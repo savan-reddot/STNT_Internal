@@ -39,13 +39,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'wip':
-      return {
-        backgroundColor: '#FCEEBA',
-        bordercolor: '#F5DA80',
-        color: '#A82C00',
-        status: 'Pending',
-      };
+    case 'submitted':
     case 'new':
       return {
         backgroundColor: '#E4ECEC',
@@ -53,26 +47,34 @@ const getStatusColor = (status: string) => {
         color: '#545969',
         status: 'Submitted',
       };
-    case 'completed':
-      return {
-        backgroundColor: '#CEF6BB',
-        bordercolor: '#B4E1A2',
-        color: '#05690D',
-        status: 'Completed',
-      };
-    case 'terminated':
+    case 'declined':
+    case 'rejected':
       return {
         backgroundColor: '#FFD6D6',
         bordercolor: '#FFA3A3',
         color: '#D0021B',
+        status: 'Declined',
+      };
+    case 'terminated':
+      return {
+        backgroundColor: '#E3F2FD',
+        bordercolor: '#BBDEFB',
+        color: '#1976D2',
         status: 'Closed',
       };
-    case 'closed':
+    case 'approved':
       return {
-        backgroundColor: '#e2e2e2ff',
-        bordercolor: '#bdbdbdff',
-        color: '#4F4F4F',
-        status: 'Closed',
+        backgroundColor: '#CEF6BB',
+        bordercolor: '#B4E1A2',
+        color: '#05690D',
+        status: 'Approved',
+      };
+    case 'wip':
+      return {
+        backgroundColor: '#FFF9C4',
+        bordercolor: '#FFF176',
+        color: '#F57F17',
+        status: 'Pending',
       };
     default:
       return {
@@ -101,17 +103,17 @@ const Claim = ({ navigation }: any) => {
       onSelect: () => setSelectedCat('all'),
     },
     {
+      title: 'Submitted',
+      value: 'submitted',
+      onSelect: () => setSelectedCat('submitted'),
+    },
+    {
       title: 'Pending',
       value: 'wip',
       onSelect: () => setSelectedCat('wip'),
     },
     {
-      title: 'Submitted',
-      value: 'new',
-      onSelect: () => setSelectedCat('new'),
-    },
-    {
-      title: 'Completed',
+      title: 'Closed',
       value: 'completed',
       onSelect: () => setSelectedCat('completed'),
     },
@@ -190,7 +192,7 @@ const Claim = ({ navigation }: any) => {
               {categories?.map((cat, index) => {
                 const isSelected = selectedCat == cat?.value;
                 return (
-                  <TouchableOpacity onPress={() => setSelectedCat(cat?.value)}>
+                  <TouchableOpacity onPress={() => setSelectedCat(cat?.value)} key={index}>
                     <View
                       style={{
                         backgroundColor: isSelected
@@ -244,6 +246,7 @@ const Claim = ({ navigation }: any) => {
                         claimRequestId: item?.id,
                       });
                     }}
+                    key={index}
                   >
                     <View key={'cl' + index} style={styles(theme).list_parent}>
                       <View
@@ -262,7 +265,7 @@ const Claim = ({ navigation }: any) => {
                         <Text
                           style={[
                             fontStyle(theme).headingMedium,
-                            { fontSize: 14, fontWeight: '600' },
+                            { fontSize: 14, fontWeight: '600', textTransform: 'capitalize' },
                           ]}
                         >
                           {item?.traveller?.name}
@@ -273,7 +276,7 @@ const Claim = ({ navigation }: any) => {
                             { fontSize: 14, fontWeight: '600' },
                           ]}
                         >
-                          {item?.claimTypes.map(ct => ct.title).join(', ')}
+                          {item?.claimTypes.map((ct: any) => ct.title).join(', ')}
                         </Text>
                         <Text
                           style={[

@@ -131,7 +131,7 @@ const Policies = ({ route }: any) => {
           {categories?.map((cat, index) => {
             const isSelected = selectedCat == cat?.value;
             return (
-              <TouchableOpacity onPress={() => cat?.onSelect()}>
+              <TouchableOpacity onPress={() => cat?.onSelect()} key={index}>
                 <View
                   style={{
                     backgroundColor: isSelected

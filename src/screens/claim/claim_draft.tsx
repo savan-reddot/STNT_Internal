@@ -120,6 +120,7 @@ const DraftClaims = ({ navigation }: any) => {
                       isDraft: true,
                     });
                   }}
+                  key={index}
                 >
                   <View key={'cl' + index} style={styles(theme).list_parent}>
                     <View

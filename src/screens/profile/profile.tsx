@@ -94,9 +94,9 @@ const Profile = ({ navigation }: any) => {
         </View>
 
         <View style={{ padding: metrics.doubleMargin }}>
-          {data.map(section => {
+          {data.map((section, index) => {
             return (
-              <View style={{ marginLeft: metrics.baseMargin }}>
+              <View style={{ marginLeft: metrics.baseMargin }} key={index}>
                 {section.title && (
                   <Text
                     style={[
