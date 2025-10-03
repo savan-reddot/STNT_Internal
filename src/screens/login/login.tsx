@@ -47,80 +47,96 @@ const Login = ({ navigation }: any) => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const onLogin = async (data: any) => {
-    console.log('User : ', JSON.stringify(data));
-    const resp = await loginUser(data);
-    console.log('loginUser Response : ', JSON.stringify(resp));
-    if (resp?.error) {
-      const { data } = resp?.error;
-      showErrorToast(data?.message, 'Error !!');
-      return;
-    }
-    if (resp?.data?.status) {
-      const { user, token, latestUid, availableUids } = resp?.data?.data;
-      console.log('User : ', JSON.stringify(user));
-      console.log('Token : ', JSON.stringify(token));
-      await AsyncStorage.setItem('@token', token);
-      await AsyncStorage.setItem(
-        '@user',
-        JSON.stringify({ ...user, latestUid, availableUids }),
-      );
-      dispatch(setToken(token));
-      dispatch(setUser({ ...user, latestUid, availableUids }));
+    try {
+      console.log('User : ', JSON.stringify(data));
+      const resp = await loginUser(data);
+      console.log('loginUser Response : ', JSON.stringify(resp));
 
-      const passportResp = await passportById({ uidNo: latestUid });
-      console.log(
-        'passportById Response : ',
-        JSON.stringify(passportResp?.data),
-      );
-      if (passportResp?.data?.status) {
-        const { data } = passportResp?.data;
-        if (data && data?.passportNo) {
-          console.log('Passport No : ', data?.passportNo);
-          const verificationResp = await verificationUser({
-            name: user?.firstName + ' ' + user?.lastName,
-            passportNo: data?.passportNo,
-            uidNo: latestUid,
-          });
-          console.log(
-            'Verification Response : ',
-            JSON.stringify(verificationResp?.data),
-          );
-          if (verificationResp?.data?.success) {
-            const { user, token } = verificationResp?.data;
-            console.log(
-              'Verification user : ',
-              JSON.stringify(verificationResp?.data?.user),
-            );
-            console.log(
-              'Verification token : ',
-              JSON.stringify(verificationResp?.data?.token),
-            );
-            await AsyncStorage.setItem('webtoken', token);
-            await AsyncStorage.setItem('userdetails', JSON.stringify(user));
-            dispatch(setUserDetails(user));
-            dispatch(setWebToken(token));
-
-            navigation.replace(Screens.BottomTab);
-          } else {
-            console.log('Error --------> ', verificationResp);
-            showErrorToast(verificationResp?.data?.message, 'Error !!');
-            navigation.replace(Screens.BottomTab);
-          }
-        } else {
-          showErrorToast('Passport Not Found !!', 'Error !!');
-          navigation.replace(Screens.BottomTab);
-        }
-      } else {
-        showErrorToast('Passport Not Found !!', 'Error !!');
-        navigation.replace(Screens.BottomTab);
+      if (resp?.error) {
+        const errorData = 'data' in resp.error ? resp.error.data : null;
+        const errorMessage = errorData && typeof errorData === 'object' && 'message' in errorData
+          ? (errorData as any).message
+          : 'Login failed';
+        showErrorToast(errorMessage, 'Error !!');
+        return;
       }
 
-      // if (user?.passportNo == null || user?.passportNo == '') {
-      //   navigation.replace(Screens.BottomTab);
-      //   return;
-      // }
-    } else {
-      showErrorToast(resp?.data?.message, 'Error !!');
+      if (resp?.data?.status) {
+        const { user, token, latestUid, availableUids } = resp?.data?.data;
+        console.log('User : ', JSON.stringify(user));
+        console.log('Token : ', JSON.stringify(token));
+
+        // Store basic user data first
+        await AsyncStorage.setItem('@token', token);
+        await AsyncStorage.setItem(
+          '@user',
+          JSON.stringify({ ...user, latestUid, availableUids }),
+        );
+        dispatch(setToken(token));
+        dispatch(setUser({ ...user, latestUid, availableUids }));
+
+        // Navigate to BottomTab immediately after basic login
+        navigation.replace(Screens.BottomTab);
+
+        // Continue with additional verification in background
+        try {
+          const passportResp = await passportById({ uidNo: latestUid });
+          console.log(
+            'passportById Response : ',
+            JSON.stringify(passportResp?.data),
+          );
+
+          if (passportResp?.data?.status) {
+            const { data } = passportResp?.data;
+            if (data && data?.passportNo) {
+              console.log('Passport No : ', data?.passportNo);
+              const verificationResp = await verificationUser({
+                name: user?.firstName + ' ' + user?.lastName,
+                passportNo: data?.passportNo,
+                uidNo: latestUid,
+              });
+              console.log(
+                'Verification Response : ',
+                JSON.stringify(verificationResp?.data),
+              );
+
+              if (verificationResp?.data?.success) {
+                const { user: verificationUserData, token: webToken } = verificationResp?.data;
+                console.log(
+                  'Verification user : ',
+                  JSON.stringify(verificationResp?.data?.user),
+                );
+                console.log(
+                  'Verification token : ',
+                  JSON.stringify(verificationResp?.data?.token),
+                );
+
+                // Store additional verification data
+                await AsyncStorage.setItem('webtoken', webToken);
+                await AsyncStorage.setItem('userdetails', JSON.stringify(verificationUserData));
+                dispatch(setUserDetails(verificationUserData));
+                dispatch(setWebToken(webToken));
+              } else {
+                console.log('Verification Error --------> ', verificationResp);
+                showErrorToast(verificationResp?.data?.message || 'Verification failed', 'Warning');
+              }
+            } else {
+              showErrorToast('Passport Not Found !!', 'Warning');
+            }
+          } else {
+            showErrorToast('Passport Not Found !!', 'Warning');
+          }
+        } catch (verificationError) {
+          console.log('Verification process error:', verificationError);
+          // Don't show error toast for background verification failures
+          // User is already logged in and can use the app
+        }
+      } else {
+        showErrorToast(resp?.data?.message, 'Error !!');
+      }
+    } catch (error) {
+      console.log('Login error:', error);
+      showErrorToast('Login failed. Please try again.', 'Error !!');
     }
   };
 

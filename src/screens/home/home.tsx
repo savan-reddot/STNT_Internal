@@ -370,6 +370,10 @@ const styles = (theme: MD3Theme) =>
       elevation: 1,
       backgroundColor: '#fff',
       padding: metrics.baseMargin,
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
     },
     tile_child: {
       flex: 1,

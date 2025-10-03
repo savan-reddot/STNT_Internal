@@ -111,7 +111,7 @@ const VirtualCard = ({ navigation }: any) => {
         <ScrollView style={{ padding: 15 }} contentContainerStyle={{ paddingBottom: metrics.doubleMargin }}>
           <TouchableOpacity activeOpacity={0.8} onPress={openZoom} style={{
             width: '100%',
-            height: metrics.screenHeight * 0.3,
+            height: 240,
           }}>
             <ImageBackground
               source={{
