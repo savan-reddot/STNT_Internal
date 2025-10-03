@@ -121,24 +121,8 @@ Passport - ${user?.passportNo.replace(
 Email - ${user?.email}
 I need some help.
 `; // optional preset text
-    const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(
-      message,
-    )}`;
-
-    console.log('Whatsapp Message : ', message);
-
-    Linking.canOpenURL(url)
-      .then((supported: boolean) => {
-        if (!supported) {
-          showErrorToast(
-            'Please install WhatsApp to send a message',
-            'WhatsApp not installed',
-          );
-        } else {
-          return Linking.openURL(url);
-        }
-      })
-      .catch(err => console.error('An error occurred', err));
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    Linking.openURL(url)
   };
 
   return (

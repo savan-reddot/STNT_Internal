@@ -173,6 +173,7 @@ const ClaimDetailsEdit = ({
                             index == claimData?.files?.length - 1 ? 0 : 0.3,
                         },
                       ]}
+                      key={index}
                     >
                       <Image
                         source={{ uri: doc?.path }}

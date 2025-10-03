@@ -297,6 +297,7 @@ const ClaimRequest = ({ navigation, route }: any) => {
     const [banks, setBanks] = useState<any[]>([]);
     const [selected_bank, setSelected_Bank] = useState<string>('');
     const [bank_account, setBank_Account] = useState<string>('');
+    const [specified_relationship, setSpecified_Relationship] = useState<string>('');
 
     useEffect(() => {
       const init = async () => {
@@ -333,8 +334,13 @@ const ClaimRequest = ({ navigation, route }: any) => {
         return;
       }
 
-      if (bank_account == '') {
-        showErrorToast('Please enter Bank Account Number !!');
+      if (payee_relationship == '') {
+        showErrorToast('Please select Relationship !!');
+        return;
+      }
+
+      if (payee_relationship == 'other' && specified_relationship == '') {
+        showErrorToast('Please enter specify relationship !!');
         return;
       }
 
@@ -343,8 +349,8 @@ const ClaimRequest = ({ navigation, route }: any) => {
         return;
       }
 
-      if (payee_relationship == '') {
-        showErrorToast('Please select Relationship !!');
+      if (bank_account == '') {
+        showErrorToast('Please enter Bank Account Number !!');
         return;
       }
 
@@ -409,7 +415,10 @@ const ClaimRequest = ({ navigation, route }: any) => {
       (val: string) => setBank_Account(val),
       [],
     );
-
+    const handleSpecifiedRelationship = useCallback(
+      (val: string) => setSpecified_Relationship(val),
+      [],
+    );
     return (
       <KeyboardAvoidingView style={[[globalStyle(theme).container]]}>
         <ScrollView style={[[globalStyle(theme).container]]}>
@@ -464,6 +473,21 @@ const ClaimRequest = ({ navigation, route }: any) => {
                 onChange={handleRelationship}
               />
             </View>
+            {payee_relationship == 'other' && <View style={{ marginTop: metrics.baseMargin }}>
+              <Text style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}>
+                Please specify relationship<Text style={{ color: 'red' }}>*</Text>
+              </Text>
+              <TextInput
+                label=""
+                value={specified_relationship}
+                placeholder={'Please enter specify relationship'}
+                onChangeText={handleSpecifiedRelationship}
+                mode="outlined"
+                keyboardType="default"
+                outlineStyle={globalStyle(theme).textinput}
+                style={{ height: metrics.screenWidth * 0.13 }}
+              />
+            </View>}
             <View style={{ marginTop: metrics.baseMargin }}>
               <Text
                 style={[

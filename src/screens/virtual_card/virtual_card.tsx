@@ -108,147 +108,143 @@ const VirtualCard = ({ navigation }: any) => {
     <AppLayout title={'E-Card'}>
       <ScreenLoader visible={isLoading} />
       {metaData && !isLoading ? (
-        <ScrollView>
-          <View
+        <ScrollView style={{ padding: 15 }} contentContainerStyle={{ paddingBottom: metrics.doubleMargin }}>
+          <TouchableOpacity activeOpacity={0.8} onPress={openZoom} style={{
+            width: '100%',
+            height: metrics.screenHeight * 0.3,
+          }}>
+            <ImageBackground
+              source={{
+                uri: `data:image/png;base64,${metaData?.virtualCard.front}`,
+              }}
+              style={styles.backgroundImage}
+              resizeMode="contain"
+            >
+              <View style={styles.overlayContent}>
+                <Text style={styles.uid}>
+                  UID: {metaData?.policyDetails.uidNo}
+                </Text>
+                <Text numberOfLines={2} style={styles.name}>
+                  Name: {metaData?.policyDetails.name}
+                </Text>
+                <Text style={styles.dob}>
+                  DOB: {metaData?.policyDetails.dob}
+                </Text>
+                <QRCode value={metaData?.virtualCard.urlPath} size={60} />
+              </View>
+            </ImageBackground>
+          </TouchableOpacity>
+
+          <Text
             style={[
-              globalStyle(theme).container,
-              { padding: metrics.doubleMargin / 2 },
+              fontStyle(theme).headingSmall,
+              {
+                fontWeight: 'regular',
+                padding: metrics.baseMargin,
+                paddingBottom: 0,
+              },
             ]}
           >
-            <View style={styles.cardContainer}>
-              <TouchableOpacity activeOpacity={0.8} onPress={openZoom}>
-                <ImageBackground
-                  source={{
-                    uri: `data:image/png;base64,${metaData?.virtualCard.front}`,
-                  }}
-                  style={styles.backgroundImage}
-                  resizeMode="contain"
-                >
-                  <View style={styles.overlayContent}>
-                    <Text style={styles.uid}>
-                      UID: {metaData?.policyDetails.uidNo}
-                    </Text>
-                    <Text numberOfLines={2} style={styles.name}>
-                      Name: {metaData?.policyDetails.name}
-                    </Text>
-                    <Text style={styles.dob}>
-                      DOB: {metaData?.policyDetails.dob}
-                    </Text>
-                    <QRCode value={metaData?.virtualCard.urlPath} size={60} />
-                  </View>
-                </ImageBackground>
-              </TouchableOpacity>
+            *Tap the card to display the QR code.
+          </Text>
 
+          <View style={{ margin: metrics.baseMargin }}>
+            <Text
+              style={[
+                fontStyle(theme).headingSmall,
+                {
+                  fontSize: 14,
+                  fontWeight: '700',
+                  color: theme.colors.onBackground,
+                },
+              ]}
+            >
+              Policy Details :
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text
                 style={[
                   fontStyle(theme).headingSmall,
                   {
-                    fontWeight: 'regular',
-                    padding: metrics.baseMargin,
-                    paddingBottom: 0,
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: theme.colors.onBackground,
                   },
                 ]}
               >
-                *Tap the card to display the QR code.
+                Plan Type :
               </Text>
+              <Text
+                style={[
+                  fontStyle(theme).headingSmall,
+                  {
+                    fontSize: 14,
+                    fontWeight: 'regular',
+                    color: theme.colors.onBackground,
+                    marginLeft: metrics.baseMargin,
+                  },
+                ]}
+              >
+                {metaData?.policyDetails?.policyType}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text
+                style={[
+                  fontStyle(theme).headingSmall,
+                  {
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: theme.colors.onBackground,
+                  },
+                ]}
+              >
+                Start Date :
+              </Text>
+              <Text
+                style={[
+                  fontStyle(theme).headingSmall,
+                  {
+                    fontSize: 14,
+                    fontWeight: 'regular',
+                    color: theme.colors.onBackground,
+                    marginLeft: metrics.baseMargin,
+                  },
+                ]}
+              >
+                {metaData?.policyDetails?.policyEffectiveData}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text
+                style={[
+                  fontStyle(theme).headingSmall,
+                  {
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: theme.colors.onBackground,
+                  },
+                ]}
+              >
+                End Date :
+              </Text>
+              <Text
+                style={[
+                  fontStyle(theme).headingSmall,
+                  {
+                    fontSize: 14,
+                    fontWeight: 'regular',
+                    color: theme.colors.onBackground,
+                    marginLeft: metrics.baseMargin,
+                  },
+                ]}
+              >
+                {metaData?.policyDetails?.policyExpirationData}
+              </Text>
+            </View>
+          </View>
 
-              <View style={{ margin: metrics.baseMargin }}>
-                <Text
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    {
-                      fontSize: 14,
-                      fontWeight: '700',
-                      color: theme.colors.onBackground,
-                    },
-                  ]}
-                >
-                  Policy Details :
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      {
-                        fontSize: 14,
-                        fontWeight: '700',
-                        color: theme.colors.onBackground,
-                      },
-                    ]}
-                  >
-                    Plan Type :
-                  </Text>
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      {
-                        fontSize: 14,
-                        fontWeight: 'regular',
-                        color: theme.colors.onBackground,
-                        marginLeft: metrics.baseMargin,
-                      },
-                    ]}
-                  >
-                    {metaData?.policyDetails?.policyType}
-                  </Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      {
-                        fontSize: 14,
-                        fontWeight: '700',
-                        color: theme.colors.onBackground,
-                      },
-                    ]}
-                  >
-                    Start Date :
-                  </Text>
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      {
-                        fontSize: 14,
-                        fontWeight: 'regular',
-                        color: theme.colors.onBackground,
-                        marginLeft: metrics.baseMargin,
-                      },
-                    ]}
-                  >
-                    {metaData?.policyDetails?.policyEffectiveData}
-                  </Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      {
-                        fontSize: 14,
-                        fontWeight: '700',
-                        color: theme.colors.onBackground,
-                      },
-                    ]}
-                  >
-                    End Date :
-                  </Text>
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      {
-                        fontSize: 14,
-                        fontWeight: 'regular',
-                        color: theme.colors.onBackground,
-                        marginLeft: metrics.baseMargin,
-                      },
-                    ]}
-                  >
-                    {metaData?.policyDetails?.policyExpirationData}
-                  </Text>
-                </View>
-              </View>
-
-              {/* <Animated.View style={[styles.card, frontStyle]}>
+          {/* <Animated.View style={[styles.card, frontStyle]}>
               <ImageBackground
                 source={{
                   uri: `data:image/png;base64,${metaData?.virtualCard.front}`,
@@ -272,8 +268,8 @@ const VirtualCard = ({ navigation }: any) => {
               </ImageBackground>
             </Animated.View> */}
 
-              {/* Back Side */}
-              {/* <Animated.View style={[styles.card, backStyle]}>
+          {/* Back Side */}
+          {/* <Animated.View style={[styles.card, backStyle]}>
               <Image
                 source={{
                   uri: `data:image/png;base64,${metaData?.virtualCard.back}`,
@@ -283,49 +279,47 @@ const VirtualCard = ({ navigation }: any) => {
               />
             </Animated.View> */}
 
-              <View style={{ margin: metrics.baseMargin }}>
-                <Text style={fontStyle(theme).headingSmall}>Note :</Text>
-                <Text
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    { fontWeight: 'regular', marginTop: 0 },
-                  ]}
-                >
-                  1. A virtual claim payment card is unique digit computer
-                  generated number that is created solely for a use between a
-                  payer and payee.{' '}
-                </Text>
-                <Text
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    { fontWeight: 'regular', marginTop: 0 },
-                  ]}
-                >
-                  2. We will provide a Claim Assistance Card for your to ensure
-                  that you have handy policy details as well as direct claims
-                  assistance number always with you.
-                </Text>
-              </View>
+          <View style={{ margin: metrics.baseMargin }}>
+            <Text style={fontStyle(theme).headingSmall}>Note :</Text>
+            <Text
+              style={[
+                fontStyle(theme).headingSmall,
+                { fontWeight: 'regular', marginTop: 0 },
+              ]}
+            >
+              1. A virtual claim payment card is unique digit computer
+              generated number that is created solely for a use between a
+              payer and payee.{' '}
+            </Text>
+            <Text
+              style={[
+                fontStyle(theme).headingSmall,
+                { fontWeight: 'regular', marginTop: 0 },
+              ]}
+            >
+              2. We will provide a Claim Assistance Card for your to ensure
+              that you have handy policy details as well as direct claims
+              assistance number always with you.
+            </Text>
+          </View>
 
-              <View style={{ alignSelf: 'center', justifyContent: 'center' }}>
-                <TouchableOpacity
-                  onPress={() => downloadECard(Platform.OS == 'ios')}
-                >
-                  <Image
-                    source={
-                      Platform.OS == 'android'
-                        ? require('../../../assets/images/google_wallet.png')
-                        : require('../../../assets/images/apple_wallet.png')
-                    }
-                    style={{
-                      width: metrics.screenWidth * 0.85,
-                      height: metrics.screenWidth * 0.15,
-                      resizeMode: 'contain',
-                    }}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
+          <View style={{ alignSelf: 'center', justifyContent: 'center' }}>
+            <TouchableOpacity
+              onPress={() => downloadECard(Platform.OS == 'ios')}
+            >
+              <Image
+                source={
+                  Platform.OS == 'android'
+                    ? require('../../../assets/images/google_wallet.png')
+                    : require('../../../assets/images/apple_wallet.png')
+                }
+                style={{
+                  width: metrics.screenWidth * 0.85,
+                  height: metrics.screenWidth * 0.15,
+                  resizeMode: 'contain',
+                }}
+              />
+            </TouchableOpacity>
           </View>
         </ScrollView>
       ) : (
@@ -370,11 +364,12 @@ const styles = StyleSheet.create({
   },
   overlayContent: {
     position: 'absolute',
-    top: metrics.screenHeight * 0.1,
+    bottom: 25,
     left: 20,
+    width: '60%',
   },
   uid: { fontWeight: 'bold', color: '#000' },
-  name: { color: '#000', marginTop: metrics.baseMargin, width: '60%' },
+  name: { color: '#000', marginTop: metrics.baseMargin, width: '100%' },
   dob: { color: '#000', marginVertical: metrics.baseMargin },
   backContent: {
     position: 'absolute',
@@ -390,13 +385,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   flipBtnText: { color: '#fff', fontWeight: '600' },
-  cardContainer: {
-    width: '100%',
-    height: metrics.screenHeight * 0.3,
-    margin: metrics.baseMargin,
-    marginHorizontal: 0,
-    alignSelf: 'center',
-  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.7)',

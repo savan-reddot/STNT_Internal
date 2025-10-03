@@ -115,15 +115,7 @@ const TrustedHospitals = ({ navigation }: any) => {
       url = `geo:0,0?q=${encodeURIComponent(address)}`;
     }
 
-    Linking.canOpenURL(url)
-      .then(supported => {
-        if (!supported) {
-          showErrorToast('Maps app not available', 'Error');
-        } else {
-          return Linking.openURL(url);
-        }
-      })
-      .catch(err => console.error('Error opening map:', err));
+    Linking.openURL(url)
   };
 
   return (
@@ -188,7 +180,7 @@ const TrustedHospitals = ({ navigation }: any) => {
             {hospitals && hospitals?.length > 0 ? (
               hospitals?.map((hotel, index) => {
                 return (
-                  <View style={styles(theme).list_parent}>
+                  <View style={styles(theme).list_parent} key={index}>
                     <Image
                       source={
                         hotel?.imageUrl
