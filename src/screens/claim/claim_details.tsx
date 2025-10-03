@@ -670,7 +670,7 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     },
                   ]}
                 >
-                  Return date to Singapore
+                  Bank Account Number
                 </Text>
                 <Text
                   numberOfLines={2}

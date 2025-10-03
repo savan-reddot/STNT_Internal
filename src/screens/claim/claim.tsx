@@ -33,7 +33,7 @@ import { getUser } from '../../redux/reducer';
 import { showErrorToast } from '../../utils/toastUtils';
 import UIDSelection from '../../components/uid_selection';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { ca } from 'react-native-paper-dates';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -63,6 +63,7 @@ const getStatusColor = (status: string) => {
         status: 'Closed',
       };
     case 'approved':
+    case 'completed':
       return {
         backgroundColor: '#CEF6BB',
         bordercolor: '#B4E1A2',
@@ -70,6 +71,7 @@ const getStatusColor = (status: string) => {
         status: 'Approved',
       };
     case 'wip':
+    case 'pending':
       return {
         backgroundColor: '#FFF9C4',
         bordercolor: '#FFF176',
@@ -113,7 +115,7 @@ const Claim = ({ navigation }: any) => {
       onSelect: () => setSelectedCat('wip'),
     },
     {
-      title: 'Closed',
+      title: 'Completed',
       value: 'completed',
       onSelect: () => setSelectedCat('completed'),
     },
@@ -300,8 +302,8 @@ const Claim = ({ navigation }: any) => {
                             },
                           ]}
                         >
-                          {moment(item?.submittedDate).format(
-                            'DD-MM-YYYY HH:mm',
+                          {moment(item?.submittedDate).tz('Asia/Singapore').format(
+                            'DD-MM-YYYY hh:mm A',
                           )}
                         </Text>
                       </View>
