@@ -84,7 +84,14 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
     console.log(hasPermission);
     if (!hasPermission) return;
 
-    const result = await launchImageLibrary({ mediaType: 'photo' });
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      // Use Android Photo Picker for Android 13+ (API 33+)
+      selectionLimit: 1,
+      includeBase64: false,
+      // This enables the new Android Photo Picker
+      presentationStyle: 'pageSheet',
+    });
     if (result.assets?.[0]) {
       const image = result.assets[0];
       setIsSelectionVisible(false);
@@ -146,9 +153,9 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
   const renderItem = ({ item }: any) => (
     <View style={styles(theme).docItem}>
       {item &&
-      item?.uri &&
-      item?.type &&
-      item?.type.toLowerCase() !== 'application/pdf' ? (
+        item?.uri &&
+        item?.type &&
+        item?.type.toLowerCase() !== 'application/pdf' ? (
         <Image
           source={{ uri: item?.uri }}
           style={{

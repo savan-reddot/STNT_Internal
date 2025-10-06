@@ -10,60 +10,49 @@ import {
 export const requestAppPermission = async (
   type: 'camera' | 'gallery' | 'document',
 ) => {
-  let permission;
-
   if (Platform.OS === 'android') {
-    const camera = await check(PERMISSIONS.ANDROID.CAMERA);
-    const image = await check(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES);
-    const video = await check(PERMISSIONS.ANDROID.READ_MEDIA_VIDEO);
-
-    if (
-      camera == RESULTS.GRANTED &&
-      image === RESULTS.GRANTED &&
-      video === RESULTS.GRANTED
-    ) {
+    // For Android, we only need camera permission
+    // Gallery access will use Android Photo Picker (no permission needed)
+    if (type === 'camera') {
+      const camera = await check(PERMISSIONS.ANDROID.CAMERA);
+      if (camera === RESULTS.GRANTED) {
+        return true;
+      }
+      const reqCamera = await request(PERMISSIONS.ANDROID.CAMERA);
+      return reqCamera === RESULTS.GRANTED;
+    } else if (type === 'gallery' || type === 'document') {
+      // No permission needed for Android Photo Picker
       return true;
     }
-
-    // If not granted, request all 3
-    const [reqCamera, reqImage, reqVideo] = await Promise.all([
-      request(PERMISSIONS.ANDROID.CAMERA),
-      request(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES),
-      request(PERMISSIONS.ANDROID.READ_MEDIA_VIDEO),
-    ]);
-
-    return (
-      reqCamera === RESULTS.GRANTED &&
-      reqImage === RESULTS.GRANTED &&
-      reqVideo === RESULTS.GRANTED
-    );
   } else {
+    // iOS permissions
+    let permission;
     if (type === 'camera') permission = PERMISSIONS.IOS.CAMERA;
     else if (type === 'gallery') permission = PERMISSIONS.IOS.PHOTO_LIBRARY;
-    else if (type === 'document')
-      permission = PERMISSIONS.IOS.PHOTO_LIBRARY_ADD_ONLY;
+    else if (type === 'document') permission = PERMISSIONS.IOS.PHOTO_LIBRARY_ADD_ONLY;
+    else return false;
+
+    const result = await check(permission);
+
+    if (result === RESULTS.GRANTED) return true;
+
+    if (result === RESULTS.BLOCKED || result === RESULTS.DENIED) {
+      Alert.alert(
+        'Permission Required',
+        'Please enable this permission in settings to proceed.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => openSettings() },
+        ],
+      );
+      return false;
+    }
+
+    const reqResult = await request(permission);
+    return reqResult === RESULTS.GRANTED;
   }
 
-  const result = await check(permission);
-
-  if (result === RESULTS.GRANTED) return true;
-
-  if (result === RESULTS.BLOCKED || result === RESULTS.DENIED) {
-    Alert.alert(
-      'Permission Required',
-      'Please enable this permission in settings to proceed.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Open Settings', onPress: openSettings },
-      ],
-    );
-    return false;
-  }
-
-  const reqResult = await request(permission).then(status => {
-    return status;
-  });
-  // return reqResult === RESULTS.GRANTED;
+  return false;
 };
 
 export const requestCameraPermission = async () => {
@@ -72,12 +61,14 @@ export const requestCameraPermission = async () => {
     ios: PERMISSIONS.IOS.CAMERA,
   });
 
+  if (!permission) return false;
+
   const result = await request(permission);
   if (result !== RESULTS.GRANTED) {
     Alert.alert(
       'Permission Required',
       'Camera permission is needed to take pictures.',
-      [{ text: 'Go to Settings', onPress: openSettings }],
+      [{ text: 'Go to Settings', onPress: () => openSettings() }],
     );
     return false;
   }
@@ -85,20 +76,18 @@ export const requestCameraPermission = async () => {
 };
 
 export const requestGalleryPermission = async () => {
-  const permission = Platform.select({
-    android:
-      Platform.Version >= 33
-        ? PERMISSIONS.ANDROID.READ_MEDIA_IMAGES
-        : PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
-    ios: PERMISSIONS.IOS.PHOTO_LIBRARY,
-  });
+  if (Platform.OS === 'android') {
+    // No permission needed for Android Photo Picker
+    return true;
+  }
 
+  const permission = PERMISSIONS.IOS.PHOTO_LIBRARY;
   const result = await request(permission);
   if (result !== RESULTS.GRANTED) {
     Alert.alert(
       'Permission Required',
       'Gallery access is needed to select images.',
-      [{ text: 'Go to Settings', onPress: openSettings }],
+      [{ text: 'Go to Settings', onPress: () => openSettings() }],
     );
     return false;
   }
@@ -111,13 +100,15 @@ export const requestStoragePermission = async () => {
     ios: PERMISSIONS.IOS.MEDIA_LIBRARY,
   });
 
+  if (!permission) return false;
+
   const result = await request(permission);
   console.log('Storage Permission Result:', result);
   if (result !== RESULTS.GRANTED) {
     Alert.alert(
       'Permission Required',
       'File access permission is needed to upload documents.',
-      [{ text: 'Go to Settings', onPress: openSettings }],
+      [{ text: 'Go to Settings', onPress: () => openSettings() }],
     );
     return false;
   }

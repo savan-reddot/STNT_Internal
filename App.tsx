@@ -22,10 +22,10 @@ const App = () => {
         const document = await request(PERMISSIONS.IOS.PHOTO_LIBRARY_ADD_ONLY);
         console.log('Camera:', cam, 'Photos:', photos);
       } else {
+        // Only request camera permission for Android
+        // Gallery access uses Android Photo Picker (no permission needed)
         const cam = await request(PERMISSIONS.ANDROID.CAMERA);
-        const photos = await request(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
-        const document = await request(PERMISSIONS.ANDROID.READ_MEDIA_VIDEO);
-        console.log('Camera:', cam, 'Photos:', photos, 'Documents :', document);
+        console.log('Camera:', cam);
       }
     };
 

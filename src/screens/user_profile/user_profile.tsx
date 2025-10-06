@@ -202,7 +202,14 @@ const UserProfile = ({ navigation }: any) => {
     console.log(hasPermission);
     if (!hasPermission) return;
 
-    const result = await launchImageLibrary({ mediaType: 'photo' });
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      // Use Android Photo Picker for Android 13+ (API 33+)
+      selectionLimit: 1,
+      includeBase64: false,
+      // This enables the new Android Photo Picker
+      presentationStyle: 'pageSheet',
+    });
     if (result.assets?.[0]) {
       const image = result.assets[0];
 
