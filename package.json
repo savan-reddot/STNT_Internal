@@ -43,6 +43,7 @@
     "react-native-qrcode-svg": "^6.3.15",
     "react-native-reanimated": "^4.0.2",
     "react-native-safe-area-context": "^5.6.0",
+    "react-native-screenguard": "^1.1.0",
     "react-native-screens": "^4.14.1",
     "react-native-signature-canvas": "^5.0.1",
     "react-native-simple-toast": "^3.3.2",

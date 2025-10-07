@@ -13,7 +13,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import ScreenGuard from 'react-native-screenguard';
 import AppLayout from '../../components/safeareawrapper';
 import { globalStyle } from '../../utils/globalStyles';
 import { useTheme } from 'react-native-paper';
@@ -56,6 +58,22 @@ const VirtualCard = ({ navigation }: any) => {
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Prevent screenshots when this screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      // Register screen guard with color overlay when screen is focused
+      ScreenGuard.register({
+        backgroundColor: '#000000', // Black background
+        timeAfterResume: 1000,     // Time delay for Android
+      });
+
+      // Cleanup function to unregister screen guard when screen loses focus
+      return () => {
+        ScreenGuard.unregister();
+      };
+    }, [])
+  );
 
   const downloadECard = async (isApple: boolean) => {
     const request = {
@@ -107,7 +125,7 @@ const VirtualCard = ({ navigation }: any) => {
   return (
     <AppLayout title={'E-Card'}>
       <ScreenLoader visible={isLoading} />
-      {metaData && !isLoading ? (
+      {!metaData?.virtualCard?.isExpired && !isLoading ? (
         <ScrollView style={{ padding: 15 }} contentContainerStyle={{ paddingBottom: metrics.doubleMargin }}>
           <TouchableOpacity activeOpacity={0.8} onPress={openZoom} style={{
             width: '100%',

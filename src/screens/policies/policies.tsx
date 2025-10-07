@@ -204,6 +204,7 @@ const Policies = ({ route }: any) => {
                             {
                               fontSize: 15,
                               fontWeight: '600',
+                              textTransform: 'capitalize',
                             },
                           ]}
                         >
