@@ -114,19 +114,19 @@ const PolicyDetails = ({
             {policyData?.status && (
               <View
                 style={{
-                  backgroundColor: '#CEF6BB',
+                  backgroundColor: policyData.isExpired ? "#F9E4F1" : '#CEF6BB',
                   paddingVertical: 0,
                   paddingHorizontal: metrics.baseMargin,
                   borderRadius: 4,
                   borderWidth: 1,
-                  borderColor: '#B4E1A2',
+                  borderColor: policyData.isExpired ? "#F2C9E3" : '#B4E1A2',
                   alignSelf: 'flex-end',
                 }}
               >
                 <Text
                   style={[
                     fontStyle(theme).headingSmall,
-                    { color: '#05690D', fontSize: 11 },
+                    { color: policyData.isExpired ? "#B3063D" : '#05690D', fontSize: 11 },
                   ]}
                 >
                   {policyData?.status?.toUpperCase()}
@@ -190,7 +190,7 @@ const PolicyDetails = ({
                 },
               ]}
             >
-              Expired On :
+              {`${policyData.isExpired ? "Expired" : "Expire"} On :`}
             </Text>
             <Text
               style={[

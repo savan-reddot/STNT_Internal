@@ -152,15 +152,14 @@ const Policies = ({ route }: any) => {
                       },
                     ]}
                   >
-                    {`${cat?.title} (${
-                      cat?.value == 'all'
-                        ? policiesData && policiesData?.totalPolicies
-                        : cat?.value == 'active'
+                    {`${cat?.title} (${cat?.value == 'all'
+                      ? policiesData && policiesData?.totalPolicies
+                      : cat?.value == 'active'
                         ? policiesData && policiesData?.activePolicies
                         : cat?.value == 'expired'
-                        ? policiesData && policiesData?.expiredPolicies
-                        : 0
-                    })`}
+                          ? policiesData && policiesData?.expiredPolicies
+                          : 0
+                      })`}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -170,8 +169,8 @@ const Policies = ({ route }: any) => {
         <View style={{ marginTop: metrics.baseMargin }}>
           <ScrollView showsVerticalScrollIndicator={false}>
             {policiesData &&
-            policiesData?.policies &&
-            policiesData?.policies?.length > 0 ? (
+              policiesData?.policies &&
+              policiesData?.policies?.length > 0 ? (
               policiesData?.policies?.map((item: any, index: number) => {
                 return (
                   <TouchableOpacity
@@ -261,22 +260,22 @@ const Policies = ({ route }: any) => {
                             },
                           ]}
                         >
-                          {'Expire On : ' +
+                          {`${item.isExpired ? 'Expired' : 'Expire'} On : ` +
                             moment(item?.endDate, 'YYYY-MM-DD').format(
                               'DD-MM-YYYY',
                             )}
                         </Text>
                         {/* )} */}
                       </View>
-                      {item.status && !item.isExpired && (
+                      {item.status && (
                         <View
                           style={{
-                            backgroundColor: '#CEF6BB',
+                            backgroundColor: item.isExpired ? "#F9E4F1" : '#CEF6BB',
                             paddingVertical: 0,
                             paddingHorizontal: metrics.baseMargin,
                             borderRadius: 4,
                             borderWidth: 1,
-                            borderColor: '#B4E1A2',
+                            borderColor: item.isExpired ? "#F2C9E3" : '#B4E1A2',
                             alignSelf: 'flex-start',
                             marginTop: metrics.smallMargin,
                           }}
@@ -284,7 +283,7 @@ const Policies = ({ route }: any) => {
                           <Text
                             style={[
                               fontStyle(theme).headingSmall,
-                              { color: '#05690D', fontSize: 11 },
+                              { color: item.isExpired ? "#B3063D" : '#05690D', fontSize: 11 },
                             ]}
                           >
                             {item?.status?.toUpperCase()}

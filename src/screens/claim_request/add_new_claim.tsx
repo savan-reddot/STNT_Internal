@@ -382,7 +382,7 @@ const AddNewClaim = ({ navigation }: any) => {
       // formData.append('claimCategoryId', claim_skeleton.selectedCategory);
       // formData.append('claimCategorylossCountry', country.label);
       // formData.append('mode', 'next');
-      // claim_skeleton.docList.forEach((doc: any) => {
+      // (claim_skeleton.docList || []).forEach((doc: any) => {
       //   if (doc.files?.length > 0) {
       //     doc?.files.forEach((file: any) => {
       //       formData.append(doc.title, file);
@@ -552,7 +552,7 @@ const AddNewClaim = ({ navigation }: any) => {
           showSuccessToast(resp?.data?.message);
           setClaim_Skeleton({
             ...claim_skeleton,
-            docList: claim_skeleton.docList.map((doc: any) => {
+            docList: (claim_skeleton.docList || []).map((doc: any) => {
               return {
                 ...doc,
                 oldfiles: doc?.oldfiles?.filter((e: any) => e.id != file.id),
@@ -594,7 +594,7 @@ const AddNewClaim = ({ navigation }: any) => {
                   (e: any) => e.value == claim_skeleton.selectedCountry,
                 );
 
-                const hasAtLeastOneFile = claim_skeleton.docList.some(
+                const hasAtLeastOneFile = (claim_skeleton.docList || []).some(
                   doc => doc.files && doc.files.length > 0,
                 );
 
@@ -614,7 +614,7 @@ const AddNewClaim = ({ navigation }: any) => {
 
                 formData.append('mode', 'next');
 
-                claim_skeleton.docList.forEach((doc: any) => {
+                (claim_skeleton.docList || []).forEach((doc: any) => {
                   if (doc.files?.length > 0) {
                     doc?.files.forEach((file: any) => {
                       formData.append(doc.title, file);
@@ -755,7 +755,7 @@ const AddNewClaim = ({ navigation }: any) => {
               <TouchableOpacity
                 style={{ flex: 1 }}
                 onPress={() => {
-                  for (const doc of claim_skeleton.docList) {
+                  for (const doc of claim_skeleton.docList || []) {
                     if (Array.isArray(doc?.files) && doc.files.length == 0) {
                       showErrorToast(
                         `Please upload documents for ${doc.title}`,
@@ -804,7 +804,7 @@ const AddNewClaim = ({ navigation }: any) => {
                 <View style={{ flex: 1 }}>
                   {claim_skeleton.docList &&
                     claim_skeleton.docList.length > 0 &&
-                    claim_skeleton.docList.map((doc, index) => (
+                    (claim_skeleton.docList || []).map((doc, index) => (
                       <View
                         style={{
                           borderWidth: 2,
@@ -885,8 +885,8 @@ const AddNewClaim = ({ navigation }: any) => {
                                   uri: file?.path
                                     ? file?.path
                                     : file?.uri
-                                    ? file?.uri
-                                    : '',
+                                      ? file?.uri
+                                      : '',
                                 }}
                                 style={{
                                   height: metrics.screenWidth * 0.11,
@@ -909,8 +909,8 @@ const AddNewClaim = ({ navigation }: any) => {
                                 {file?.originalname
                                   ? file?.originalname
                                   : file?.name
-                                  ? file?.name
-                                  : '-'}
+                                    ? file?.name
+                                    : '-'}
                               </Text>
                               <TouchableOpacity
                                 onPress={() => delete_document(file)}
@@ -945,7 +945,7 @@ const AddNewClaim = ({ navigation }: any) => {
                             (e: any) =>
                               e.value == claim_skeleton.selectedCountry,
                           );
-                          for (const doc of claim_skeleton.docList) {
+                          for (const doc of claim_skeleton.docList || []) {
                             if (
                               Array.isArray(doc?.files) &&
                               doc.files.length == 0
@@ -967,7 +967,7 @@ const AddNewClaim = ({ navigation }: any) => {
                             country.label,
                           );
                           formData.append('mode', 'next');
-                          claim_skeleton.docList.forEach((doc: any) => {
+                          (claim_skeleton.docList || []).forEach((doc: any) => {
                             if (doc.files?.length > 0) {
                               doc?.files.forEach((file: any) => {
                                 formData.append(doc.title, file);
@@ -997,7 +997,7 @@ const AddNewClaim = ({ navigation }: any) => {
 
                           console.log('isEdit ', isEdit);
 
-                          for (const doc of claim_skeleton.docList) {
+                          for (const doc of claim_skeleton.docList || []) {
                             if (
                               Array.isArray(doc?.files) &&
                               doc.files.length == 0
@@ -1033,7 +1033,7 @@ const AddNewClaim = ({ navigation }: any) => {
                             'claim docs ----> ',
                             claim_skeleton.docList,
                           );
-                          claim_skeleton.docList.forEach((doc: any) => {
+                          (claim_skeleton.docList || []).forEach((doc: any) => {
                             if (doc.files?.length > 0) {
                               doc?.files.forEach((file: any) => {
                                 formData.append(doc.title, file);
@@ -1068,7 +1068,7 @@ const AddNewClaim = ({ navigation }: any) => {
                         const country: any = list.find(
                           (e: any) => e.value == claim_skeleton.selectedCountry,
                         );
-                        for (const doc of claim_skeleton.docList) {
+                        for (const doc of claim_skeleton.docList || []) {
                           if (
                             Array.isArray(doc?.files) &&
                             doc.files.length == 0 &&
@@ -1110,7 +1110,7 @@ const AddNewClaim = ({ navigation }: any) => {
                           'claim docs ----> ',
                           claim_skeleton.docList,
                         );
-                        claim_skeleton.docList.forEach((doc: any) => {
+                        (claim_skeleton.docList || []).forEach((doc: any) => {
                           if (doc.files?.length > 0) {
                             doc?.files.forEach((file: any) => {
                               !file?.uri.includes('https://') &&
@@ -1172,7 +1172,7 @@ const AddNewClaim = ({ navigation }: any) => {
         onSave={docs => {
           setClaim_Skeleton({
             ...claim_skeleton,
-            docList: claim_skeleton.docList.map(doc => {
+            docList: (claim_skeleton.docList || []).map(doc => {
               if (doc.id === details?.id) {
                 return {
                   ...doc,

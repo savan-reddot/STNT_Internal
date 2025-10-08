@@ -35,31 +35,39 @@ const mapType = (val: any) => {
   return 'text';
 };
 
-const generateFormSchema = (obj: any) => {
+const generateFormSchema = (obj: any): any[] => {
   const schema = [];
 
   for (const key in obj) {
     const value = obj[key];
 
     if (typeof value === 'object' && !Array.isArray(value)) {
-      if (
-        Object.keys(value).includes('status') &&
-        typeof value.status === 'string'
-      ) {
-        // it's a boolean with nested fields
-        schema.push({
-          title: key,
-          type: 'boolean',
-          nested: {
-            title: Object.keys(value).find(k => k !== 'status'),
-            type: 'group',
-            fields: generateFormSchema(
-              value[Object.keys(value).find(k => k !== 'status')],
-            ),
-          },
-        });
+      // Check if it has a 'status' property (boolean field)
+      if (Object.keys(value).includes('status') && typeof value.status === 'string') {
+        // Extract all nested fields (excluding 'status')
+        const nestedFields = { ...value };
+        delete nestedFields.status;
+
+        // If there are nested fields, create the nested structure
+        if (Object.keys(nestedFields).length > 0) {
+          schema.push({
+            title: key,
+            type: 'boolean',
+            nested: {
+              title: key, // Use the same key as the parent
+              type: 'group',
+              fields: generateFormSchema(nestedFields),
+            },
+          });
+        } else {
+          // Simple boolean without nested fields
+          schema.push({
+            title: key,
+            type: 'boolean',
+          });
+        }
       } else {
-        // it's a group field
+        // it's a regular group field
         schema.push({
           title: key,
           type: 'group',
@@ -244,47 +252,36 @@ const DynamicFormNew = forwardRef(
 
       schema.forEach((field: any) => {
         const key = field.title;
-        const title = field.title;
 
         if (field.type === 'group') {
-          // Recursively transform nested group
           const groupData: any = {};
           field.fields.forEach((subField: any) => {
-            const value =
-              data?.[title]?.[subField.title] ??
-              data?.[`${title}.${subField.title}`];
+            const value = data?.[key]?.[subField.title];
             groupData[subField.title] = formatValue(value, subField.type);
           });
-          output[title] = groupData;
+          output[key] = groupData;
         } else if (field.type === 'boolean') {
-          // Handle boolean with optional nested group
           output[key] = { status: !!data[key] };
 
           if (data[key] && field.nested) {
             const nestedKey = field.nested.title;
-            output[key][nestedKey] = transformData(
-              data,
-              field.nested.fields.map((nested: any) => ({
-                ...nested,
-                title: `${nestedKey}.${nested.title}`,
-              })),
-            );
+            const nestedData = data[nestedKey] || {};
+            output[key][nestedKey] = transformData(nestedData, field.nested.fields);
           }
         } else {
-          // Normal field
-          output[key] = data[key];
+          output[key] = formatValue(data[key], field.type);
         }
       });
 
       return output;
     };
 
-    const openPicker = name => {
-      setVisiblePickers(prev => ({ ...prev, [name]: true }));
+    const openPicker = (name: string) => {
+      setVisiblePickers((prev: any) => ({ ...prev, [name]: true }));
     };
 
-    const closePicker = name => {
-      setVisiblePickers(prev => ({ ...prev, [name]: false }));
+    const closePicker = (name: string) => {
+      setVisiblePickers((prev: any) => ({ ...prev, [name]: false }));
     };
 
     const renderField = (field: any, parent = '') => {
@@ -369,7 +366,7 @@ const DynamicFormNew = forwardRef(
                 <TouchableOpacity
                   activeOpacity={0.85}
                   onPress={() =>
-                    setVisiblePickers(prev => ({ ...prev, [name]: true }))
+                    setVisiblePickers((prev: any) => ({ ...prev, [name]: true }))
                   }
                 >
                   <TextInput
@@ -392,7 +389,7 @@ const DynamicFormNew = forwardRef(
                   mode="single"
                   visible={!!visiblePickers[name]}
                   onDismiss={() =>
-                    setVisiblePickers(p => ({ ...p, [name]: false }))
+                    setVisiblePickers((p: any) => ({ ...p, [name]: false }))
                   }
                   date={value || undefined}
                   onConfirm={({ date }) => {
@@ -407,18 +404,6 @@ const DynamicFormNew = forwardRef(
                   validRange={{ endDate: today }}
                   saveLabel="Save" // 🖊️ custom text
                   saveLabelDisabled={false}
-                  theme={{
-                    colors: {
-                      primary: theme.colors.primary,
-                      onPrimary: theme.colors.onPrimary,
-                    },
-                    fonts: {
-                      labelLarge: {
-                        fontFamily: Font_Medium,
-                        fontSize: 16,
-                      },
-                    },
-                  }}
                 />
                 {errors[name] && (
                   <Text
@@ -447,7 +432,7 @@ const DynamicFormNew = forwardRef(
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() =>
-                setVisiblePickers(prev => ({ ...prev, [name]: true }))
+                setVisiblePickers((prev: any) => ({ ...prev, [name]: true }))
               }
             >
               <TextInput
@@ -468,15 +453,14 @@ const DynamicFormNew = forwardRef(
             <TimePickerModal
               visible={!!visiblePickers[name]}
               onDismiss={() =>
-                setVisiblePickers(p => ({ ...p, [name]: false }))
+                setVisiblePickers((p: any) => ({ ...p, [name]: false }))
               }
               onConfirm={({ hours, minutes }) => {
                 const isPM = hours >= 12;
                 const formatted = `${(hours % 12 || 12)
                   .toString()
-                  .padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${
-                  isPM ? 'PM' : 'AM'
-                }`;
+                  .padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${isPM ? 'PM' : 'AM'
+                  }`;
                 setValue(name, `${hours}:${minutes}`);
                 closePicker(name);
               }}
@@ -534,7 +518,7 @@ const DynamicFormNew = forwardRef(
                 )}
               />
             </View>
-            {watch(name) &&
+            {watch(name) && field.nested && field.nested.fields &&
               field.nested.fields.map((nestedField: any) =>
                 renderField(nestedField, field.nested.title),
               )}
@@ -598,8 +582,8 @@ const DynamicFormNew = forwardRef(
                 isEdit
                   ? 'Update'
                   : claim_form && claim_form?.length - 1 > form_index
-                  ? 'Next'
-                  : 'Submit'
+                    ? 'Next'
+                    : 'Submit'
               }
               onPress={handleSubmit(onSubmit)}
               style={{ marginBottom: metrics.doubleMargin * 3 }}

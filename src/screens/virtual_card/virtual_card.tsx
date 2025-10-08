@@ -321,7 +321,7 @@ const VirtualCard = ({ navigation }: any) => {
             </Text>
           </View>
 
-          <View style={{ alignSelf: 'center', justifyContent: 'center' }}>
+          {/* <View style={{ alignSelf: 'center', justifyContent: 'center' }}>
             <TouchableOpacity
               onPress={() => downloadECard(Platform.OS == 'ios')}
             >
@@ -338,7 +338,7 @@ const VirtualCard = ({ navigation }: any) => {
                 }}
               />
             </TouchableOpacity>
-          </View>
+          </View> */}
         </ScrollView>
       ) : (
         <NoDataFound
