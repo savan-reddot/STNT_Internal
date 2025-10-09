@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     width: '60%',
   },
   uid: { fontWeight: 'bold', color: '#000' },
-  name: { color: '#000', marginTop: metrics.baseMargin, width: '100%' },
+  name: { color: '#000', marginTop: metrics.baseMargin, width: '100%', textTransform: 'capitalize' },
   dob: { color: '#000', marginVertical: metrics.baseMargin },
   backContent: {
     position: 'absolute',
