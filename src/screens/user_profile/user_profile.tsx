@@ -224,35 +224,78 @@ const UserProfile = ({ navigation }: any) => {
   };
 
   const handleAddDocument = async () => {
-    const hasPermission = await requestAppPermission('document');
-    console.log('Storage Permission:', hasPermission);
-    if (!hasPermission) return;
-
     try {
+      const hasPermission = await requestAppPermission('document');
+      console.log('Document Permission:', hasPermission);
+
+      if (!hasPermission) {
+        Alert.alert(
+          'Permission Required',
+          'Please grant file access permission to upload documents.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       const files = await pick({
-        type: [types.pdf, types.images], // accepts PDFs and images
+        type: [types.images], // accepts PDFs and images
         allowMultiple: false, // or true for multiple selection
       });
+
+      if (!files || files.length === 0) {
+        console.log('No files selected');
+        return;
+      }
+
       const [file] = files; // destructure single file
 
+      if (!file || !file.uri) {
+        Alert.alert('Error', 'Failed to get file information. Please try again.');
+        return;
+      }
+
+      // Check file size (4.5 MB limit)
+      const maxSize = 4.5 * 1024 * 1024; // 4.5 MB in bytes
+      if (file.size && file.size > maxSize) {
+        Alert.alert(
+          'File Too Large',
+          'The selected file is larger than 4.5 MB. Please choose a smaller file.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       // Optionally copy to local app storage
-      const [local] = await keepLocalCopy({
-        files: [{ uri: file.uri, fileName: file.name || '' }],
-        destination: 'documentDirectory',
-      });
+      let localUri = file.uri;
+      try {
+        const [local] = await keepLocalCopy({
+          files: [{ uri: file.uri, fileName: file.name || '' }],
+          destination: 'documentDirectory',
+        });
+        // Check if the copy was successful and use the local URI
+        if (local && 'localUri' in local) {
+          localUri = local.localUri;
+        } else if (local && 'sourceUri' in local) {
+          localUri = local.sourceUri;
+        }
+      } catch (copyError) {
+        console.warn('Failed to copy file locally, using original URI:', copyError);
+        // Continue with original URI if local copy fails
+      }
 
       upload_picture({
-        uri: local?.uri ?? file.uri,
-        name: file.name,
-        type: file.type,
+        uri: localUri,
+        name: file.name || 'Document',
+        type: file.type || 'application/octet-stream',
         size: file.size,
         id: Date.now().toString(),
       });
 
       setIsSelectionVisible(false);
-      // now local.uri points to a local stored file
-    } catch (err) {
-      console.warn('Picker error', err);
+      console.log('Document added successfully:', file.name);
+
+    } catch (err: any) {
+      console.log('Document picker error:', err);
     }
   };
 

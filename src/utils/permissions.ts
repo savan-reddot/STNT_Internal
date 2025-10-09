@@ -11,8 +11,6 @@ export const requestAppPermission = async (
   type: 'camera' | 'gallery' | 'document',
 ) => {
   if (Platform.OS === 'android') {
-    // For Android, we only need camera permission
-    // Gallery access will use Android Photo Picker (no permission needed)
     if (type === 'camera') {
       const camera = await check(PERMISSIONS.ANDROID.CAMERA);
       if (camera === RESULTS.GRANTED) {
@@ -20,16 +18,36 @@ export const requestAppPermission = async (
       }
       const reqCamera = await request(PERMISSIONS.ANDROID.CAMERA);
       return reqCamera === RESULTS.GRANTED;
-    } else if (type === 'gallery' || type === 'document') {
+    } else if (type === 'gallery') {
       // No permission needed for Android Photo Picker
       return true;
+    } else if (type === 'document') {
+      // For document picker, we need to check READ_EXTERNAL_STORAGE permission
+      // for Android 12 and below, or no permission for Android 13+
+      const androidVersion = Platform.Version;
+      if (typeof androidVersion === 'number' && androidVersion >= 33) {
+        // Android 13+ doesn't need READ_EXTERNAL_STORAGE for document picker
+        return true;
+      } else {
+        // Android 12 and below need READ_EXTERNAL_STORAGE
+        const storage = await check(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
+        if (storage === RESULTS.GRANTED) {
+          return true;
+        }
+        const reqStorage = await request(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
+        return reqStorage === RESULTS.GRANTED;
+      }
     }
   } else {
     // iOS permissions
     let permission;
     if (type === 'camera') permission = PERMISSIONS.IOS.CAMERA;
     else if (type === 'gallery') permission = PERMISSIONS.IOS.PHOTO_LIBRARY;
-    else if (type === 'document') permission = PERMISSIONS.IOS.PHOTO_LIBRARY_ADD_ONLY;
+    else if (type === 'document') {
+      // For document picker on iOS, we don't need specific permissions
+      // The document picker handles its own access
+      return true;
+    }
     else return false;
 
     const result = await check(permission);

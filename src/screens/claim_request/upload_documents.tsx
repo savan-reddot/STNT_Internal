@@ -13,6 +13,7 @@ import {
   StyleSheet,
   Platform,
   Image,
+  Alert,
 } from 'react-native';
 import { pick, types, keepLocalCopy } from '@react-native-documents/picker';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -60,89 +61,191 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
   }, [details?.files]);
 
   const handleCameraCapture = async () => {
-    const hasPermission = await requestAppPermission('camera');
-    if (!hasPermission) return;
+    try {
+      const hasPermission = await requestAppPermission('camera');
+      if (!hasPermission) {
+        Alert.alert(
+          'Permission Required',
+          'Please grant camera permission to take pictures.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
 
-    const result = await launchCamera({ mediaType: 'photo' });
-    if (result.assets?.[0]) {
-      const image = result.assets[0];
-      setIsSelectionVisible(false);
-      setDocuments(prev => [
-        ...prev,
-        {
-          uri: image.uri,
-          name: image.fileName || 'Captured Image',
-          type: image.type,
-          id: Date.now().toString(),
-        },
-      ]);
+      const result = await launchCamera({
+        mediaType: 'photo',
+        quality: 0.8,
+        maxWidth: 2048,
+        maxHeight: 2048,
+      });
+
+      if (result.didCancel) {
+        console.log('User canceled camera');
+        return;
+      }
+
+      if (result.errorMessage) {
+        console.error('Camera error:', result.errorMessage);
+        Alert.alert('Camera Error', result.errorMessage);
+        return;
+      }
+
+      if (result.assets?.[0]) {
+        const image = result.assets[0];
+        setIsSelectionVisible(false);
+        setDocuments(prev => [
+          ...prev,
+          {
+            uri: image.uri,
+            name: image.fileName || 'Captured Image',
+            type: image.type,
+            size: image.fileSize,
+            id: Date.now().toString(),
+          },
+        ]);
+        console.log('Image captured successfully:', image.fileName);
+      }
+    } catch (err) {
+      console.error('Camera capture error:', err);
+      Alert.alert('Error', 'Failed to capture image. Please try again.');
     }
   };
 
   const handleImagePicker = async () => {
-    const hasPermission = await requestAppPermission('gallery');
-    console.log(hasPermission);
-    if (!hasPermission) return;
+    try {
+      const hasPermission = await requestAppPermission('gallery');
+      console.log('Gallery Permission:', hasPermission);
+      if (!hasPermission) {
+        Alert.alert(
+          'Permission Required',
+          'Please grant gallery permission to select images.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
 
-    const result = await launchImageLibrary({
-      mediaType: 'photo',
-      // Use Android Photo Picker for Android 13+ (API 33+)
-      selectionLimit: 1,
-      includeBase64: false,
-      // This enables the new Android Photo Picker
-      presentationStyle: 'pageSheet',
-    });
-    if (result.assets?.[0]) {
-      const image = result.assets[0];
-      setIsSelectionVisible(false);
-      setDocuments(prev => [
-        ...prev,
-        {
-          uri: image.uri,
-          name: image.fileName || 'Selected Image',
-          type: image.type,
-          id: Date.now().toString(),
-        },
-      ]);
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        // Use Android Photo Picker for Android 13+ (API 33+)
+        selectionLimit: 1,
+        includeBase64: false,
+        quality: 0.8,
+        maxWidth: 2048,
+        maxHeight: 2048,
+        // This enables the new Android Photo Picker
+        presentationStyle: 'pageSheet',
+      });
+
+      if (result.didCancel) {
+        console.log('User canceled image picker');
+        return;
+      }
+
+      if (result.errorMessage) {
+        console.error('Image picker error:', result.errorMessage);
+        Alert.alert('Gallery Error', result.errorMessage);
+        return;
+      }
+
+      if (result.assets?.[0]) {
+        const image = result.assets[0];
+        setIsSelectionVisible(false);
+        setDocuments(prev => [
+          ...prev,
+          {
+            uri: image.uri,
+            name: image.fileName || 'Selected Image',
+            type: image.type,
+            size: image.fileSize,
+            id: Date.now().toString(),
+          },
+        ]);
+        console.log('Image selected successfully:', image.fileName);
+      }
+    } catch (err) {
+      console.error('Image picker error:', err);
+      Alert.alert('Error', 'Failed to select image. Please try again.');
     }
   };
 
   const handleAddDocument = async () => {
-    const hasPermission = await requestAppPermission('document');
-    console.log('Storage Permission:', hasPermission);
-    if (!hasPermission) return;
-
     try {
+      const hasPermission = await requestAppPermission('document');
+      console.log('Document Permission:', hasPermission);
+
+      if (!hasPermission) {
+        Alert.alert(
+          'Permission Required',
+          'Please grant file access permission to upload documents.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       const files = await pick({
         type: [types.pdf, types.images], // accepts PDFs and images
         allowMultiple: false, // or true for multiple selection
       });
+
+      if (!files || files.length === 0) {
+        console.log('No files selected');
+        return;
+      }
+
       const [file] = files; // destructure single file
 
+      if (!file || !file.uri) {
+        Alert.alert('Error', 'Failed to get file information. Please try again.');
+        return;
+      }
+
+      // Check file size (4.5 MB limit)
+      const maxSize = 4.5 * 1024 * 1024; // 4.5 MB in bytes
+      if (file.size && file.size > maxSize) {
+        Alert.alert(
+          'File Too Large',
+          'The selected file is larger than 4.5 MB. Please choose a smaller file.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       // Optionally copy to local app storage
-      const [local] = await keepLocalCopy({
-        files: [{ uri: file.uri, fileName: file.name || '' }],
-        destination: 'documentDirectory',
-      });
+      let localUri = file.uri;
+      try {
+        const [local] = await keepLocalCopy({
+          files: [{ uri: file.uri, fileName: file.name || '' }],
+          destination: 'documentDirectory',
+        });
+        // Check if the copy was successful and use the local URI
+        if (local && 'localUri' in local) {
+          localUri = local.localUri;
+        } else if (local && 'sourceUri' in local) {
+          localUri = local.sourceUri;
+        }
+      } catch (copyError) {
+        console.warn('Failed to copy file locally, using original URI:', copyError);
+        // Continue with original URI if local copy fails
+      }
 
       setIsSelectionVisible(false);
-      // now local.uri points to a local stored file
       setDocuments(prev => [
         ...prev,
         {
-          uri: local?.uri ?? file.uri,
-          name: file.name,
-          type: file.type,
+          uri: localUri,
+          name: file.name || 'Document',
+          type: file.type || 'application/octet-stream',
           size: file.size,
           id: Date.now().toString(),
         },
       ]);
-    } catch (err) {
-      console.warn('Picker error', err);
+      console.log('Document added successfully:', file.name);
+    } catch (err: any) {
+      console.log('Document picker error:', err);
     }
   };
 
-  const handleRemove = id => {
+  const handleRemove = (id: string) => {
     setDocuments(prev => prev.filter(doc => doc.id !== id));
   };
 
