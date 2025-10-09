@@ -1,43 +1,76 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { API_URL } from '@env';
+import { showErrorToast } from '../utils/toastUtils';
+import { logout } from './reducer';
+import { clearAuthData, isValidToken, handleTokenExpiration } from '../utils/authUtils';
 
 export const apiClient = createApi({
   reducerPath: 'apiClient',
   baseQuery: fetchBaseQuery({
     baseUrl: API_URL,
     prepareHeaders: async (headers, { endpoint, arg }) => {
-      let token;
-      let requestUrl = '';
+      try {
+        let token;
+        let requestUrl = '';
 
-      if (arg && typeof arg === 'object' && 'url' in arg) {
-        requestUrl = arg.url;
-      }
-
-      if (typeof arg === 'string') {
-        requestUrl = arg;
-      }
-      // const requestUrl = arg?.url ?? endpoint ?? '';
-      console.log('requestUrl : ', requestUrl);
-      console.log('arg : ', arg);
-      if (requestUrl?.includes('mobile')) {
-        token = await AsyncStorage.getItem('@token');
-        console.log('token mobile : ', token);
-      } else {
-        if (!requestUrl.includes('verification')) {
-          token = await AsyncStorage.getItem('webtoken');
-          console.log('token web : ', token);
+        // Safely extract request URL
+        if (arg && typeof arg === 'object' && 'url' in arg) {
+          requestUrl = arg.url || '';
+        } else if (typeof arg === 'string') {
+          requestUrl = arg;
         }
-      }
 
-      // const token = await AsyncStorage.getItem('@token');
-      // const web_token = await AsyncStorage.getItem('@web_token');
+        // Determine which token to use based on endpoint
+        try {
+          if (requestUrl?.includes('mobile')) {
+            token = await AsyncStorage.getItem('@token');
+          } else {
+            if (!requestUrl.includes('verification')) {
+              token = await AsyncStorage.getItem('webtoken');
+            }
+          }
+        } catch (storageError) {
+          console.error('Error reading token from storage:', storageError);
+          token = null;
+        }
 
-      if (token && token !== undefined) {
-        headers.set('Authorization', `Bearer ${token}`);
-        headers.set('Accept', `*/*`);
+        // Add token to headers if available and valid
+        try {
+          if (isValidToken(token)) {
+            headers.set('Authorization', `Bearer ${token}`);
+            headers.set('Accept', `*/*`);
+          }
+        } catch (headerError) {
+          console.error('Error setting headers:', headerError);
+        }
+
+        return headers;
+      } catch (error) {
+        console.error('Error in prepareHeaders:', error);
+        return headers; // Return headers even if there's an error
       }
-      return headers;
+    },
+    // Add custom fetch function to handle errors
+    fetchFn: async (...args) => {
+      try {
+        const result = await fetch(...args);
+
+        // Handle token expiration
+        if (result.status === 401 || result.status === 403) {
+          try {
+            await handleTokenExpiration();
+          } catch (tokenError) {
+            console.error('Error handling token expiration:', tokenError);
+          }
+        }
+
+        return result;
+      } catch (error) {
+        console.error('API request failed:', error);
+        // Re-throw the error so RTK Query can handle it properly
+        throw error;
+      }
     },
   }),
   refetchOnFocus: false,

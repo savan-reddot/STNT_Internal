@@ -289,7 +289,7 @@ const Register = ({ navigation }: any) => {
                     style={[
                       fontStyle(theme).headingSmall,
                       {
-                        color: theme.colors.accent,
+                        color: theme.colors.primary,
                         textDecorationLine: 'underline',
                         marginLeft: metrics.baseMargin,
                       },
@@ -386,7 +386,7 @@ const styles = (theme: MD3Theme) =>
       marginTop: metrics.baseMargin,
     },
     keyboard_container: {
-      flex: 1,
+      flexGrow: 1,
       backgroundColor: theme.colors.background,
     },
   });

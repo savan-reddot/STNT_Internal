@@ -31,10 +31,16 @@ export const auth = createSlice({
     setWebToken: (state, action) => {
       state.web_token = action.payload;
     },
+    logout: (state) => {
+      state.user = null;
+      state.user_details = null;
+      state.token = null;
+      state.web_token = null;
+    },
   },
 });
 
-export const { setUser, setToken, setWebToken, setUserDetails } = auth.actions;
+export const { setUser, setToken, setWebToken, setUserDetails, logout } = auth.actions;
 export default auth.reducer;
 
 export const getUser = (state: RootState) => state.auth.user;

@@ -32,6 +32,7 @@ import {
   useUpload_profile_pictureMutation,
 } from '../../redux/services';
 import { showErrorToast } from '../../utils/toastUtils';
+import { clearAuthData } from '../../utils/authUtils';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import ScreenLoader from '../../components/loader';
 import { useFocusEffect } from '@react-navigation/native';
@@ -339,7 +340,7 @@ const UserProfile = ({ navigation }: any) => {
   };
 
   const doLogout = async () => {
-    await AsyncStorage.clear();
+    await clearAuthData();
     navigation.navigate(Screens.Splash);
   };
 

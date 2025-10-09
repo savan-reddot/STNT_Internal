@@ -5,7 +5,7 @@ import { useTheme } from 'react-native-paper';
 import { metrics } from '../utils/metrics';
 import { useNavigation } from '@react-navigation/native';
 import { Screens } from '../common/screens';
-import { getUser, setToken, setUser, setUserDetails } from '../redux/reducer';
+import { getUser, setToken, setUser, setUserDetails, setWebToken } from '../redux/reducer';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -22,15 +22,57 @@ const Splash = ({ navigation }: any) => {
       useNativeDriver: true,
     }).start(async () => {
       // After animation, navigate to Login or Home
-      const user = await AsyncStorage.getItem('@user');
-      const user_details = await AsyncStorage.getItem('userdetails');
-      const token = await AsyncStorage.getItem('@token');
-      if (token && user) {
-        dispatch(setUser(JSON.parse(user)));
-        dispatch(setUserDetails(JSON.parse(user_details)));
-        dispatch(setToken(token));
-        navigation.replace(Screens.BottomTab);
-      } else {
+      try {
+        const user = await AsyncStorage.getItem('@user');
+        const user_details = await AsyncStorage.getItem('userdetails');
+        const token = await AsyncStorage.getItem('@token');
+        const webToken = await AsyncStorage.getItem('webtoken');
+
+        if (token && user) {
+          try {
+            // Parse user data safely
+            const parsedUser = JSON.parse(user);
+            dispatch(setUser(parsedUser));
+            dispatch(setToken(token));
+
+            // Set user details if available
+            if (user_details) {
+              try {
+                const parsedUserDetails = JSON.parse(user_details);
+                dispatch(setUserDetails(parsedUserDetails));
+              } catch (parseError) {
+                console.warn('Failed to parse user details:', parseError);
+                // Continue without user details
+              }
+            }
+
+            // Set web token if available
+            if (webToken) {
+              dispatch(setWebToken(webToken));
+            }
+
+            navigation.replace(Screens.BottomTab);
+          } catch (parseError) {
+            console.error('Splash - Error parsing user data:', parseError);
+            // Clear corrupted data and go to onboard
+            try {
+              await AsyncStorage.multiRemove(['@token', 'webtoken', '@user', 'userdetails']);
+            } catch (clearError) {
+              console.error('Splash - Error clearing corrupted data:', clearError);
+            }
+            navigation.replace(Screens.Onboard);
+          }
+        } else {
+          navigation.replace(Screens.Onboard);
+        }
+      } catch (error) {
+        console.error('Splash - Error during token restoration:', error);
+        // Clear potentially corrupted data and go to onboard
+        try {
+          await AsyncStorage.multiRemove(['@token', 'webtoken', '@user', 'userdetails']);
+        } catch (clearError) {
+          console.error('Splash - Error clearing corrupted data:', clearError);
+        }
         navigation.replace(Screens.Onboard);
       }
     });

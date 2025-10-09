@@ -18,6 +18,7 @@ import { useReset_passwordMutation } from '../../redux/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUser } from '../../redux/reducer';
 import { showErrorToast } from '../../utils/toastUtils';
+import { clearAuthData } from '../../utils/authUtils';
 import { Screens } from '../../common/screens';
 
 const ChangePassword = ({ navigation }: any) => {
@@ -30,7 +31,7 @@ const ChangePassword = ({ navigation }: any) => {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const doLogout = async () => {
-    await AsyncStorage.clear();
+    await clearAuthData();
     navigation.navigate(Screens.Splash);
   };
 

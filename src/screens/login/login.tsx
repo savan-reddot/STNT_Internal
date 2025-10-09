@@ -48,9 +48,7 @@ const Login = ({ navigation }: any) => {
 
   const onLogin = async (data: any) => {
     try {
-      console.log('User : ', JSON.stringify(data));
       const resp = await loginUser(data);
-      console.log('loginUser Response : ', JSON.stringify(resp));
 
       if (resp?.error) {
         const errorData = 'data' in resp.error ? resp.error.data : null;
@@ -63,17 +61,21 @@ const Login = ({ navigation }: any) => {
 
       if (resp?.data?.status) {
         const { user, token, latestUid, availableUids } = resp?.data?.data;
-        console.log('User : ', JSON.stringify(user));
-        console.log('Token : ', JSON.stringify(token));
 
         // Store basic user data first
-        await AsyncStorage.setItem('@token', token);
-        await AsyncStorage.setItem(
-          '@user',
-          JSON.stringify({ ...user, latestUid, availableUids }),
-        );
-        dispatch(setToken(token));
-        dispatch(setUser({ ...user, latestUid, availableUids }));
+        try {
+          await AsyncStorage.setItem('@token', token);
+          await AsyncStorage.setItem(
+            '@user',
+            JSON.stringify({ ...user, latestUid, availableUids }),
+          );
+          dispatch(setToken(token));
+          dispatch(setUser({ ...user, latestUid, availableUids }));
+        } catch (storageError) {
+          console.error('Error storing login data:', storageError);
+          showErrorToast('Error saving login data. Please try again.', 'Error !!');
+          return;
+        }
 
         // Navigate to BottomTab immediately after basic login
         navigation.replace(Screens.BottomTab);
@@ -81,43 +83,29 @@ const Login = ({ navigation }: any) => {
         // Continue with additional verification in background
         try {
           const passportResp = await passportById({ uidNo: latestUid });
-          console.log(
-            'passportById Response : ',
-            JSON.stringify(passportResp?.data),
-          );
 
           if (passportResp?.data?.status) {
             const { data } = passportResp?.data;
             if (data && data?.passportNo) {
-              console.log('Passport No : ', data?.passportNo);
               const verificationResp = await verificationUser({
                 name: user?.firstName + ' ' + user?.lastName,
                 passportNo: data?.passportNo,
                 uidNo: latestUid,
               });
-              console.log(
-                'Verification Response : ',
-                JSON.stringify(verificationResp?.data),
-              );
 
               if (verificationResp?.data?.success) {
                 const { user: verificationUserData, token: webToken } = verificationResp?.data;
-                console.log(
-                  'Verification user : ',
-                  JSON.stringify(verificationResp?.data?.user),
-                );
-                console.log(
-                  'Verification token : ',
-                  JSON.stringify(verificationResp?.data?.token),
-                );
 
                 // Store additional verification data
-                await AsyncStorage.setItem('webtoken', webToken);
-                await AsyncStorage.setItem('userdetails', JSON.stringify(verificationUserData));
-                dispatch(setUserDetails(verificationUserData));
-                dispatch(setWebToken(webToken));
+                try {
+                  await AsyncStorage.setItem('webtoken', webToken);
+                  await AsyncStorage.setItem('userdetails', JSON.stringify(verificationUserData));
+                  dispatch(setUserDetails(verificationUserData));
+                  dispatch(setWebToken(webToken));
+                } catch (verificationStorageError) {
+                  console.error('Error storing verification data:', verificationStorageError);
+                }
               } else {
-                console.log('Verification Error --------> ', verificationResp);
                 showErrorToast(verificationResp?.data?.message || 'Verification failed', 'Warning');
               }
             } else {
@@ -242,7 +230,7 @@ const Login = ({ navigation }: any) => {
                     style={[
                       fontStyle(theme).headingSmall,
                       {
-                        color: theme.colors.accent,
+                        color: theme.colors.primary,
                         textDecorationLine: 'underline',
                       },
                     ]}
@@ -273,7 +261,7 @@ const Login = ({ navigation }: any) => {
                     style={[
                       fontStyle(theme).headingSmall,
                       {
-                        color: theme.colors.accent,
+                        color: theme.colors.primary,
                         textDecorationLine: 'underline',
                         marginLeft: metrics.baseMargin,
                       },
