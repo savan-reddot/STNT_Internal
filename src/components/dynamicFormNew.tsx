@@ -25,6 +25,7 @@ import moment from 'moment';
 import { format } from 'date-fns';
 import UButton from './custombutton';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const mapType = (val: any) => {
   if (val === 'string') return 'text';
@@ -32,6 +33,7 @@ const mapType = (val: any) => {
   if (val === 'boolean') return 'boolean';
   if (val === 'YYYY-MM-DD') return 'date';
   if (val === 'HH/MM (AM/PM)') return 'time';
+  if (Array.isArray(val)) return 'array';
   return 'text';
 };
 
@@ -74,6 +76,14 @@ const generateFormSchema = (obj: any): any[] => {
           fields: generateFormSchema(value),
         });
       }
+    } else if (Array.isArray(value)) {
+      // Handle array fields - assume first element defines the structure
+      const arrayItemSchema = value.length > 0 ? generateFormSchema(value[0]) : [];
+      schema.push({
+        title: key,
+        type: 'array',
+        itemSchema: arrayItemSchema,
+      });
     } else {
       schema.push({
         title: key,
@@ -115,6 +125,8 @@ const generateDefaultValues = (schema: any) => {
       defaults[field.title] = generateDefaultValues(field.fields);
     } else if (field.type === 'boolean') {
       defaults[field.title] = false;
+    } else if (field.type === 'array') {
+      defaults[field.title] = [generateDefaultValues(field.itemSchema)]; // Start with one default item
     } else {
       defaults[field.title] = ''; // empty string for text inputs
     }
@@ -144,10 +156,12 @@ const DynamicFormNew = forwardRef(
     }: any,
     ref,
   ) => {
+    console.log('structure -----> ', structure);
     const formSchema = useMemo(
       () => generateFormSchema(structure),
       [structure],
     );
+    console.log('formSchema -----> ', formSchema);
     const theme = useTheme();
     const {
       control,
@@ -207,6 +221,10 @@ const DynamicFormNew = forwardRef(
 
         if (field.type === 'group') {
           result[key] = mapEditValuesToForm(field.fields, val || {});
+        } else if (field.type === 'array') {
+          // Handle array data for edit mode
+          const arrayData = val || [];
+          result[key] = arrayData.map((item: any) => mapEditValuesToForm(field.itemSchema, item));
         } else if (field.type === 'boolean') {
           // boolean with optional nested group
           result[key] = val?.status ?? false;
@@ -241,11 +259,18 @@ const DynamicFormNew = forwardRef(
     const transformData = (data: any, schema: any[] = formSchema): any => {
       const output: any = {};
 
-      const formatValue = (value: any, type: string) => {
+      const formatValue = (value: any, type: string, fieldTitle?: string) => {
         if (type === 'date' && value) {
           return moment(value).format('DD-MM-YYYY');
         } else if (type === 'time' && value) {
           return moment(value, ['hh:mm A', 'HH:mm']).format('HH:mm');
+        } else if (type === 'number' && value) {
+          // Handle currency formatting for purchase price
+          if (fieldTitle?.toLowerCase().includes('price')) {
+            const numericValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]/g, '')) : value;
+            return `$${numericValue}`;
+          }
+          return typeof value === 'string' ? value : String(value);
         }
         return value;
       };
@@ -257,9 +282,12 @@ const DynamicFormNew = forwardRef(
           const groupData: any = {};
           field.fields.forEach((subField: any) => {
             const value = data?.[key]?.[subField.title];
-            groupData[subField.title] = formatValue(value, subField.type);
+            groupData[subField.title] = formatValue(value, subField.type, subField.title);
           });
           output[key] = groupData;
+        } else if (field.type === 'array') {
+          const arrayData = data[key] || [];
+          output[key] = arrayData.map((item: any) => transformData(item, field.itemSchema));
         } else if (field.type === 'boolean') {
           output[key] = { status: !!data[key] };
 
@@ -269,7 +297,7 @@ const DynamicFormNew = forwardRef(
             output[key][nestedKey] = transformData(nestedData, field.nested.fields);
           }
         } else {
-          output[key] = formatValue(data[key], field.type);
+          output[key] = formatValue(data[key], field.type, field.title);
         }
       });
 
@@ -282,6 +310,62 @@ const DynamicFormNew = forwardRef(
 
     const closePicker = (name: string) => {
       setVisiblePickers((prev: any) => ({ ...prev, [name]: false }));
+    };
+
+    const renderListField = (field: any, parent = '') => {
+      const name = parent ? `${parent}.${field.title}` : field.title;
+      const value = watch(name) || [];
+
+      const addItem = () => {
+        const newItem = generateDefaultValues(field.itemSchema);
+        setValue(name, [...value, newItem]);
+      };
+
+      const removeItem = (index: number) => {
+        // Don't allow removing the first item (index 0)
+        if (index === 0) return;
+        const newValue = value.filter((_: any, i: number) => i !== index);
+        setValue(name, newValue);
+      };
+
+      return (
+        <View key={name} style={styles(theme).parent_view}>
+          <View style={styles(theme).listHeader}>
+            <Text style={styles(theme).listTitle}>
+              {field.title}
+            </Text>
+            <TouchableOpacity
+              onPress={addItem}
+              style={styles(theme).addButton}
+            >
+              <Icon name="add" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          {value.map((item: any, index: number) => (
+            <View key={index} style={styles(theme).itemCard}>
+              <View style={styles(theme).itemHeader}>
+                <Text style={styles(theme).itemTitle}>
+                  Item {index + 1}
+                </Text>
+                {index > 0 && (
+                  <TouchableOpacity
+                    onPress={() => removeItem(index)}
+                    style={styles(theme).deleteButton}
+                  >
+                    <Icon name="delete" size={16} color="white" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {field.itemSchema.map((subField: any) => {
+                const subName = `${name}.${index}.${subField.title}`;
+                return renderField(subField, `${name}.${index}`);
+              })}
+            </View>
+          ))}
+        </View>
+      );
     };
 
     const renderField = (field: any, parent = '') => {
@@ -313,14 +397,8 @@ const DynamicFormNew = forwardRef(
                   error={!!errors[name]}
                 />
                 {errors[name] && (
-                  <Text
-                    style={{
-                      color: 'red',
-                      fontSize: 12,
-                      marginTop: metrics.smallMargin,
-                    }}
-                  >
-                    This field is required
+                  <Text style={styles(theme).errorText}>
+                    {String(errors[name]?.message || 'This field is required')}
                   </Text>
                 )}
               </View>
@@ -406,14 +484,8 @@ const DynamicFormNew = forwardRef(
                   saveLabelDisabled={false}
                 />
                 {errors[name] && (
-                  <Text
-                    style={{
-                      color: 'red',
-                      fontSize: 12,
-                      marginTop: metrics.smallMargin,
-                    }}
-                  >
-                    This field is required
+                  <Text style={styles(theme).errorText}>
+                    {String(errors[name]?.message || 'This field is required')}
                   </Text>
                 )}
               </View>
@@ -555,6 +627,10 @@ const DynamicFormNew = forwardRef(
         );
       }
 
+      if (field.type === 'array') {
+        return renderListField(field, parent);
+      }
+
       return null;
     };
 
@@ -599,9 +675,59 @@ export default DynamicFormNew;
 
 const styles = (theme: MD3Theme) =>
   StyleSheet.create({
-    parent_view: { margin: metrics.baseMargin, marginHorizontal: 0 },
+    parent_view: {
+      margin: metrics.baseMargin,
+      marginHorizontal: 0
+    },
     keyboard_container: {
-      // fle: 1,
       backgroundColor: theme.colors.background,
+    },
+    listHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: metrics.baseMargin,
+    },
+    listTitle: {
+      ...fontStyle(theme).headingMedium,
+      fontSize: metrics.moderateScale(17),
+    },
+    addButton: {
+      backgroundColor: theme.colors.primary,
+      borderRadius: 20,
+      width: 40,
+      height: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    itemCard: {
+      marginBottom: metrics.baseMargin,
+      padding: metrics.baseMargin,
+      backgroundColor: '#f5f5f5',
+      borderRadius: 8,
+    },
+    itemHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: metrics.smallMargin,
+    },
+    itemTitle: {
+      ...fontStyle(theme).headingSmall,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    deleteButton: {
+      backgroundColor: '#ff4444',
+      borderRadius: 15,
+      width: 30,
+      height: 30,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    errorText: {
+      color: 'red',
+      fontSize: 12,
+      marginTop: metrics.smallMargin,
     },
   });
