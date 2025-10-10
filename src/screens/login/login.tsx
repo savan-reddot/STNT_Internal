@@ -252,7 +252,7 @@ const Login = ({ navigation }: any) => {
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={[fontStyle(theme).headingSmall]}>
-                  Dont't have an account?
+                  Don’t have an account?
                 </Text>
                 <Pressable
                   onPress={() => navigation.navigate(Screens.Register)}
