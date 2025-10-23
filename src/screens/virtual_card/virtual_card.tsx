@@ -125,7 +125,7 @@ const VirtualCard = ({ navigation }: any) => {
   return (
     <AppLayout title={'E-Card'}>
       <ScreenLoader visible={isLoading} />
-      {!metaData?.virtualCard?.isExpired && !isLoading ? (
+      {metaData?.virtualCard?.isExpired === false && !isLoading ? (
         <ScrollView style={{ padding: 15 }} contentContainerStyle={{ paddingBottom: metrics.doubleMargin }}>
           <TouchableOpacity activeOpacity={0.8} onPress={openZoom} style={{
             width: '100%',

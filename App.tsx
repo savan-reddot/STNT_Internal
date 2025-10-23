@@ -10,6 +10,7 @@ import Toast from 'react-native-toast-message';
 import { toastConfig } from './src/utils/toastConfig';
 import { requestAppPermission } from './src/utils/permissions';
 import { PERMISSIONS, request } from 'react-native-permissions';
+import { navigationRef } from './src/utils/navigationRef';
 
 const App = () => {
   const scheme = useColorScheme();
@@ -35,7 +36,7 @@ const App = () => {
   return (
     <PaperProvider theme={scheme === 'dark' ? darkTheme : lightTheme}>
       <Provider store={store}>
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           <MainStack />
           <Toast config={toastConfig} />
         </NavigationContainer>

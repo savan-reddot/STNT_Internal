@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showErrorToast } from './toastUtils';
+import { navigateToSplash } from './navigationRef';
 
 /**
  * Utility functions for authentication management
@@ -88,6 +89,7 @@ export const handleTokenExpiration = async (): Promise<void> => {
         // Safely show error toast
         try {
             showErrorToast('Session expired. Please login again.', 'Authentication Error');
+            navigateToSplash();
         } catch (toastError) {
             console.error('Error showing toast:', toastError);
         }

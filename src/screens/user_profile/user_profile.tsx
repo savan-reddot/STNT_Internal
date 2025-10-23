@@ -107,11 +107,9 @@ const UserProfile = ({ navigation }: any) => {
       if (user?.passportNo == null || user?.passportNo == '') {
         getProfile();
       } else {
+        // console.log('user ----> ', user?.latestUid);
         const passportResp = await passportById({ uidNo: user?.latestUid });
-        console.log(
-          'passportById Response : ',
-          JSON.stringify(passportResp?.data),
-        );
+        console.log('passportById Response : ', passportResp);
         if (passportResp?.data?.status) {
           const { data } = passportResp?.data;
           if (data && data?.passportNo) {
@@ -122,6 +120,9 @@ const UserProfile = ({ navigation }: any) => {
               availableUids: resp?.data?.data?.availableUids,
             });
           }
+        } else if (passportResp?.error?.status === 400) {
+          showErrorToast(passportResp?.error?.data?.message);
+          return
         } else {
           dispatch(setUser(resp?.data?.data?.user));
           navigation.goBack();

@@ -55,9 +55,9 @@ export const apiClient = createApi({
     fetchFn: async (...args) => {
       try {
         const result = await fetch(...args);
-
+        console.log('result ----> ', result.status, result);
         // Handle token expiration
-        if (result.status === 401 || result.status === 403) {
+        if (result.status === 401) {
           try {
             await handleTokenExpiration();
           } catch (tokenError) {
