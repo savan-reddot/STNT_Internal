@@ -31,7 +31,7 @@ import {
   useUpdate_profileMutation,
   useUpload_profile_pictureMutation,
 } from '../../redux/services';
-import { showErrorToast } from '../../utils/toastUtils';
+import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 import { clearAuthData } from '../../utils/authUtils';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import ScreenLoader from '../../components/loader';
@@ -104,6 +104,7 @@ const UserProfile = ({ navigation }: any) => {
     const resp = await update_profile(request);
     console.log('resp update profile : ', resp);
     if (resp && resp?.data && resp?.data?.status) {
+      showSuccessToast(resp?.data?.message);
       if (user?.passportNo == null || user?.passportNo == '') {
         getProfile();
       } else {
@@ -121,8 +122,10 @@ const UserProfile = ({ navigation }: any) => {
             });
           }
         } else if (passportResp?.error?.status === 400) {
-          showErrorToast(passportResp?.error?.data?.message);
-          return
+          setTimeout(() => {
+            showErrorToast("This passport number not found in our system");
+            navigation.goBack();
+          }, 2000);
         } else {
           dispatch(setUser(resp?.data?.data?.user));
           navigation.goBack();

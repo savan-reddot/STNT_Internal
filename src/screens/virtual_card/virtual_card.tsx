@@ -43,25 +43,22 @@ const VirtualCard = ({ navigation }: any) => {
   const [google_wallet_pass, { isGoogleLoading }] =
     useGoogle_wallet_passMutation();
 
-  useEffect(() => {
-    const init = async () => {
-      const resp = await user_meta(0);
-      console.log('Meta Data : ', resp?.data);
-      if (resp && resp?.data) {
-        const { status, data } = resp?.data;
-        if (status) {
-          setMetaData(data);
-        }
+  const init = async () => {
+    const resp = await user_meta(0);
+    console.log('Meta Data : ', resp?.data);
+    if (resp && resp?.data) {
+      const { status, data } = resp?.data;
+      if (status) {
+        setMetaData(data);
       }
-    };
+    }
+  };
 
-    init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Prevent screenshots when this screen is focused
+  // Prevent screenshots when this screen is focused and call init function
   useFocusEffect(
     useCallback(() => {
+      init();
+
       // Register screen guard with color overlay when screen is focused
       ScreenGuard.register({
         backgroundColor: '#000000', // Black background
