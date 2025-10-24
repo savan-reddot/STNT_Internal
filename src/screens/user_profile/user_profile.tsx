@@ -120,10 +120,12 @@ const UserProfile = ({ navigation }: any) => {
               latestUid: user?.latestUid,
               availableUids: resp?.data?.data?.availableUids,
             });
+          } else {
+            showErrorToast('Passport not found in our system!!');
           }
         } else if (passportResp?.error?.status === 400) {
           setTimeout(() => {
-            showErrorToast("This passport number not found in our system");
+            showErrorToast("Passport not found in our system!!");
             navigation.goBack();
           }, 2000);
         } else {
