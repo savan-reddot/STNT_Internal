@@ -354,7 +354,7 @@ const UserProfile = ({ navigation }: any) => {
   return (
     <KeyboardAwareScrollView
       contentContainerStyle={styles(theme).keyboard_container}
-      enableOnAndroid
+      enableOnAndroid={true}
       keyboardShouldPersistTaps="handled"
       extraScrollHeight={20}
     >
@@ -651,7 +651,7 @@ const styles = (theme: MD3Theme) =>
       borderColor: theme.colors.outline,
     },
     keyboard_container: {
-      flex: 1,
+      flexGrow: 1,
       backgroundColor: theme.colors.background,
     },
     modal: {
