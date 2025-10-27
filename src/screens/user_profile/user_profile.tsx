@@ -172,7 +172,11 @@ const UserProfile = ({ navigation }: any) => {
     } else {
       await AsyncStorage.setItem('webtoken', "");
       dispatch(setWebToken(null));
-      navigation.goBack();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: Screens.BottomTab }],
+      });
+      // navigation.goBack();
     }
   };
 
