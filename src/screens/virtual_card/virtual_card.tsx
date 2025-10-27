@@ -1,11 +1,9 @@
 import {
   Animated,
   Easing,
-  Image,
   ImageBackground,
   Linking,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,13 +12,11 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import ScreenGuard from 'react-native-screenguard';
 import AppLayout from '../../components/safeareawrapper';
-import { globalStyle } from '../../utils/globalStyles';
 import { useTheme } from 'react-native-paper';
 import { metrics } from '../../utils/metrics';
-
 import {
   useApple_wallet_passMutation,
   useGoogle_wallet_passMutation,
@@ -31,6 +27,7 @@ import fontStyle from '../../styles/fontStyle';
 import NoDataFound from '../../components/no_data_found';
 import ScreenLoader from '../../components/loader';
 import { showErrorToast } from '../../utils/toastUtils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const VirtualCard = ({ navigation }: any) => {
   const theme = useTheme();
@@ -44,12 +41,16 @@ const VirtualCard = ({ navigation }: any) => {
     useGoogle_wallet_passMutation();
 
   const init = async () => {
-    const resp = await user_meta(0);
-    console.log('Meta Data : ', resp?.data);
-    if (resp && resp?.data) {
-      const { status, data } = resp?.data;
-      if (status) {
-        setMetaData(data);
+    const webToken = await AsyncStorage.getItem('webtoken');
+
+    if (webToken) {
+      const resp = await user_meta(0);
+      console.log('Meta Data : ', resp?.data);
+      if (resp && resp?.data) {
+        const { status, data } = resp?.data;
+        if (status) {
+          setMetaData(data);
+        }
       }
     }
   };
@@ -338,12 +339,14 @@ const VirtualCard = ({ navigation }: any) => {
           </View> */}
         </ScrollView>
       ) : (
-        <NoDataFound
-          title={'No Virtual Card Found'}
-          description={
-            'Please verify your Passport Number and Email ID in Profile Settings, or contact ST&T Support.'
-          }
-        />
+        <View style={styles.noDataFoundContainer}>
+          <NoDataFound
+            title={'No Virtual Card Found'}
+            description={
+              'Please verify your Passport Number and Email ID in Profile Settings, or contact ST&T Support.'
+            }
+          />
+        </View>
       )}
       {visible && (
         <Modal visible={visible} transparent animationType="fade">
@@ -409,5 +412,12 @@ const styles = StyleSheet.create({
   qrLarge: {
     width: metrics.screenWidth * 0.8,
     height: metrics.screenWidth * 0.8,
+  },
+  noDataFoundContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: metrics.baseMargin,
+    backgroundColor: "white",
   },
 });

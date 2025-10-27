@@ -2,7 +2,6 @@ import {
   Dimensions,
   FlatList,
   Image,
-  KeyboardAvoidingView,
   Linking,
   StatusBar,
   StyleSheet,
@@ -11,25 +10,19 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import AppLayout from '../../components/safeareawrapper';
+import React, { useCallback, useState } from 'react';
 import { globalStyle } from '../../utils/globalStyles';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import { metrics } from '../../utils/metrics';
 import fontStyle from '../../styles/fontStyle';
 import { Font_Regular } from '../../theme/fonts';
-import AppHeader from '../../components/header';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Screens } from '../../common/screens';
 import { useAppSelector } from '../../redux/hooks';
 import { getUser } from '../../redux/reducer';
 import { useLazyGet_policyQuery } from '../../redux/services';
 import ScreenLoader from '../../components/loader';
-import { FAB } from 'react-native-paper';
-import { showErrorToast } from '../../utils/toastUtils';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 10;
@@ -53,7 +46,6 @@ const Home = ({ navigation }: any) => {
   };
   const [policy_data, setPolicy_Data] = useState<POLICY_DATA>(initPolicyData);
   const user = useAppSelector(getUser);
-  const insets = useSafeAreaInsets();
   const action_list = [
     {
       id: 1,
@@ -84,23 +76,29 @@ const Home = ({ navigation }: any) => {
     },
   ];
 
-  useEffect(() => {
-    const init = async () => {
-      const resp = await get_policy({ category: 'all' });
-      console.log('resp?.data?.data -----> ', resp?.data?.data);
-      if (resp?.data?.status && resp?.data?.data) {
-        const { policies, totalPolicies, activePolicies, expiredPolicies } =
-          resp?.data?.data;
-        if (policies?.length > 0) {
-          setPolicy_Data(resp?.data?.data);
-        }
-      } else {
-        setPolicy_Data(initPolicyData);
-      }
-    };
+  useFocusEffect(
+    useCallback(() => {
+      init();
+      return () => {
+        // console.log('Screen is unfocused ❌');
+      };
+    }, []),
+  );
 
-    init();
-  }, []);
+  const init = async () => {
+    const resp = await get_policy({ category: 'all' });
+    // console.log('resp?.data?.data -----> ', resp?.data?.data);
+    if (resp?.data?.status && resp?.data?.data) {
+      const { policies, totalPolicies, activePolicies, expiredPolicies } =
+        resp?.data?.data;
+      if (policies?.length > 0) {
+        setPolicy_Data(resp?.data?.data);
+      }
+    } else {
+      setPolicy_Data(initPolicyData);
+    }
+  };
+
 
   const getGreeting = () => {
     const currentHour = new Date().getHours();

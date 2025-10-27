@@ -78,7 +78,10 @@ const Login = ({ navigation }: any) => {
         }
 
         // Navigate to BottomTab immediately after basic login
-        navigation.replace(Screens.BottomTab);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: Screens.BottomTab }],
+        });
 
         // Continue with additional verification in background
         try {

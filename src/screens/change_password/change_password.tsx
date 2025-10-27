@@ -29,9 +29,10 @@ const ChangePassword = ({ navigation }: any) => {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const dispatch = useAppDispatch();
 
   const doLogout = async () => {
-    await clearAuthData();
+    await clearAuthData(dispatch);
     navigation.navigate(Screens.Splash);
   };
 

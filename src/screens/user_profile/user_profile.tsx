@@ -1,16 +1,14 @@
 import {
   Alert,
-  Image,
   ImageBackground,
   Keyboard,
   StyleSheet,
   Text,
-  Touchable,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';
 import { globalStyle } from '../../utils/globalStyles';
 import { metrics } from '../../utils/metrics';
@@ -59,7 +57,7 @@ const UserProfile = ({ navigation }: any) => {
   const [upload_profile_picture, { isLoading: isUploadProfileLoading }] =
     useUpload_profile_pictureMutation();
   const user_details = useAppSelector(getUserDetails);
-  const [user_info, setUserInfo] = useState();
+  const [user_info, setUserInfo] = useState<any>({});
   const [isSelectionVisible, setIsSelectionVisible] = useState<boolean>(false);
 
   useFocusEffect(
@@ -104,35 +102,9 @@ const UserProfile = ({ navigation }: any) => {
     const resp = await update_profile(request);
     console.log('resp update profile : ', resp);
     if (resp && resp?.data && resp?.data?.status) {
+      dispatch(setUser(resp?.data?.data?.user));
       showSuccessToast(resp?.data?.message);
-      if (user?.passportNo == null || user?.passportNo == '') {
-        getProfile();
-      } else {
-        // console.log('user ----> ', user?.latestUid);
-        const passportResp = await passportById({ uidNo: user?.latestUid });
-        console.log('passportById Response : ', passportResp);
-        if (passportResp?.data?.status) {
-          const { data } = passportResp?.data;
-          if (data && data?.passportNo) {
-            console.log('Passport No : ', data?.passportNo);
-            verifyUser({
-              user: resp?.data?.data?.user,
-              latestUid: user?.latestUid,
-              availableUids: resp?.data?.data?.availableUids,
-            });
-          } else {
-            showErrorToast('Passport not found in our system!!');
-          }
-        } else if (passportResp?.error?.status === 400) {
-          setTimeout(() => {
-            showErrorToast("Passport not found in our system!!");
-            navigation.goBack();
-          }, 2000);
-        } else {
-          dispatch(setUser(resp?.data?.data?.user));
-          navigation.goBack();
-        }
-      }
+      getProfile(true);
     } else {
       showErrorToast('Policy Not Found !!', 'Error !!');
       dispatch(setUser(resp?.data?.data?.user));
@@ -140,32 +112,44 @@ const UserProfile = ({ navigation }: any) => {
     }
   };
 
-  const getProfile = async () => {
+  const getProfile = async (isFromSaveButton: boolean = false) => {
     const resp = await get_profile(0);
     console.log('get profile resp : ', resp);
     if (resp && resp?.data && resp?.data?.status) {
       dispatch(
         setUser({
           ...resp?.data?.data?.user,
-          latestUid: user?.latestUid,
+          latestUid: resp?.data?.data?.latestUid,
           availableUids: resp?.data?.data?.availableUids,
         }),
       );
-      const passportResp = await passportById({ uidNo: user?.latestUid });
-      console.log(
-        'passportById Response : ',
-        JSON.stringify(passportResp?.data),
-      );
+      await AsyncStorage.setItem('@user', JSON.stringify(resp?.data?.data?.user));
+      const passportResp = await passportById({ uidNo: resp?.data?.data?.latestUid });
+      console.log('passportById Response get profile : ', passportResp);
       if (passportResp?.data?.status) {
         const { data } = passportResp?.data;
         if (data && data?.passportNo) {
           console.log('Passport No : ', data?.passportNo);
           verifyUser({
             user: resp?.data?.data?.user,
-            latestUid: user?.latestUid,
+            latestUid: resp?.data?.data?.latestUid,
+            availableUids: resp?.data?.data?.availableUids,
+          });
+        } else {
+          showErrorToast('Passport Not Found !!', 'Warning');
+          isFromSaveButton && verifyUser({
+            user: resp?.data?.data?.user,
+            latestUid: resp?.data?.data?.latestUid,
             availableUids: resp?.data?.data?.availableUids,
           });
         }
+      } else {
+        showErrorToast('Passport Not Found !!', 'Warning');
+        isFromSaveButton && verifyUser({
+          user: resp?.data?.data?.user,
+          latestUid: resp?.data?.data?.latestUid,
+          availableUids: resp?.data?.data?.availableUids,
+        });
       }
     }
   };
@@ -176,13 +160,18 @@ const UserProfile = ({ navigation }: any) => {
       passportNo: data?.user?.passportNo,
       uidNo: data?.latestUid,
     });
-
+    console.log('verificationResp : ', verificationResp);
     if (verificationResp?.data?.success) {
       const { token } = verificationResp?.data;
       await AsyncStorage.setItem('webtoken', token);
       dispatch(setWebToken(token));
-      navigation.replace(Screens.BottomTab);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: Screens.BottomTab }],
+      });
     } else {
+      await AsyncStorage.setItem('webtoken', "");
+      dispatch(setWebToken(null));
       navigation.goBack();
     }
   };
@@ -346,7 +335,7 @@ const UserProfile = ({ navigation }: any) => {
   };
 
   const doLogout = async () => {
-    await clearAuthData();
+    await clearAuthData(dispatch);
     navigation.navigate(Screens.Splash);
   };
 

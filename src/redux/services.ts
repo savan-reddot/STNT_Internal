@@ -1,9 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { API_URL } from '@env';
-import { showErrorToast } from '../utils/toastUtils';
-import { logout } from './reducer';
-import { clearAuthData, isValidToken, handleTokenExpiration } from '../utils/authUtils';
+import { isValidToken, handleTokenExpiration } from '../utils/authUtils';
 
 export const apiClient = createApi({
   reducerPath: 'apiClient',
@@ -20,13 +18,12 @@ export const apiClient = createApi({
         } else if (typeof arg === 'string') {
           requestUrl = arg;
         }
-
         // Determine which token to use based on endpoint
         try {
           if (requestUrl?.includes('mobile')) {
             token = await AsyncStorage.getItem('@token');
           } else {
-            if (!requestUrl.includes('verification')) {
+            if (!requestUrl?.includes('verification')) {
               token = await AsyncStorage.getItem('webtoken');
             }
           }
@@ -55,7 +52,7 @@ export const apiClient = createApi({
     fetchFn: async (...args) => {
       try {
         const result = await fetch(...args);
-        console.log('result ----> ', result.status, result);
+        // console.log('result ----> ', result.status, result);
         // Handle token expiration
         if (result.status === 401) {
           try {

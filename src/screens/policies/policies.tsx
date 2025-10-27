@@ -1,15 +1,13 @@
-/* eslint-disable react-native/no-inline-styles */
 import {
   ScrollView,
   StyleSheet,
   Text,
-  Touchable,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';
-import { useTheme } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import { getRandomPastelColor, globalStyle } from '../../utils/globalStyles';
 import { metrics } from '../../utils/metrics';
 import fontStyle from '../../styles/fontStyle';
@@ -17,37 +15,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLazyGet_policyQuery } from '../../redux/services';
 import ScreenLoader from '../../components/loader';
 import NoDataFound from '../../components/no_data_found';
-import { useFocusEffect } from '@react-navigation/native';
 import PolicyDetails from '../../components/policy_details';
-import { set } from 'date-fns';
 import moment from 'moment';
-
-const data = [
-  {
-    id: 1,
-    title: 'Umrah EMA Basic',
-    category: 'active',
-    type: 'S-STT-S1004-5921',
-    filled_on: '01/03/2024',
-    color: getRandomPastelColor(),
-  },
-  {
-    id: 2,
-    title: 'Umrah EMA Basic',
-    category: 'active',
-    type: 'S-STT-8680-6950',
-    filled_on: '03/03/2024',
-    color: getRandomPastelColor(),
-  },
-  {
-    id: 3,
-    title: 'Umrah EMA Basic',
-    category: 'expired',
-    type: 'S-STT-8990-6950',
-    filled_on: '03/03/2024',
-    color: getRandomPastelColor(),
-  },
-];
 
 const Policies = ({ route }: any) => {
   const theme = useTheme();
@@ -89,25 +58,13 @@ const Policies = ({ route }: any) => {
     }
   }, [selectedPolicy]);
 
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     getPolicies(selectedCat);̧
-
-  //     return () => {
-  //       console.log('Screen is unfocused ❌');
-  //       // Cleanup tasks go here
-  //       // e.g., stop timers, unsubscribe listeners
-  //     };
-  //   }, [selectedCat]),
-  // );
-
   useEffect(() => {
     getPolicies(selectedCat);
   }, [selectedCat]);
 
   const getPolicies = async (category: string) => {
     const resp = await get_policy({ category });
-    console.log('resp?.data?.data -----> ', resp?.data?.data);
+    // console.log('resp?.data?.data -----> ', resp?.data?.data);
     if (resp?.data?.status && resp?.data?.data) {
       const { policies } = resp?.data?.data;
       if (resp?.data?.status) {
@@ -153,11 +110,11 @@ const Policies = ({ route }: any) => {
                     ]}
                   >
                     {`${cat?.title} (${cat?.value == 'all'
-                      ? policiesData && policiesData?.totalPolicies
+                      ? policiesData && policiesData?.totalPolicies || 0
                       : cat?.value == 'active'
-                        ? policiesData && policiesData?.activePolicies
+                        ? policiesData && policiesData?.activePolicies || 0
                         : cat?.value == 'expired'
-                          ? policiesData && policiesData?.expiredPolicies
+                          ? policiesData && policiesData?.expiredPolicies || 0
                           : 0
                       })`}
                   </Text>

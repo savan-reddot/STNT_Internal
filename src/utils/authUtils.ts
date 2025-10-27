@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showErrorToast } from './toastUtils';
 import { navigateToSplash } from './navigationRef';
+import { logout } from '../redux/reducer';
 
 /**
  * Utility functions for authentication management
@@ -9,9 +10,11 @@ import { navigateToSplash } from './navigationRef';
 /**
  * Clear all authentication data from AsyncStorage
  */
-export const clearAuthData = async (): Promise<void> => {
+export const clearAuthData = async (dispatch: any): Promise<void> => {
     try {
-        await AsyncStorage.multiRemove(['@token', 'webtoken', '@user', 'userdetails']);
+        // await AsyncStorage.multiRemove(['@token', 'webtoken', '@user', 'userdetails']);
+        await AsyncStorage.clear();
+        dispatch(logout());
     } catch (error) {
         console.error('Error clearing auth data:', error);
     }
@@ -85,7 +88,7 @@ export const storeTokens = async (
  */
 export const handleTokenExpiration = async (): Promise<void> => {
     try {
-        await clearAuthData();
+        await AsyncStorage.clear();
         // Safely show error toast
         try {
             showErrorToast('Session expired. Please login again.', 'Authentication Error');

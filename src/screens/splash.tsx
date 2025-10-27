@@ -51,7 +51,10 @@ const Splash = ({ navigation }: any) => {
               dispatch(setWebToken(webToken));
             }
 
-            navigation.replace(Screens.BottomTab);
+            navigation.reset({
+              index: 0,
+              routes: [{ name: Screens.BottomTab }],
+            });
           } catch (parseError) {
             console.error('Splash - Error parsing user data:', parseError);
             // Clear corrupted data and go to onboard

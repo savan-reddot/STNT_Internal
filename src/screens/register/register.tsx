@@ -85,7 +85,10 @@ const Register = ({ navigation }: any) => {
         }
       } else {
         showErrorToast('Passport Not Found !!', 'Error !!');
-        navigation.replace(Screens.BottomTab);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: Screens.BottomTab }],
+        });
       }
     }
   };
@@ -105,7 +108,10 @@ const Register = ({ navigation }: any) => {
       dispatch(setUserDetails(user));
       dispatch(setWebToken(token));
 
-      navigation.replace(Screens.BottomTab);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: Screens.BottomTab }],
+      });
     }
   };
 
