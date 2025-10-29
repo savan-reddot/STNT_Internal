@@ -22,21 +22,8 @@ export const requestAppPermission = async (
       // No permission needed for Android Photo Picker
       return true;
     } else if (type === 'document') {
-      // For document picker, we need to check READ_EXTERNAL_STORAGE permission
-      // for Android 12 and below, or no permission for Android 13+
-      const androidVersion = Platform.Version;
-      if (typeof androidVersion === 'number' && androidVersion >= 33) {
-        // Android 13+ doesn't need READ_EXTERNAL_STORAGE for document picker
-        return true;
-      } else {
-        // Android 12 and below need READ_EXTERNAL_STORAGE
-        const storage = await check(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
-        if (storage === RESULTS.GRANTED) {
-          return true;
-        }
-        const reqStorage = await request(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
-        return reqStorage === RESULTS.GRANTED;
-      }
+      // No permission needed - @react-native-documents/picker uses Storage Access Framework
+      return true;
     }
   } else {
     // iOS permissions

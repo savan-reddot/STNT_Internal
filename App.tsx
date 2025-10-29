@@ -15,24 +15,6 @@ import { navigationRef } from './src/utils/navigationRef';
 const App = () => {
   const scheme = useColorScheme();
 
-  useEffect(() => {
-    const init = async () => {
-      if (Platform.OS == 'ios') {
-        const cam = await request(PERMISSIONS.IOS.CAMERA);
-        const photos = await request(PERMISSIONS.IOS.PHOTO_LIBRARY);
-        const document = await request(PERMISSIONS.IOS.PHOTO_LIBRARY_ADD_ONLY);
-        console.log('Camera:', cam, 'Photos:', photos);
-      } else {
-        // Only request camera permission for Android
-        // Gallery access uses Android Photo Picker (no permission needed)
-        const cam = await request(PERMISSIONS.ANDROID.CAMERA);
-        console.log('Camera:', cam);
-      }
-    };
-
-    init();
-  }, []);
-
   return (
     <PaperProvider theme={scheme === 'dark' ? darkTheme : lightTheme}>
       <Provider store={store}>
