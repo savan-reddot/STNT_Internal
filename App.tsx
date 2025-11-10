@@ -1,29 +1,40 @@
+import React from 'react';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider } from 'react-redux';
-import { View, Text, useColorScheme, Platform } from 'react-native';
-import React, { useEffect } from 'react';
+import { Platform, useColorScheme, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { NavigationContainer } from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
+
 import { darkTheme, lightTheme } from './src/theme/theme';
 import { store } from './src/redux/store';
-import { NavigationContainer } from '@react-navigation/native';
 import MainStack from './src/navigation/main';
-import Toast from 'react-native-toast-message';
 import { toastConfig } from './src/utils/toastConfig';
-import { requestAppPermission } from './src/utils/permissions';
-import { PERMISSIONS, request } from 'react-native-permissions';
 import { navigationRef } from './src/utils/navigationRef';
 
-const App = () => {
+const AppContent = () => {
   const scheme = useColorScheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <PaperProvider theme={scheme === 'dark' ? darkTheme : lightTheme}>
-      <Provider store={store}>
-        <NavigationContainer ref={navigationRef}>
-          <MainStack />
-          <Toast config={toastConfig} />
-        </NavigationContainer>
-      </Provider>
-    </PaperProvider>
+    <View style={{ flex: 1, paddingBottom: Platform.OS === 'android' ? insets.bottom : 0 }}>
+      <PaperProvider theme={scheme === 'dark' ? darkTheme : lightTheme}>
+        <Provider store={store}>
+          <NavigationContainer ref={navigationRef}>
+            <MainStack />
+            <Toast config={toastConfig} />
+          </NavigationContainer>
+        </Provider>
+      </PaperProvider>
+    </View>
+  );
+};
+
+const App = () => {
+  return (
+    <SafeAreaProvider>
+      <AppContent />
+    </SafeAreaProvider>
   );
 };
 
