@@ -50,7 +50,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       <KeyboardAvoidingView
         style={styles(theme).container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? keyboardOffset : 0}
+        // keyboardVerticalOffset={Platform.OS === 'ios' ? keyboardOffset : 0}
       >
         {children}
       </KeyboardAvoidingView>

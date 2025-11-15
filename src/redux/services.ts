@@ -251,6 +251,34 @@ export const apiClient = createApi({
         body: formData,
       }),
     }),
+    apply_referral_code: builder.mutation({
+      query: (request: any) => ({
+        url: 'apply-referral-code',
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    payment_orders: builder.mutation({
+      query: (request: any) => ({
+        url: 'payment/orders',
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    payment_success: builder.mutation({
+      query: (request: any) => ({
+        url: 'payment/success',
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    policy_purchase_form: builder.mutation({
+      query: (request: any) => ({
+        url: 'policy-purchase-form',
+        method: 'POST',
+        body: request,
+      }),
+    }),
   }),
 });
 
@@ -288,4 +316,8 @@ export const {
   useLazyCountriesQuery,
   useLazyClaim_categoryQuery,
   useUpdate_profileMutation,
+  useApply_referral_codeMutation,
+  usePayment_ordersMutation,
+  usePayment_successMutation,
+  usePolicy_purchase_formMutation,
 } = apiClient;

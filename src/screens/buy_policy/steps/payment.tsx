@@ -1,0 +1,427 @@
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
+import { Control, Controller, FieldErrors, UseFormWatch, UseFormGetValues } from 'react-hook-form';
+import RazorpayCheckout from 'react-native-razorpay';
+import { RAZORPAY_KEY_ID } from '@env';
+import fontStyle from '../../../styles/fontStyle';
+import { metrics } from '../../../utils/metrics';
+import { PolicyFormData } from '../types';
+import KeyboardAwareContainer from '../components/KeyboardAwareContainer';
+import { useApply_referral_codeMutation, usePayment_ordersMutation, usePayment_successMutation, usePolicy_purchase_formMutation } from '../../../redux/services';
+import { showErrorToast, showSuccessToast } from '../../../utils/toastUtils';
+import { useAppSelector } from '../../../redux/hooks';
+import { getUser } from '../../../redux/reducer';
+
+interface PaymentProps {
+  control: Control<PolicyFormData>;
+  errors: FieldErrors<PolicyFormData>;
+  watch: UseFormWatch<PolicyFormData>;
+  getValues: UseFormGetValues<PolicyFormData>;
+}
+
+const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) => {
+  const theme = useTheme();
+  const user = useAppSelector(getUser);
+  const [referralCodeValue, setReferralCodeValue] = useState('');
+  const countryOfTravel = watch('countryOfTravel') || '';
+  const [applyReferralCode, { isLoading: isApplyingCode }] = useApply_referral_codeMutation();
+  const [createPaymentOrder, { isLoading: isCreatingOrder }] = usePayment_ordersMutation();
+  const [verifyPayment, { isLoading: isVerifyingPayment }] = usePayment_successMutation();
+  const [purchasePolicy, { isLoading: isPurchasingPolicy }] = usePolicy_purchase_formMutation();
+
+  // Get form data for payment
+  const name = watch('name') || user?.firstName || '';
+  const email = watch('email') || user?.email || '';
+  const phone = watch('phone') || user?.phone || '';
+
+  // Extract the price from countryOfTravel (format: "$140.00")
+  // Format it to match screenshot: "$ 140.00" (with space after $)
+  let insuranceTotal = '$ 0.00';
+  let billAmount = 0;
+  if (countryOfTravel.includes('$')) {
+    // Remove $ and add space, e.g., "$140.00" -> "$ 140.00"
+    const price = countryOfTravel.replace('$', '').trim();
+    insuranceTotal = `$ ${price}`;
+    // Extract numeric value for API (e.g., "140.00" -> 140)
+    billAmount = parseFloat(price) || 0;
+  }
+
+  const handleApplyCode = async () => {
+    if (!referralCodeValue.trim()) {
+      showErrorToast('Please enter a referral code', 'Error !!');
+      return;
+    }
+
+    if (billAmount === 0) {
+      showErrorToast('Invalid bill amount', 'Error !!');
+      return;
+    }
+
+    try {
+      const response = await applyReferralCode({
+        referral_code: referralCodeValue.trim(),
+        bill_amount: billAmount,
+      }).unwrap();
+
+      showSuccessToast('Referral code applied successfully', 'Success !!');
+    } catch (error: any) {
+      const errorMessage = error?.data?.message || error?.message || 'Failed to apply referral code';
+      showErrorToast(errorMessage, 'Error !!');
+    }
+  };
+
+  const handleMakePayment = async () => {
+    console.log('billAmount', billAmount);
+    if (billAmount === 0) {
+      showErrorToast('Invalid payment amount', 'Error !!');
+      return;
+    }
+
+    // Convert amount to smallest currency unit (cents for SGD)
+    const amountInSGD = Math.round(billAmount * 100);
+
+    try {
+      // Step 1: Create payment order via API
+      console.log('Creating payment order...', { amount: amountInSGD, currency: 'SGD' });
+      const orderResponse = await createPaymentOrder({
+        amount: amountInSGD,
+        currency: 'SGD',
+      });
+
+      console.log('Payment order created:', orderResponse);
+
+      // Check for errors first
+      if (orderResponse.error) {
+        const errorMessage = (orderResponse.error as any)?.data?.message || 'Failed to create payment order';
+        showErrorToast(errorMessage, 'Error !!');
+        return;
+      }
+
+      // Extract order_id from response
+      // Response structure: { success: true, data: { id: "order_xxx", currency: "SGD", amount: 21000 } }
+      const orderData = orderResponse.data;
+      const orderId = orderData?.data?.id || orderData?.id || orderData?.order_id;
+
+      if (!orderId) {
+        console.error('Order ID not found in response:', orderResponse);
+        showErrorToast('Failed to create payment order', 'Error !!');
+        return;
+      }
+
+      console.log('Using order_id:', orderId);
+
+      // Step 2: Open Razorpay checkout with order_id
+      const options = {
+        description: 'Umrah Travel Insurance Policy Payment',
+        image: '', // Optional: Add your company logo URL
+        currency: 'SGD',
+        key: RAZORPAY_KEY_ID,
+        amount: amountInSGD,
+        order_id: orderId, // Use order_id from API response
+        name: 'ST&T International',
+        prefill: {
+          email: email,
+          contact: phone,
+          name: name,
+        },
+        theme: { color: theme.colors.primary || '#2196F3' },
+        notes: {
+          policy_type: 'Umrah Travel Insurance',
+          referral_code: referralCodeValue || undefined,
+        },
+      };
+
+      const razorpayData = await RazorpayCheckout.open(options);
+
+      // Payment successful from Razorpay SDK
+      console.log('Razorpay Payment Success:', razorpayData);
+
+      // Step 3: Verify payment with backend API
+      try {
+        console.log('Verifying payment with backend...');
+        const verificationResponse = await verifyPayment({
+          orderCreationId: orderId, // The order_id we created earlier
+          razorpayPaymentId: orderId,
+          razorpayOrderId: razorpayData.razorpay_order_id,
+          razorpaySignature: razorpayData.razorpay_signature,
+        }).unwrap();
+
+        console.log('Payment verification response:', verificationResponse);
+
+        // Check if verification was successful
+        if (verificationResponse?.success) {
+          // Step 4: Purchase policy after successful payment verification
+          try {
+            console.log('Purchasing policy...');
+            const formData = getValues();
+
+            // Map coverage plan value to plan details
+            const planMapping: Record<string, { id: number; plan_code: string; display_name: string }> = {
+              umrah_ema: { id: 1, plan_code: 'UMRAH_EMA', display_name: 'UMRAH EMA' },
+              basic: { id: 2, plan_code: 'BASIC', display_name: 'Basic Plan' },
+              standard: { id: 3, plan_code: 'STANDARD', display_name: 'Standard Plan' },
+              premium: { id: 4, plan_code: 'PREMIUM', display_name: 'Premium Plan' },
+            };
+
+            // Plan pricing data (same as in travelDetails.tsx)
+            const planPricingData: Record<string, {
+              adultPrice: number;
+              childPrice: number;
+              extraPerDay: number;
+              maxDays: number;
+            }> = {
+              umrah_ema: { adultPrice: 140.0, childPrice: 115.0, extraPerDay: 15.0, maxDays: 16 },
+              basic: { adultPrice: 100.0, childPrice: 80.0, extraPerDay: 10.0, maxDays: 14 },
+              standard: { adultPrice: 150.0, childPrice: 120.0, extraPerDay: 20.0, maxDays: 18 },
+              premium: { adultPrice: 200.0, childPrice: 160.0, extraPerDay: 25.0, maxDays: 21 },
+            };
+
+            const selectedPlan = formData.umrahCoveragePlan || '';
+            const planDetails = planMapping[selectedPlan] || planMapping.umrah_ema;
+            const planPricing = planPricingData[selectedPlan] || planPricingData.umrah_ema;
+
+            // Generate coveragePlanDetailsText
+            const coveragePlanDetailsText = `Duration of Travel: CHILD - Up to ${planPricing.maxDays} days (Below 18 years old): $${planPricing.childPrice.toFixed(0)} ADULT- Up to ${planPricing.maxDays} days (Above 18 years old): $${planPricing.adultPrice.toFixed(0)} Additional Days: $${planPricing.extraPerDay.toFixed(0)}/Day`;
+
+            // Map customers to customer_information format
+            const customerInformation = (formData.customers || []).map((customer) => {
+              // Convert date format from YYYY-MM-DD to ISO string
+              const dobDate = customer.dateOfBirth ? new Date(customer.dateOfBirth + 'T00:00:00') : new Date();
+              const dobISO = dobDate.toISOString();
+
+              // Capitalize gender (Male/Female)
+              const genderCapitalized = customer.gender
+                ? customer.gender.charAt(0).toUpperCase() + customer.gender.slice(1).toLowerCase()
+                : '';
+
+              return {
+                id: `${customer.dateOfBirth}#${customer.passportNumber}`,
+                full_name: customer.fullName,
+                passport_number: customer.passportNumber,
+                nationality: customer.nationality,
+                gender: genderCapitalized,
+                dob: dobISO,
+                entry_type: customer.isChild ? 'CHILD' : 'ADULT',
+              };
+            });
+
+            // Prepare policy purchase payload
+            const policyPayload = {
+              travel_type: formData.travellingSaudiWith && formData.travellingSaudiWith.toLowerCase() !== 'individual' ? 'group' : 'individual',
+              name: formData.name,
+              phone: formData.phone,
+              email: formData.email,
+              name_nok: formData.nextOfKinName,
+              phone_nok: formData.nextOfKinPhone,
+              email_nok: formData.nextOfKinEmail,
+              date_of_departure: formData.departureDate ? new Date(formData.departureDate + 'T00:00:00').toISOString() : '',
+              date_of_arrival: formData.arrivalDate ? new Date(formData.arrivalDate + 'T00:00:00').toISOString() : '',
+              number_of_days: parseInt(formData.numberOfDays || '0', 10),
+              destination_country: formData.destination,
+              coverage_plan: planDetails.display_name,
+              coverage_plan_id: planDetails.id,
+              coveragePlanDetailsText: coveragePlanDetailsText,
+              number_of_adults: formData.adults || 0,
+              number_of_children: formData.children || 0,
+              customer_information: customerInformation,
+              is_info_correct: formData.confirmInformationAccurate,
+              is_not_discharged_from_hospital: formData.notDischargedWithin30Days,
+              is_pdpa_consent_accepted: formData.pdpaConsent,
+              payment_details: {
+                referral_code: referralCodeValue || '',
+                orderCreationId: orderId,
+                razorpayPaymentId: razorpayData.razorpay_payment_id,
+              },
+              plan_details: {
+                plan: {
+                  id: planDetails.id,
+                  plan_code: planDetails.plan_code,
+                  display_name: planDetails.display_name,
+                },
+              },
+            };
+
+            console.log('Policy purchase payload:', JSON.stringify(policyPayload, null, 2));
+
+            const purchaseResponse = await purchasePolicy(policyPayload).unwrap();
+
+            console.log('Policy purchase response:', purchaseResponse);
+
+            if (purchaseResponse?.success) {
+              showSuccessToast('Policy purchased successfully!', 'Success !!');
+              // TODO: Navigate to success screen or next step
+            } else {
+              showErrorToast('Failed to purchase policy', 'Error !!');
+            }
+          } catch (purchaseError: any) {
+            console.error('Policy purchase error:', purchaseError);
+            const errorMessage = purchaseError?.data?.message || purchaseError?.message || 'Failed to purchase policy';
+            showErrorToast(errorMessage, 'Error !!');
+          }
+        } else {
+          showErrorToast('Payment verification failed', 'Error !!');
+        }
+      } catch (verifyError: any) {
+        console.error('Payment verification error:', verifyError);
+        const errorMessage = verifyError?.data?.message || verifyError?.message || 'Payment verification failed';
+        showErrorToast(errorMessage, 'Error !!');
+      }
+
+    } catch (error: any) {
+      // Handle errors
+      console.log('Payment Error:', error);
+
+      // Check if it's an order creation error
+      if (error?.data || error?.error) {
+        const errorMessage = error?.data?.message || error?.error?.message || error?.message || 'Failed to process payment';
+        showErrorToast(errorMessage, 'Error !!');
+        return;
+      }
+
+      // Handle Razorpay checkout errors
+      if (error.code === 'BAD_REQUEST_ERROR') {
+        showErrorToast('Invalid payment request', 'Error !!');
+      } else if (error.code === 'NETWORK_ERROR') {
+        showErrorToast('Network error. Please check your connection', 'Error !!');
+      } else if (error.code !== 'Payment Cancelled') {
+        // Don't show error for user cancellation
+        showErrorToast(error.description || 'Payment failed', 'Error !!');
+      }
+    }
+  };
+
+  return (
+    <KeyboardAwareContainer>
+      <View>
+        {/* Referral Code Section */}
+        <View style={styles(theme).fieldContainer}>
+          <Text style={[fontStyle(theme).headingSmall, { marginBottom: metrics.baseMargin }]}>
+            Referral Code
+          </Text>
+          <View style={styles(theme).referralCodeContainer}>
+            <TextInput
+              mode="outlined"
+              placeholder="Test123"
+              value={referralCodeValue}
+              onChangeText={setReferralCodeValue}
+              style={styles(theme).referralCodeInput}
+              outlineStyle={{ borderRadius: metrics.baseRadius }}
+            />
+            <TouchableOpacity
+              onPress={handleApplyCode}
+              style={[
+                styles(theme).applyButton,
+                isApplyingCode && styles(theme).applyButtonDisabled,
+              ]}
+              disabled={isApplyingCode}
+            >
+              {isApplyingCode ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles(theme).applyButtonText}>Apply Code</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Bill Summary Section */}
+        <View style={styles(theme).billSummaryContainer}>
+          <Text style={[fontStyle(theme).headingMedium, { marginBottom: metrics.doubleMargin }]}>
+            Bill summary
+          </Text>
+          <View style={styles(theme).billSummaryRow}>
+            <Text style={fontStyle(theme).headingSmall}>Insurance Total</Text>
+            <Text style={[fontStyle(theme).headingSmall, { fontWeight: 'bold' }]}>
+              {insuranceTotal}
+            </Text>
+          </View>
+        </View>
+
+        {/* Make Payment Button */}
+        <View style={styles(theme).makePaymentContainer}>
+          <TouchableOpacity
+            onPress={handleMakePayment}
+            style={[
+              styles(theme).makePaymentButton,
+              (isCreatingOrder || isVerifyingPayment || isPurchasingPolicy) && styles(theme).makePaymentButtonDisabled,
+            ]}
+            disabled={isCreatingOrder || isVerifyingPayment || isPurchasingPolicy}
+          >
+            {(isCreatingOrder || isVerifyingPayment || isPurchasingPolicy) ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <Text style={styles(theme).makePaymentButtonText}>Make Payment</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAwareContainer>
+  );
+};
+
+const styles = (theme: MD3Theme) =>
+  StyleSheet.create({
+    fieldContainer: {
+      marginBottom: metrics.doubleMargin * 2,
+    },
+    referralCodeContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: metrics.baseMargin,
+    },
+    referralCodeInput: {
+      flex: 1,
+      height: metrics.screenWidth * 0.13,
+    },
+    applyButton: {
+      backgroundColor: '#4CAF50', // Green color
+      paddingVertical: metrics.baseMargin * 1.5,
+      paddingHorizontal: metrics.doubleMargin,
+      borderRadius: metrics.baseRadius,
+      justifyContent: 'center',
+      alignItems: 'center',
+      minWidth: 100,
+    },
+    applyButtonDisabled: {
+      opacity: 0.6,
+    },
+    applyButtonText: {
+      color: 'white',
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    billSummaryContainer: {
+      marginBottom: metrics.doubleMargin * 2,
+      padding: metrics.doubleMargin,
+      backgroundColor: '#F5F5F5',
+      borderRadius: metrics.baseRadius,
+    },
+    billSummaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    makePaymentContainer: {
+      marginTop: metrics.doubleMargin,
+    },
+    makePaymentButton: {
+      backgroundColor: '#2196F3', // Blue color
+      paddingVertical: metrics.doubleMargin,
+      paddingHorizontal: metrics.doubleMargin,
+      borderRadius: metrics.baseRadius,
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+    },
+    makePaymentButtonDisabled: {
+      opacity: 0.6,
+    },
+    makePaymentButtonText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+  });
+
+export default Payment;

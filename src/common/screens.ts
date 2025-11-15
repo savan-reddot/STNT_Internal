@@ -21,4 +21,5 @@ export const Screens = {
   Splash: 'Splash',
   Onboard: 'Onboard',
   BottomTab: 'BottomTab',
+  BuyPolicy: 'BuyPolicy',
 } as const;

@@ -51,10 +51,7 @@ const Home = ({ navigation }: any) => {
       id: 1,
       title: 'Buy Policy',
       icon: require('../../../assets/images/buy_policy.png'),
-      onPress: () =>
-        navigation.navigate(Screens.WebView, {
-          url: 'https://stntinternational.com/ema-package/#form1',
-        }),
+      onPress: () => navigation.navigate(Screens.BuyPolicy),
     },
     {
       id: 2,

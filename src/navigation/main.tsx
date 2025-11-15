@@ -23,6 +23,7 @@ import UserProfile from '../screens/user_profile/user_profile';
 import Notification from '../screens/notification/notification';
 import ClaimDetails from '../screens/claim/claim_details';
 import DraftClaims from '../screens/claim/claim_draft';
+import BuyPolicy from '../screens/buy_policy/buy_policy';
 
 const Stack = createStackNavigator();
 
@@ -52,6 +53,7 @@ const MainStack = () => {
         name={Screens.TrustedHospitals}
         component={TrustedHospitals}
       />
+      <Stack.Screen name={Screens.BuyPolicy} component={BuyPolicy} />
     </Stack.Navigator>
   );
 };
