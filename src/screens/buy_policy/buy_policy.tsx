@@ -51,6 +51,7 @@ const BuyPolicy = ({ navigation }: any) => {
     mode: 'onChange',
     defaultValues: {
       travellingSaudiWith: 'Individual',
+      travelAgencyName: '',
       name: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '',
       phone: '7698533947',
       email: user?.email || '',
@@ -60,10 +61,16 @@ const BuyPolicy = ({ navigation }: any) => {
       departureDate: '15/11/2025',
       arrivalDate: '25/11/2025',
       numberOfDays: '0',
-      destination: 'Saudi Arabia',
-      umrahCoveragePlan: 'umrah_ema',
-      countryOfTravel: 'Saudi Arabia',
-      adults: 1,
+      destination: '',
+      umrahCoveragePlan: '',
+      countryOfTravel: '',
+      selectedPlanDisplayName: '',
+      selectedPlanCode: '',
+      coveragePlanDetailsText: '',
+      selectedPlanDetails: null,
+      planAdultPricing: null,
+      planChildPricing: null,
+      adults: 0,
       children: 0,
       customers: [],
       importantNoticeDeclaration: false,
@@ -87,8 +94,9 @@ const BuyPolicy = ({ navigation }: any) => {
       case 0: // Contact Details
         const travellingSaudiWith = watch('travellingSaudiWith');
         const contactFields: (keyof PolicyFormData)[] = ['travellingSaudiWith'];
-        // Only validate other fields if travellingSaudiWith is selected
-        if (travellingSaudiWith) {
+
+        // Only validate other fields based on selection
+        if (travellingSaudiWith === 'individual' || travellingSaudiWith === 'non_partnered_travel_agency') {
           contactFields.push(
             'name',
             'phone',
@@ -97,7 +105,14 @@ const BuyPolicy = ({ navigation }: any) => {
             'nextOfKinPhone',
             'nextOfKinEmail',
           );
+
+          // Add travelAgencyName validation for non-partnered travel agency
+          if (travellingSaudiWith === 'non_partnered_travel_agency') {
+            contactFields.push('travelAgencyName');
+          }
         }
+        // For partnered_travel_agency, no additional fields to validate
+
         const contactResult = await trigger(contactFields);
         return contactResult;
       case 1: // Travel Details
@@ -109,7 +124,17 @@ const BuyPolicy = ({ navigation }: any) => {
           'umrahCoveragePlan',
         ];
         const travelResult = await trigger(travelFields);
-        return travelResult;
+        if (!travelResult) {
+          return false;
+        }
+
+        const travelAdults = watch('adults') || 0;
+        const travelChildren = watch('children') || 0;
+        if (travelAdults === 0 && travelChildren === 0) {
+          Alert.alert('Selection required', 'Please select at least one Adult or Child to proceed.');
+          return false;
+        }
+        return true;
       case 2: // Customer Details
         const customers = watch('customers') || [];
         const adults = watch('adults') || 0;

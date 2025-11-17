@@ -10,7 +10,7 @@ import { globalStyle } from '../../../utils/globalStyles';
 import { PolicyFormData } from '../types';
 import KeyboardAwareContainer from '../components/KeyboardAwareContainer';
 import { format, parse } from 'date-fns';
-import { useLazyCountriesQuery } from '../../../redux/services';
+import { useLazyCountriesQuery, useLazyGetplansQuery, useLazyPlanPricingQuery } from '../../../redux/services';
 
 interface TravelDetailsProps {
   control: Control<PolicyFormData>;
@@ -20,45 +20,16 @@ interface TravelDetailsProps {
   setValue: any;
 }
 
-const umrahCoverageOptions = [
-  { label: 'UMRAH EMA', value: 'umrah_ema' },
-  { label: 'Basic Plan', value: 'basic' },
-  { label: 'Standard Plan', value: 'standard' },
-  { label: 'Premium Plan', value: 'premium' },
-];
-
-// Dummy pricing data for plans
-const planPricingData: Record<string, {
+// Plan pricing interface
+interface PlanPricingData {
   adultPrice: number;
   childPrice: number;
   extraPerDay: number;
   maxDays: number;
-}> = {
-  umrah_ema: {
-    adultPrice: 140.0,
-    childPrice: 115.0,
-    extraPerDay: 15.0,
-    maxDays: 16,
-  },
-  basic: {
-    adultPrice: 100.0,
-    childPrice: 80.0,
-    extraPerDay: 10.0,
-    maxDays: 14,
-  },
-  standard: {
-    adultPrice: 150.0,
-    childPrice: 120.0,
-    extraPerDay: 20.0,
-    maxDays: 18,
-  },
-  premium: {
-    adultPrice: 200.0,
-    childPrice: 160.0,
-    extraPerDay: 25.0,
-    maxDays: 21,
-  },
-};
+  pricingString: string;
+  adultPricingRaw?: any;
+  childPricingRaw?: any;
+}
 
 const formatDateForDisplay = (dateString: string): string => {
   if (!dateString) return '';
@@ -114,33 +85,46 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
 }) => {
   const theme = useTheme();
   const [countries] = useLazyCountriesQuery();
+  const [getplans] = useLazyGetplansQuery();
+  const [planPricing] = useLazyPlanPricingQuery();
+
   const [destinationOptions, setDestinationOptions] = useState<Array<{ label: string; value: string }>>([]);
+  const [umrahCoverageOptions, setUmrahCoverageOptions] = useState<Array<{
+    label: string;
+    value: string;
+    id: number;
+    plan_code?: string;
+    trip_days_cap?: number;
+    rawPlan?: any;
+  }>>([]);
+  const [planPricingData, setPlanPricingData] = useState<Record<string, PlanPricingData>>({});
+  const [hasFetchedPlans, setHasFetchedPlans] = useState(false);
+  const [hasFetchedPricing, setHasFetchedPricing] = useState(false);
+  const [previousDestination, setPreviousDestination] = useState<string>('');
+
+  const selectedDestination = watch('destination');
   const selectedPlan = watch('umrahCoveragePlan');
   const adults = watch('adults') || 0;
   const children = watch('children') || 0;
   const numberOfDays = parseInt(watch('numberOfDays') || '0', 10);
 
   // Get selected plan details
-  const selectedPlanOption = umrahCoverageOptions.find(plan => plan.value === selectedPlan);
+  const selectedPlanOption = umrahCoverageOptions.find((plan: any) => plan.value === selectedPlan);
   const planName = selectedPlanOption?.label || '';
-  const planPricing = selectedPlan ? planPricingData[selectedPlan] : null;
+  const currentPlanPricing = selectedPlan ? planPricingData[selectedPlan] : null;
 
   // Calculate pricing
   let adultFeePerPerson = 0;
   let childFeePerPerson = 0;
-  let adultExtraDays = 0;
-  let childExtraDays = 0;
 
-  if (planPricing) {
-    if (numberOfDays <= planPricing.maxDays) {
-      adultFeePerPerson = planPricing.adultPrice;
-      childFeePerPerson = planPricing.childPrice;
+  if (currentPlanPricing) {
+    if (numberOfDays <= currentPlanPricing.maxDays) {
+      adultFeePerPerson = currentPlanPricing.adultPrice;
+      childFeePerPerson = currentPlanPricing.childPrice;
     } else {
-      const extraDays = numberOfDays - planPricing.maxDays;
-      adultFeePerPerson = planPricing.adultPrice + (extraDays * planPricing.extraPerDay);
-      childFeePerPerson = planPricing.childPrice + (extraDays * planPricing.extraPerDay);
-      adultExtraDays = extraDays;
-      childExtraDays = extraDays;
+      const extraDays = numberOfDays - currentPlanPricing.maxDays;
+      adultFeePerPerson = currentPlanPricing.adultPrice + (extraDays * currentPlanPricing.extraPerDay);
+      childFeePerPerson = currentPlanPricing.childPrice + (extraDays * currentPlanPricing.extraPerDay);
     }
   }
 
@@ -148,6 +132,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
   const childFee = children * childFeePerPerson;
   const totalPrice = adultFee + childFee;
 
+  // Fetch countries on mount
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -170,15 +155,139 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
     fetchCountries();
   }, [countries]);
 
+  // Reset plans and pricing when destination changes
+  useEffect(() => {
+    if (selectedDestination && selectedDestination !== previousDestination && previousDestination !== '') {
+      // Reset flags and data when destination changes (not on initial set)
+      setHasFetchedPlans(false);
+      setHasFetchedPricing(false);
+      setUmrahCoverageOptions([]);
+      setPlanPricingData({});
+      setValue('umrahCoveragePlan', '');
+      setValue('countryOfTravel', '');
+    }
+    setPreviousDestination(selectedDestination || '');
+  }, [selectedDestination, previousDestination, setValue]);
+
+  // Fetch plans when destination is selected (only once per destination)
+  useEffect(() => {
+    const fetchPlans = async () => {
+      if (selectedDestination && !hasFetchedPlans) {
+        try {
+          const resp = await getplans(0);
+          if (resp?.data?.success) {
+            const plansList = resp?.data?.data?.rows;
+            if (Array.isArray(plansList) && plansList.length > 0) {
+              const options = plansList
+                .map((plan: any) => ({
+                  label: plan.display_name,
+                  value: plan.id?.toString(),
+                  id: plan.id,
+                  plan_code: plan.plan_code,
+                  trip_days_cap: plan.trip_days_cap,
+                  rawPlan: plan,
+                }))
+                .sort((a, b) => a.id - b.id); // Sort by ID in ascending order
+              setUmrahCoverageOptions(options);
+              setHasFetchedPlans(true);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching plans:', error);
+        }
+      }
+    };
+    fetchPlans();
+  }, [selectedDestination, hasFetchedPlans, getplans]);
+
+  // Fetch pricing for all plans when plans are loaded (only once)
+  useEffect(() => {
+    const fetchAllPricing = async () => {
+      if (umrahCoverageOptions.length > 0 && !hasFetchedPricing) {
+        try {
+          // Fetch all pricings at once
+          const resp = await planPricing(0);
+          if (resp?.data?.success) {
+            const allPricings = resp?.data?.data?.rows || [];
+            // Process pricing for each plan
+            const pricingMap: Record<string, PlanPricingData> = {};
+
+            umrahCoverageOptions.forEach((plan: any) => {
+              // Filter pricings by plan_id
+              const planPricings = allPricings.filter((p: any) =>
+                p.plan_id === plan.id
+              );
+
+              if (planPricings.length > 0) {
+                // Filter ADULT and CHILD pricing
+                const adultPricing = planPricings.find((p: any) =>
+                  p.age_band === 'ADULT' || p.age_band === 'adult'
+                );
+                const childPricing = planPricings.find((p: any) =>
+                  p.age_band === 'CHILD' || p.age_band === 'child'
+                );
+
+                if (adultPricing && childPricing) {
+                  const maxDays = plan.trip_days_cap || 0;
+                  const adultPrice = adultPricing.base_premium;
+                  const childPrice = childPricing.base_premium;
+                  const extraPerDay = adultPricing.per_extra_day_rate || childPricing.per_extra_day_rate;
+
+                  // Generate pricing string
+                  const pricingString = `Duration of Travel: CHILD - Up to ${maxDays} days (Below 18 years old): $${childPrice.toFixed(0)} ADULT- Up to ${maxDays} days (Above 18 years old): $${adultPrice.toFixed(0)} Additional Days: $${extraPerDay.toFixed(0)}/Day`;
+
+                  pricingMap[plan.value] = {
+                    adultPrice,
+                    childPrice,
+                    extraPerDay,
+                    maxDays,
+                    pricingString,
+                    adultPricingRaw: adultPricing,
+                    childPricingRaw: childPricing,
+                  };
+                }
+              }
+            });
+
+            setPlanPricingData(pricingMap);
+            setHasFetchedPricing(true);
+          }
+        } catch (error) {
+          console.error('Error fetching pricing:', error);
+        }
+      }
+    };
+    fetchAllPricing();
+  }, [umrahCoverageOptions, selectedPlan, hasFetchedPricing, planPricing]);
+
   // Update pricing when plan, adults, children, or days change
   useEffect(() => {
-    if (selectedPlan && planPricing) {
+    if (selectedPlan && currentPlanPricing) {
       const pricing = `$${totalPrice.toFixed(2)}`;
       setValue('countryOfTravel', pricing);
     } else {
       setValue('countryOfTravel', '');
     }
-  }, [selectedPlan, adults, children, numberOfDays, totalPrice, planPricing, setValue]);
+  }, [selectedPlan, adults, children, numberOfDays, totalPrice, currentPlanPricing, setValue]);
+
+  // Store selected plan metadata in form
+  useEffect(() => {
+    if (selectedPlanOption && currentPlanPricing) {
+      setValue('selectedPlanDisplayName', selectedPlanOption.label || '');
+      setValue('selectedPlanCode', selectedPlanOption.plan_code || '');
+      setValue('coveragePlanDetailsText', currentPlanPricing.pricingString);
+      setValue('selectedPlanDetails', selectedPlanOption.rawPlan || null);
+      setValue('planAdultPricing', currentPlanPricing.adultPricingRaw || null);
+      setValue('planChildPricing', currentPlanPricing.childPricingRaw || null);
+    } else {
+      setValue('selectedPlanDisplayName', '');
+      setValue('selectedPlanCode', '');
+      setValue('coveragePlanDetailsText', '');
+      setValue('selectedPlanDetails', null);
+      setValue('planAdultPricing', null);
+      setValue('planChildPricing', null);
+    }
+  }, [selectedPlanOption, currentPlanPricing, setValue]);
 
   return (
     <KeyboardAwareContainer>
@@ -327,19 +436,23 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                 Umrah coverage plan<Text style={{ color: 'red' }}>*</Text>
               </Text>
               <Dropdown
-                style={globalStyle(theme).dropdown}
+                style={[
+                  globalStyle(theme).dropdown,
+                  !selectedDestination && styles(theme).dropdownDisabled,
+                ]}
                 placeholderStyle={styles(theme).placeholderStyle}
                 selectedTextStyle={styles(theme).selectedTextStyle}
                 data={umrahCoverageOptions}
                 labelField="label"
                 valueField="value"
-                placeholder="Select"
+                placeholder={selectedDestination ? "Select" : "Please select destination first"}
                 value={value}
                 onChange={(item) => {
                   onChange(item.value);
                 }}
                 containerStyle={styles(theme).dropdownContainer}
                 itemTextStyle={styles(theme).dropdownItemText}
+                disable={!selectedDestination}
               />
               {errors.umrahCoveragePlan && (
                 <Text style={styles(theme).errorText}>
@@ -350,14 +463,14 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
           )}
         />
 
-        {selectedPlan && planPricing && (
+        {selectedPlan && currentPlanPricing && (
           <View style={styles(theme).fieldContainer}>
             <Text style={fontStyle(theme).headingSmall}>
               {planName} Plan Pricing
             </Text>
             <View style={styles(theme).pricingContainer}>
               <Text style={styles(theme).pricingText}>
-                Duration of Travel: CHILD - Up to {planPricing.maxDays} days (Below 18 years old): ${planPricing.childPrice.toFixed(0)} ADULT- Up to {planPricing.maxDays} days (Above 18 years old): ${planPricing.adultPrice.toFixed(0)} Additional Days: ${planPricing.extraPerDay.toFixed(0)}/Day
+                {currentPlanPricing.pricingString}
               </Text>
             </View>
 
@@ -365,16 +478,16 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
               <View style={styles(theme).feeRow}>
                 <Text style={styles(theme).feeLabel}>Adult Fees</Text>
                 <View style={styles(theme).feeValues}>
-                  <Text style={styles(theme).feeText}>Price: $ {planPricing.adultPrice.toFixed(2)}</Text>
-                  <Text style={styles(theme).feeText}>Extra: $ {planPricing.extraPerDay.toFixed(2)}/Day</Text>
+                  <Text style={styles(theme).feeText}>Price: $ {currentPlanPricing.adultPrice.toFixed(2)}</Text>
+                  <Text style={styles(theme).feeText}>Extra: $ {currentPlanPricing.extraPerDay.toFixed(2)}/Day</Text>
                 </View>
               </View>
 
               <View style={styles(theme).feeRow}>
                 <Text style={styles(theme).feeLabel}>Child Fees</Text>
                 <View style={styles(theme).feeValues}>
-                  <Text style={styles(theme).feeText}>Price: $ {planPricing.childPrice.toFixed(2)}</Text>
-                  <Text style={styles(theme).feeText}>Extra: $ {planPricing.extraPerDay.toFixed(2)}/Day</Text>
+                  <Text style={styles(theme).feeText}>Price: $ {currentPlanPricing.childPrice.toFixed(2)}</Text>
+                  <Text style={styles(theme).feeText}>Extra: $ {currentPlanPricing.extraPerDay.toFixed(2)}/Day</Text>
                 </View>
               </View>
             </View>
@@ -461,6 +574,9 @@ const styles = (theme: MD3Theme) =>
     dropdownItemText: {
       fontSize: 16,
       color: theme.colors.onSurface,
+    },
+    dropdownDisabled: {
+      opacity: 0.5,
     },
     counterRow: {
       flexDirection: 'row',

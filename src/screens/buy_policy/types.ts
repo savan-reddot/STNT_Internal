@@ -1,6 +1,26 @@
+interface PlanPriceBand {
+  id?: number;
+  plan_code?: string;
+  plan_id?: number;
+  age_band?: string;
+  min_age?: number;
+  max_age?: number;
+  base_premium?: number;
+  per_extra_day_rate?: number;
+}
+
+export interface PlanDetails {
+  id?: number;
+  plan_code?: string;
+  display_name?: string;
+  trip_days_cap?: number;
+  [key: string]: any;
+}
+
 export interface PolicyFormData {
   // Contact Details
   travellingSaudiWith: string;
+  travelAgencyName: string;
   name: string;
   phone: string;
   email: string;
@@ -15,6 +35,12 @@ export interface PolicyFormData {
   destination: string;
   umrahCoveragePlan: string;
   countryOfTravel: string;
+  selectedPlanDisplayName: string;
+  selectedPlanCode: string;
+  coveragePlanDetailsText: string;
+  selectedPlanDetails: PlanDetails | null;
+  planAdultPricing: PlanPriceBand | null;
+  planChildPricing: PlanPriceBand | null;
   adults: number;
   children: number;
 

@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { API_URL } from '@env';
+import { API_URL, RAZORPAY_KEY_ID } from '@env';
 import { isValidToken, handleTokenExpiration } from '../utils/authUtils';
+console.log('API_URL ----> ', API_URL, RAZORPAY_KEY_ID);
 
 export const apiClient = createApi({
   reducerPath: 'apiClient',
@@ -93,6 +94,12 @@ export const apiClient = createApi({
     }),
     countries: builder.query({
       query: () => `website/countries`,
+    }),
+    getplans: builder.query({
+      query: (page: number) => `plans/get-all?size=10&page=${page}`,
+    }),
+    planPricing: builder.query({
+      query: (page: number) => `pricings/get-all?size=10&page=${page}`,
     }),
     get_profile: builder.query({
       query: () => `/mobile-data/profile`,
@@ -320,4 +327,6 @@ export const {
   usePayment_ordersMutation,
   usePayment_successMutation,
   usePolicy_purchase_formMutation,
+  useLazyGetplansQuery,
+  useLazyPlanPricingQuery,
 } = apiClient;

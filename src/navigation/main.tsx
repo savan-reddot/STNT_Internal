@@ -24,6 +24,7 @@ import Notification from '../screens/notification/notification';
 import ClaimDetails from '../screens/claim/claim_details';
 import DraftClaims from '../screens/claim/claim_draft';
 import BuyPolicy from '../screens/buy_policy/buy_policy';
+import BuyPolicySuccess from '../screens/buy_policy/success';
 
 const Stack = createStackNavigator();
 
@@ -54,6 +55,10 @@ const MainStack = () => {
         component={TrustedHospitals}
       />
       <Stack.Screen name={Screens.BuyPolicy} component={BuyPolicy} />
+      <Stack.Screen
+        name={Screens.BuyPolicySuccess}
+        component={BuyPolicySuccess}
+      />
     </Stack.Navigator>
   );
 };

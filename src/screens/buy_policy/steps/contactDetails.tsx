@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Linking } from 'react-native';
 import React from 'react';
 import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
 import { Control, Controller, FieldErrors, UseFormWatch } from 'react-hook-form';
@@ -21,6 +21,49 @@ const travellingSaudiOptions = [
   { label: 'Non-Partenered Travel Agency', value: 'non_partnered_travel_agency' },
 ];
 
+const partneredTravelAgents = [
+  'ABU BAKAR TRAVEL SERVICES PTE LTD',
+  'AFANDI TRAVEL & SERVICES PTE LTD',
+  "AFANA SERVICES PTE LTD",
+  'AK TOURS & TRAVELS PTE LTD',
+  'AL-FATTAH TRAVEL & TOURS PTE LTD',
+  'AL FIRDAUS TRAVELS PTE LTD',
+  'AL-MUNAWWARAH TRAVEL & TOURS PTE LTD',
+  'AL-QURRO TRAVEL & TOURS PTE LTD',
+  'AL-SALAMAH TRAVEL & SERVICES PTE LTD',
+  'AQ TRAVEL & TOURS PTE LTD',
+  'AR RAIYAN TOURS & TRAVEL PTE LTD',
+  'AS-SOFI TRAVEL & SERVICES PTE LTD',
+  'AZZA TRAVEL & TOURS PTE LTD',
+  'DE HAYAT TRAVEL & SERVICES PTE LTD',
+  'EL-HIJRAH TRAVEL PTE LTD',
+  'EMERALD TOURS AND TRAVELS',
+  'EVERSHINE TRAVEL & SERVICES PTE LTD',
+  'FURSA TRAVEL PTE LTD',
+  'HAGEL TRAVEL & TOURS PTE LTD',
+  'HAMIDAH TRAVEL & TOURS PTE LTD',
+  'HUSAINI TRAVELS & TOURS PTE LTD',
+  'IMAN TRAVEL & SERVICES PTE LTD',
+  'IMAAN TRAVEL & TOURS PTE LTD',
+  'JALALUDDIN TRAVEL & SERVICES PTE LTD',
+  'M3 OASIS PTE LTD',
+  'NOOR MOHAMAD SERVICES & TRAVEL PTE LTD',
+  'NURHIKMAH TRAVEL & TOURS PTE LTD',
+  'POS TKI TRAVEL & TOURS PTE LTD',
+  'RAFFLESIA TRAVEL & TOURS SERVICES PTE LTD',
+  'RAFFLES HOLIDAYS PTE LTD',
+  'SA AL-HABSYI TRAVEL PTE LTD',
+  'SENYUM TRAVEL PTE LTD',
+  'SHA TRAVEL & TOUR PTE LTD',
+  'SHAHIDAH TRAVEL & TOURS PTE LTD',
+  'SJ HOLIDAYS PTE LTD',
+  'SMILING TRAVEL PTE LTD',
+  'SINGAPORE TRAVEL HUB PTE LTD',
+  'SUNNY ISLAND TRAVEL & TOURS PTE LTD',
+  'TRAVEL WITH GLAMZ PTE LTD',
+  'UMMI TRAVEL PTE LTD',
+];
+
 const ContactDetails: React.FC<ContactDetailsProps> = ({
   control,
   errors,
@@ -28,7 +71,22 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
 }) => {
   const theme = useTheme();
   const travellingSaudiWith = watch('travellingSaudiWith');
-  const showFields = !!travellingSaudiWith;
+  const isIndividual = travellingSaudiWith === 'individual';
+  const isPartneredAgency = travellingSaudiWith === 'partnered_travel_agency';
+  const isNonPartneredAgency = travellingSaudiWith === 'non_partnered_travel_agency';
+  const showContactFields = isIndividual || isNonPartneredAgency;
+
+  const handlePhonePress = (phone: string) => {
+    Linking.openURL(`tel:${phone.replace(/\s/g, '')}`).catch((err) =>
+      console.error('Failed to open phone:', err)
+    );
+  };
+
+  const handleEmailPress = (email: string) => {
+    Linking.openURL(`mailto:${email}`).catch((err) =>
+      console.error('Failed to open email:', err)
+    );
+  };
 
   return (
     <KeyboardAwareContainer>
@@ -56,6 +114,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 placeholder="Select"
                 value={value}
                 onChange={(item) => onChange(item.value)}
+                containerStyle={styles(theme).dropdownContainer}
+                itemTextStyle={styles(theme).dropdownItemText}
               />
               {errors.travellingSaudiWith && (
                 <Text style={styles(theme).errorText}>
@@ -66,8 +126,80 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           )}
         />
 
-        {showFields && (
+        {/* Partnered Travel Agency - Show contact info and list */}
+        {isPartneredAgency && (
+          <View style={styles(theme).fieldContainer}>
+            <Text style={[fontStyle(theme).headingSmall, { marginBottom: metrics.baseMargin }]}>
+              Please contact us through{' '}
+              <Text
+                style={styles(theme).linkText}
+                onPress={() => handlePhonePress('62950012')}
+              >
+                62950012
+              </Text>
+              {' / '}
+              <Text
+                style={styles(theme).linkText}
+                onPress={() => handlePhonePress('91362973')}
+              >
+                91362973
+              </Text>
+              {' or '}
+              <Text
+                style={styles(theme).linkText}
+                onPress={() => handleEmailPress('enquiry@stntinternational.com')}
+              >
+                enquiry@stntinternational.com
+              </Text>
+            </Text>
+
+            <Text style={[fontStyle(theme).headingSmall, { marginTop: metrics.doubleMargin, marginBottom: metrics.baseMargin }]}>
+              List of our partnered Travel Agents:
+            </Text>
+
+            <View style={styles(theme).agentsListContainer}>
+              {partneredTravelAgents.map((agent, index) => (
+                <Text key={index} style={styles(theme).agentItem}>
+                  {index + 1}. {agent}
+                </Text>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Individual or Non-Partnered Travel Agency - Show form fields */}
+        {showContactFields && (
           <>
+            {/* Name of Travel Agency - Only for Non-Partnered Travel Agency */}
+            {isNonPartneredAgency && (
+              <Controller
+                control={control}
+                name="travelAgencyName"
+                rules={{ required: 'Name of Travel Agency is required' }}
+                render={({ field: { onChange, value } }) => (
+                  <View style={styles(theme).fieldContainer}>
+                    <Text style={fontStyle(theme).headingSmall}>
+                      Name of Travel Agency<Text style={{ color: 'red' }}>*</Text>
+                    </Text>
+                    <TextInput
+                      mode="outlined"
+                      placeholder="Enter travel agency name"
+                      value={value}
+                      onChangeText={onChange}
+                      style={{ height: metrics.screenWidth * 0.13 }}
+                      outlineStyle={{ borderRadius: metrics.baseRadius }}
+                      error={!!errors.travelAgencyName}
+                    />
+                    {errors.travelAgencyName && (
+                      <Text style={styles(theme).errorText}>
+                        {errors.travelAgencyName.message}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              />
+            )}
+
             <Controller
               control={control}
               name="name"
@@ -264,6 +396,30 @@ const styles = (theme: MD3Theme) =>
     selectedTextStyle: {
       fontSize: 14,
       color: theme.colors.onBackground,
+    },
+    dropdownContainer: {
+      borderRadius: metrics.baseRadius,
+      borderColor: '#E6EBF1',
+      borderWidth: 1,
+    },
+    dropdownItemText: {
+      fontSize: 16,
+      color: theme.colors.onSurface,
+    },
+    linkText: {
+      color: theme.colors.primary,
+      textDecorationLine: 'underline',
+    },
+    agentsListContainer: {
+      backgroundColor: '#F5F5F5',
+      borderRadius: metrics.baseRadius,
+      padding: metrics.doubleMargin,
+    },
+    agentItem: {
+      fontSize: 14,
+      color: theme.colors.onSurface,
+      lineHeight: 24,
+      marginBottom: metrics.smallMargin,
     },
   });
 

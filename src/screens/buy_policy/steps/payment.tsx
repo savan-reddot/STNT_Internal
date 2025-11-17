@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
 import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
 import { Control, Controller, FieldErrors, UseFormWatch, UseFormGetValues } from 'react-hook-form';
@@ -12,6 +12,8 @@ import { useApply_referral_codeMutation, usePayment_ordersMutation, usePayment_s
 import { showErrorToast, showSuccessToast } from '../../../utils/toastUtils';
 import { useAppSelector } from '../../../redux/hooks';
 import { getUser } from '../../../redux/reducer';
+import { useNavigation } from '@react-navigation/native';
+import { Screens } from '../../../common/screens';
 
 interface PaymentProps {
   control: Control<PolicyFormData>;
@@ -22,6 +24,7 @@ interface PaymentProps {
 
 const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) => {
   const theme = useTheme();
+  const navigation = useNavigation<any>();
   const user = useAppSelector(getUser);
   const [referralCodeValue, setReferralCodeValue] = useState('');
   const countryOfTravel = watch('countryOfTravel') || '';
@@ -98,10 +101,8 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
         return;
       }
 
-      // Extract order_id from response
-      // Response structure: { success: true, data: { id: "order_xxx", currency: "SGD", amount: 21000 } }
-      const orderData = orderResponse.data;
-      const orderId = orderData?.data?.id || orderData?.id || orderData?.order_id;
+      const orderData = orderResponse?.data?.data;
+      const orderId = orderData?.id;
 
       if (!orderId) {
         console.error('Order ID not found in response:', orderResponse);
@@ -109,7 +110,7 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
         return;
       }
 
-      console.log('Using order_id:', orderId);
+      console.log('Using order_id:', orderId,);
 
       // Step 2: Open Razorpay checkout with order_id
       const options = {
@@ -126,12 +127,12 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
           name: name,
         },
         theme: { color: theme.colors.primary || '#2196F3' },
-        notes: {
-          policy_type: 'Umrah Travel Insurance',
-          referral_code: referralCodeValue || undefined,
-        },
+        // notes: {
+        //   policy_type: 'Umrah Travel Insurance',
+        //   referral_code: referralCodeValue || undefined,
+        // },
       };
-
+      console.log('options ----> ', options);
       const razorpayData = await RazorpayCheckout.open(options);
 
       // Payment successful from Razorpay SDK
@@ -141,10 +142,10 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
       try {
         console.log('Verifying payment with backend...');
         const verificationResponse = await verifyPayment({
-          orderCreationId: orderId, // The order_id we created earlier
-          razorpayPaymentId: orderId,
-          razorpayOrderId: razorpayData.razorpay_order_id,
-          razorpaySignature: razorpayData.razorpay_signature,
+          orderCreationId: orderId,
+          razorpayPaymentId: razorpayData?.razorpay_payment_id,
+          razorpayOrderId: razorpayData?.razorpay_order_id,
+          razorpaySignature: razorpayData?.razorpay_signature,
         }).unwrap();
 
         console.log('Payment verification response:', verificationResponse);
@@ -155,34 +156,23 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
           try {
             console.log('Purchasing policy...');
             const formData = getValues();
+            const planId = parseInt(formData.umrahCoveragePlan || '0', 10);
+            if (!planId) {
+              showErrorToast('Please select a plan before proceeding', 'Error !!');
+              return;
+            }
 
-            // Map coverage plan value to plan details
-            const planMapping: Record<string, { id: number; plan_code: string; display_name: string }> = {
-              umrah_ema: { id: 1, plan_code: 'UMRAH_EMA', display_name: 'UMRAH EMA' },
-              basic: { id: 2, plan_code: 'BASIC', display_name: 'Basic Plan' },
-              standard: { id: 3, plan_code: 'STANDARD', display_name: 'Standard Plan' },
-              premium: { id: 4, plan_code: 'PREMIUM', display_name: 'Premium Plan' },
-            };
+            const planDisplayName = formData.selectedPlanDisplayName;
+            const planCode = formData.selectedPlanCode;
+            const coveragePlanDetailsText = formData.coveragePlanDetailsText;
+            const planAdultPricing = formData.planAdultPricing;
+            const planChildPricing = formData.planChildPricing;
+            const selectedPlanDetails = formData.selectedPlanDetails;
 
-            // Plan pricing data (same as in travelDetails.tsx)
-            const planPricingData: Record<string, {
-              adultPrice: number;
-              childPrice: number;
-              extraPerDay: number;
-              maxDays: number;
-            }> = {
-              umrah_ema: { adultPrice: 140.0, childPrice: 115.0, extraPerDay: 15.0, maxDays: 16 },
-              basic: { adultPrice: 100.0, childPrice: 80.0, extraPerDay: 10.0, maxDays: 14 },
-              standard: { adultPrice: 150.0, childPrice: 120.0, extraPerDay: 20.0, maxDays: 18 },
-              premium: { adultPrice: 200.0, childPrice: 160.0, extraPerDay: 25.0, maxDays: 21 },
-            };
-
-            const selectedPlan = formData.umrahCoveragePlan || '';
-            const planDetails = planMapping[selectedPlan] || planMapping.umrah_ema;
-            const planPricing = planPricingData[selectedPlan] || planPricingData.umrah_ema;
-
-            // Generate coveragePlanDetailsText
-            const coveragePlanDetailsText = `Duration of Travel: CHILD - Up to ${planPricing.maxDays} days (Below 18 years old): $${planPricing.childPrice.toFixed(0)} ADULT- Up to ${planPricing.maxDays} days (Above 18 years old): $${planPricing.adultPrice.toFixed(0)} Additional Days: $${planPricing.extraPerDay.toFixed(0)}/Day`;
+            if (!planDisplayName || !coveragePlanDetailsText || !planAdultPricing || !planChildPricing) {
+              showErrorToast('Plan details are missing. Please revisit Travel Details step.', 'Error !!');
+              return;
+            }
 
             // Map customers to customer_information format
             const customerInformation = (formData.customers || []).map((customer) => {
@@ -212,6 +202,7 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
               name: formData.name,
               phone: formData.phone,
               email: formData.email,
+              ...(formData.travelAgencyName && { travel_agency_name: formData.travelAgencyName }),
               name_nok: formData.nextOfKinName,
               phone_nok: formData.nextOfKinPhone,
               email_nok: formData.nextOfKinEmail,
@@ -219,9 +210,9 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
               date_of_arrival: formData.arrivalDate ? new Date(formData.arrivalDate + 'T00:00:00').toISOString() : '',
               number_of_days: parseInt(formData.numberOfDays || '0', 10),
               destination_country: formData.destination,
-              coverage_plan: planDetails.display_name,
-              coverage_plan_id: planDetails.id,
-              coveragePlanDetailsText: coveragePlanDetailsText,
+              coverage_plan: planDisplayName,
+              coverage_plan_id: planId,
+              // coveragePlanDetailsText: coveragePlanDetailsText,
               number_of_adults: formData.adults || 0,
               number_of_children: formData.children || 0,
               customer_information: customerInformation,
@@ -229,28 +220,29 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
               is_not_discharged_from_hospital: formData.notDischargedWithin30Days,
               is_pdpa_consent_accepted: formData.pdpaConsent,
               payment_details: {
-                referral_code: referralCodeValue || '',
                 orderCreationId: orderId,
                 razorpayPaymentId: razorpayData.razorpay_payment_id,
+                razorpayOrderId: razorpayData.razorpay_order_id,
+                discount_amount: 0,
+                bill_amount: billAmount,
+                final_bill_amount: billAmount,
+                referral_code: referralCodeValue || '',
               },
               plan_details: {
-                plan: {
-                  id: planDetails.id,
-                  plan_code: planDetails.plan_code,
-                  display_name: planDetails.display_name,
-                },
+                plan: selectedPlanDetails,
+                adultPricing: planAdultPricing,
+                childPricing: planChildPricing,
               },
             };
 
             console.log('Policy purchase payload:', JSON.stringify(policyPayload, null, 2));
-
             const purchaseResponse = await purchasePolicy(policyPayload).unwrap();
 
             console.log('Policy purchase response:', purchaseResponse);
 
-            if (purchaseResponse?.success) {
+            if (purchaseResponse?.data?.success) {
               showSuccessToast('Policy purchased successfully!', 'Success !!');
-              // TODO: Navigate to success screen or next step
+              navigation.navigate(Screens.BuyPolicySuccess);
             } else {
               showErrorToast('Failed to purchase policy', 'Error !!');
             }

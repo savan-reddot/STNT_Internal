@@ -22,4 +22,5 @@ export const Screens = {
   Onboard: 'Onboard',
   BottomTab: 'BottomTab',
   BuyPolicy: 'BuyPolicy',
+  BuyPolicySuccess: 'BuyPolicySuccess',
 } as const;
