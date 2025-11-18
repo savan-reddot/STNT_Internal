@@ -22,6 +22,18 @@ interface PaymentProps {
   getValues: UseFormGetValues<PolicyFormData>;
 }
 
+interface DiscountInfo {
+  discountAmount: number;
+  finalBillAmount: number;
+  referralData?: {
+    code?: string;
+    influencer_name?: string;
+    discount_type?: string;
+    discount_percentage?: string;
+    maximum_discount?: string;
+  };
+}
+
 const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) => {
   const theme = useTheme();
   const navigation = useNavigation<any>();
@@ -32,25 +44,61 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
   const [createPaymentOrder, { isLoading: isCreatingOrder }] = usePayment_ordersMutation();
   const [verifyPayment, { isLoading: isVerifyingPayment }] = usePayment_successMutation();
   const [purchasePolicy, { isLoading: isPurchasingPolicy }] = usePolicy_purchase_formMutation();
+  const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null);
+  const [isCodeApplied, setIsCodeApplied] = useState(false);
 
   // Get form data for payment
   const name = watch('name') || user?.firstName || '';
   const email = watch('email') || user?.email || '';
   const phone = watch('phone') || user?.phone || '';
 
+  const formatCurrency = (value: number) => {
+    const numericValue = Number.isFinite(value) ? value : 0;
+    return `$ ${numericValue.toFixed(2)}`;
+  };
+
   // Extract the price from countryOfTravel (format: "$140.00")
-  // Format it to match screenshot: "$ 140.00" (with space after $)
-  let insuranceTotal = '$ 0.00';
   let billAmount = 0;
   if (countryOfTravel.includes('$')) {
     // Remove $ and add space, e.g., "$140.00" -> "$ 140.00"
     const price = countryOfTravel.replace('$', '').trim();
-    insuranceTotal = `$ ${price}`;
     // Extract numeric value for API (e.g., "140.00" -> 140)
     billAmount = parseFloat(price) || 0;
   }
+  const insuranceTotal = formatCurrency(billAmount);
+  const amountToPay = discountInfo?.finalBillAmount ?? billAmount;
+  const formattedDiscountAmount = formatCurrency(discountInfo?.discountAmount ?? 0);
+  const formattedAmountToPay = formatCurrency(amountToPay);
+  const formatOptionalNumber = (value?: string) => {
+    if (!value) {
+      return null;
+    }
+    const parsed = parseFloat(value);
+    if (Number.isNaN(parsed)) {
+      return null;
+    }
+    return Number.isInteger(parsed) ? parsed.toFixed(0) : parsed.toFixed(2);
+  };
+  const referralMessage = isCodeApplied
+    ? (() => {
+      const percentage = formatOptionalNumber(discountInfo?.referralData?.discount_percentage);
+      const maximum = formatOptionalNumber(discountInfo?.referralData?.maximum_discount);
+      if (percentage && maximum) {
+        return `Referral code applied successfully. You get ${percentage}% extra discount (Upto $${maximum})`;
+      }
+      return 'Referral code applied successfully.';
+    })()
+    : '';
 
   const handleApplyCode = async () => {
+    if (isCodeApplied) {
+      setDiscountInfo(null);
+      setIsCodeApplied(false);
+      setReferralCodeValue('');
+      showSuccessToast('Referral code removed', 'Success !!');
+      return;
+    }
+
     if (!referralCodeValue.trim()) {
       showErrorToast('Please enter a referral code', 'Error !!');
       return;
@@ -67,6 +115,19 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
         bill_amount: billAmount,
       }).unwrap();
 
+      const responseData = response?.data;
+      console.log('applyReferralCode ----> ', responseData);
+      if (!responseData) {
+        showErrorToast('Invalid response from server', 'Error !!');
+        return;
+      }
+
+      setDiscountInfo({
+        discountAmount: parseFloat(responseData.discount_amount) || 0,
+        finalBillAmount: parseFloat(responseData.final_bill_amount) || billAmount,
+        referralData: responseData.referral_data || undefined,
+      });
+      setIsCodeApplied(true);
       showSuccessToast('Referral code applied successfully', 'Success !!');
     } catch (error: any) {
       const errorMessage = error?.data?.message || error?.message || 'Failed to apply referral code';
@@ -76,13 +137,13 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
 
   const handleMakePayment = async () => {
     console.log('billAmount', billAmount);
-    if (billAmount === 0) {
+    if (amountToPay === 0) {
       showErrorToast('Invalid payment amount', 'Error !!');
       return;
     }
 
     // Convert amount to smallest currency unit (cents for SGD)
-    const amountInSGD = Math.round(billAmount * 100);
+    const amountInSGD = Math.round(amountToPay * 100);
 
     try {
       // Step 1: Create payment order via API
@@ -223,10 +284,10 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
                 orderCreationId: orderId,
                 razorpayPaymentId: razorpayData.razorpay_payment_id,
                 razorpayOrderId: razorpayData.razorpay_order_id,
-                discount_amount: 0,
+                discount_amount: discountInfo?.discountAmount ?? 0,
                 bill_amount: billAmount,
-                final_bill_amount: billAmount,
-                referral_code: referralCodeValue || '',
+                final_bill_amount: amountToPay,
+                referral_code: isCodeApplied ? referralCodeValue.trim() : '',
               },
               plan_details: {
                 plan: selectedPlanDetails,
@@ -294,16 +355,18 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
           <View style={styles(theme).referralCodeContainer}>
             <TextInput
               mode="outlined"
-              placeholder="Test123"
+              placeholder="Code"
               value={referralCodeValue}
               onChangeText={setReferralCodeValue}
               style={styles(theme).referralCodeInput}
               outlineStyle={{ borderRadius: metrics.baseRadius }}
+              editable={!isCodeApplied}
             />
             <TouchableOpacity
               onPress={handleApplyCode}
               style={[
                 styles(theme).applyButton,
+                isCodeApplied && styles(theme).removeButton,
                 isApplyingCode && styles(theme).applyButtonDisabled,
               ]}
               disabled={isApplyingCode}
@@ -311,10 +374,15 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
               {isApplyingCode ? (
                 <ActivityIndicator color="white" size="small" />
               ) : (
-                <Text style={styles(theme).applyButtonText}>Apply Code</Text>
+                <Text style={styles(theme).applyButtonText}>
+                  {isCodeApplied ? 'Remove Code' : 'Apply Code'}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
+          {!!referralMessage && (
+            <Text style={styles(theme).referralSuccessText}>{referralMessage}</Text>
+          )}
         </View>
 
         {/* Bill Summary Section */}
@@ -326,6 +394,20 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
             <Text style={fontStyle(theme).headingSmall}>Insurance Total</Text>
             <Text style={[fontStyle(theme).headingSmall, { fontWeight: 'bold' }]}>
               {insuranceTotal}
+            </Text>
+          </View>
+          {discountInfo && (
+            <View style={[styles(theme).billSummaryRow, { marginTop: metrics.baseMargin }]}>
+              <Text style={fontStyle(theme).headingSmall}>Discount</Text>
+              <Text style={[fontStyle(theme).headingSmall, styles(theme).discountValueText]}>
+                - {formattedDiscountAmount}
+              </Text>
+            </View>
+          )}
+          <View style={[styles(theme).billSummaryRow, { marginTop: metrics.baseMargin }]}>
+            <Text style={[fontStyle(theme).headingSmall, { fontWeight: 'bold' }]}>To Pay</Text>
+            <Text style={[fontStyle(theme).headingSmall, styles(theme).amountToPayText]}>
+              {formattedAmountToPay}
             </Text>
           </View>
         </View>
@@ -373,15 +455,22 @@ const styles = (theme: MD3Theme) =>
       borderRadius: metrics.baseRadius,
       justifyContent: 'center',
       alignItems: 'center',
-      minWidth: 100,
+      width: 130,
     },
     applyButtonDisabled: {
       opacity: 0.6,
+    },
+    removeButton: {
+      backgroundColor: '#D32F2F',
     },
     applyButtonText: {
       color: 'white',
       fontSize: 14,
       fontWeight: '600',
+    },
+    referralSuccessText: {
+      color: '#4CAF50',
+      marginTop: metrics.baseMargin / 2,
     },
     billSummaryContainer: {
       marginBottom: metrics.doubleMargin * 2,
@@ -393,6 +482,14 @@ const styles = (theme: MD3Theme) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+    },
+    discountValueText: {
+      color: '#D32F2F',
+      fontWeight: 'bold',
+    },
+    amountToPayText: {
+      color: '#1976D2',
+      fontWeight: 'bold',
     },
     makePaymentContainer: {
       marginTop: metrics.doubleMargin,
