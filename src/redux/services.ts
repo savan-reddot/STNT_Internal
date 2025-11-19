@@ -7,7 +7,7 @@ console.log('API_URL ----> ', API_URL, RAZORPAY_KEY_ID);
 export const apiClient = createApi({
   reducerPath: 'apiClient',
   baseQuery: fetchBaseQuery({
-    baseUrl: API_URL,
+    baseUrl: __DEV__ ? 'https://staging.stntinternational.com/api/' : API_URL,
     prepareHeaders: async (headers, { endpoint, arg }) => {
       try {
         let token;

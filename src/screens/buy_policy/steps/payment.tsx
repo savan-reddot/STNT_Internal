@@ -35,9 +35,9 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
   const user = useAppSelector(getUser);
   const [referralCodeValue, setReferralCodeValue] = useState('');
   const countryOfTravel = watch('countryOfTravel') || '';
-  const [applyReferralCode, { isLoading: isApplyingCode }] = useApply_referral_codeMutation();
-  const [createPaymentOrder, { isLoading: isCreatingOrder }] = usePayment_ordersMutation();
-  const [verifyPayment, { isLoading: isVerifyingPayment }] = usePayment_successMutation();
+  const [apply_referral_code, { isLoading: isApplyingCode }] = useApply_referral_codeMutation();
+  const [payment_orders, { isLoading: isCreatingOrder }] = usePayment_ordersMutation();
+  const [payment_success, { isLoading: isVerifyingPayment }] = usePayment_successMutation();
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null);
   const [isCodeApplied, setIsCodeApplied] = useState(false);
 
@@ -104,7 +104,7 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
     }
 
     try {
-      const response = await applyReferralCode({
+      const response = await apply_referral_code({
         referral_code: referralCodeValue.trim(),
         bill_amount: billAmount,
       }).unwrap();
@@ -142,7 +142,7 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
     try {
       // Step 1: Create payment order via API
       console.log('Creating payment order...', { amount: amountInSGD, currency: 'SGD' });
-      const orderResponse = await createPaymentOrder({
+      const orderResponse = await payment_orders({
         amount: amountInSGD,
         currency: 'SGD',
       });
@@ -170,7 +170,7 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
       // Step 2: Open Razorpay checkout with order_id
       const options = {
         currency: 'SGD',
-        key: __DEV__ ? 'rzp_test_sg_jTyhhA2UxKAEaT' : RAZORPAY_KEY_ID,
+        key: __DEV__ ? 'rzp_test_sg_0a26QO4pWeTsIH' : RAZORPAY_KEY_ID,
         amount: amountInSGD,
         order_id: orderId,
         prefill: {
@@ -188,7 +188,7 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
       // Step 3: Verify payment with backend API
       try {
         console.log('Verifying payment with backend...');
-        const verificationResponse = await verifyPayment({
+        const verificationResponse = await payment_success({
           orderCreationId: orderId,
           razorpayPaymentId: razorpayData?.razorpay_payment_id,
           razorpayOrderId: razorpayData?.razorpay_order_id,
@@ -207,7 +207,7 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
             discountAmount: discountInfo?.discountAmount ?? 0,
             billAmount,
             finalBillAmount: amountToPay,
-            referralCode: isCodeApplied ? referralCodeValue.trim() : undefined,
+            referralCode: isCodeApplied ? referralCodeValue.trim() : "",
             referralDetails: discountInfo?.referralData,
             paymentTimestamp: new Date().toISOString(),
           };

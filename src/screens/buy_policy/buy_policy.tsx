@@ -39,6 +39,26 @@ const steps = [
 const getStepPercentage = (stepIndex: number) =>
   Math.round(((stepIndex + 1) / steps.length) * 100);
 
+const convertDateToISO = (value?: string) => {
+  if (!value) {
+    return '';
+  }
+  if (value.includes('T')) {
+    return new Date(value).toISOString();
+  }
+  // expect DD/MM/YYYY
+  const parts = value.split('/');
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    const isoDate = new Date(`${year}-${month}-${day}T00:00:00`);
+    if (!isNaN(isoDate.getTime())) {
+      return isoDate.toISOString();
+    }
+  }
+  const fallback = new Date(value);
+  return isNaN(fallback.getTime()) ? '' : fallback.toISOString();
+};
+
 const BuyPolicy = ({ navigation }: any) => {
   const theme = useTheme();
   const user = useAppSelector(getUser);
@@ -47,7 +67,7 @@ const BuyPolicy = ({ navigation }: any) => {
   const [selectedDateField, setSelectedDateField] = useState<string>('');
   const [selectedCustomerIndex, setSelectedCustomerIndex] = useState<number | null>(null);
   const [paymentMeta, setPaymentMeta] = useState<PaymentCompletionData | null>(null);
-  const [purchasePolicy, { isLoading: isPurchasingPolicy }] = usePolicy_purchase_formMutation();
+  const [policy_purchase_form, { isLoading: isPurchasingPolicy }] = usePolicy_purchase_formMutation();
 
   const {
     control,
@@ -59,18 +79,18 @@ const BuyPolicy = ({ navigation }: any) => {
   } = useForm<PolicyFormData>({
     mode: 'onChange',
     defaultValues: {
-      travellingSaudiWith: '',
+      travellingSaudiWith: __DEV__ ? 'individual' : '',
       travelAgencyName: '',
       name: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '',
-      phone: '',
+      phone: __DEV__ ? '7698533947' : '',
       email: user?.email || '',
-      nextOfKinName: '',
-      nextOfKinPhone: '',
-      nextOfKinEmail: '',
-      departureDate: '',
-      arrivalDate: '',
-      numberOfDays: '',
-      destination: '',
+      nextOfKinName: __DEV__ ? 'test' : '',
+      nextOfKinPhone: __DEV__ ? '7698533947' : '',
+      nextOfKinEmail: __DEV__ ? 'savan@gmail.com' : '',
+      departureDate: __DEV__ ? '19/11/2025' : '',
+      arrivalDate: __DEV__ ? '26/11/2025' : '',
+      numberOfDays: __DEV__ ? '7' : '',
+      destination: __DEV__ ? 'Saudi Arabia' : '',
       umrahCoveragePlan: '',
       countryOfTravel: '',
       selectedPlanDisplayName: '',
@@ -79,12 +99,12 @@ const BuyPolicy = ({ navigation }: any) => {
       selectedPlanDetails: null,
       planAdultPricing: null,
       planChildPricing: null,
-      adults: 0,
+      adults: __DEV__ ? 1 : 0,
       children: 0,
       customers: [],
-      pdpaConsent: false,
-      notDischargedWithin30Days: false,
-      confirmInformationAccurate: false,
+      pdpaConsent: __DEV__ ? true : false,
+      notDischargedWithin30Days: __DEV__ ? true : false,
+      confirmInformationAccurate: __DEV__ ? true : false,
       referralCode: '',
       insuranceTotal: '',
       cardNumber: '',
@@ -341,8 +361,7 @@ const BuyPolicy = ({ navigation }: any) => {
     }
 
     const customerInformation = (data.customers || []).map((customer) => {
-      const dobDate = customer.dateOfBirth ? new Date(customer.dateOfBirth + 'T00:00:00') : new Date();
-      const dobISO = dobDate.toISOString();
+      const dobISO = convertDateToISO(customer.dateOfBirth);
       const genderCapitalized = customer.gender
         ? customer.gender.charAt(0).toUpperCase() + customer.gender.slice(1).toLowerCase()
         : '';
@@ -368,8 +387,8 @@ const BuyPolicy = ({ navigation }: any) => {
       name_nok: data.nextOfKinName,
       phone_nok: data.nextOfKinPhone,
       email_nok: data.nextOfKinEmail,
-      date_of_departure: data.departureDate ? new Date(data.departureDate + 'T00:00:00').toISOString() : '',
-      date_of_arrival: data.arrivalDate ? new Date(data.arrivalDate + 'T00:00:00').toISOString() : '',
+      date_of_departure: convertDateToISO(data.departureDate),
+      date_of_arrival: convertDateToISO(data.arrivalDate),
       number_of_days: parseInt(data.numberOfDays || '0', 10),
       destination_country: data.destination,
       coverage_plan: planDisplayName,
@@ -381,13 +400,13 @@ const BuyPolicy = ({ navigation }: any) => {
       is_not_discharged_from_hospital: data.notDischargedWithin30Days,
       is_pdpa_consent_accepted: data.pdpaConsent,
       payment_details: {
-        orderCreationId: paymentMeta.orderCreationId,
-        razorpayPaymentId: paymentMeta.razorpayPaymentId,
-        razorpayOrderId: paymentMeta.razorpayOrderId,
-        discount_amount: paymentMeta.discountAmount,
-        bill_amount: paymentMeta.billAmount,
-        final_bill_amount: paymentMeta.finalBillAmount,
-        referral_code: paymentMeta.referralCode || '',
+        orderCreationId: paymentMeta?.orderCreationId,
+        razorpayPaymentId: paymentMeta?.razorpayPaymentId,
+        razorpayOrderId: paymentMeta?.razorpayOrderId,
+        discount_amount: paymentMeta?.discountAmount,
+        bill_amount: paymentMeta?.billAmount,
+        final_bill_amount: paymentMeta?.finalBillAmount,
+        referral_code: paymentMeta?.referralCode || '',
       },
       plan_details: {
         plan: selectedPlanDetails,
@@ -396,9 +415,11 @@ const BuyPolicy = ({ navigation }: any) => {
       },
     };
 
+    console.log('policyPayload ----> ', policyPayload);
     try {
-      const response = await purchasePolicy(policyPayload).unwrap();
-      if (response?.data?.success) {
+      const response = await policy_purchase_form(policyPayload).unwrap();
+      console.log('response ----> ', response);
+      if (response?.success) {
         showSuccessToast('Policy purchased successfully!', 'Success !!');
         navigation.navigate(Screens.BuyPolicySuccess);
       } else {

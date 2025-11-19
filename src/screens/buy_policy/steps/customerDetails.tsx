@@ -68,11 +68,11 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
       for (let i = 0; i < toAdd; i++) {
         const isChild = currentCustomers.length + i >= adults;
         append({
-          fullName: '',
-          passportNumber: '',
-          nationality: '',
-          gender: '',
-          dateOfBirth: '',
+          fullName: __DEV__ ? 'Savan' : '',
+          passportNumber: __DEV__ ? '1234567890' : '',
+          nationality: __DEV__ ? 'Singaporean' : '',
+          gender: __DEV__ ? 'Male' : '',
+          dateOfBirth: __DEV__ ? '1990-01-01' : '',
           isChild: isChild,
         });
       }
