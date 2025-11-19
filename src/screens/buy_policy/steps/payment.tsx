@@ -1,25 +1,21 @@
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
 import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
-import { Control, Controller, FieldErrors, UseFormWatch, UseFormGetValues } from 'react-hook-form';
+import { UseFormWatch } from 'react-hook-form';
 import RazorpayCheckout from 'react-native-razorpay';
 import { RAZORPAY_KEY_ID } from '@env';
 import fontStyle from '../../../styles/fontStyle';
 import { metrics } from '../../../utils/metrics';
-import { PolicyFormData } from '../types';
+import { PaymentCompletionData, PolicyFormData } from '../types';
 import KeyboardAwareContainer from '../components/KeyboardAwareContainer';
-import { useApply_referral_codeMutation, usePayment_ordersMutation, usePayment_successMutation, usePolicy_purchase_formMutation } from '../../../redux/services';
+import { useApply_referral_codeMutation, usePayment_ordersMutation, usePayment_successMutation } from '../../../redux/services';
 import { showErrorToast, showSuccessToast } from '../../../utils/toastUtils';
 import { useAppSelector } from '../../../redux/hooks';
 import { getUser } from '../../../redux/reducer';
-import { useNavigation } from '@react-navigation/native';
-import { Screens } from '../../../common/screens';
 
 interface PaymentProps {
-  control: Control<PolicyFormData>;
-  errors: FieldErrors<PolicyFormData>;
   watch: UseFormWatch<PolicyFormData>;
-  getValues: UseFormGetValues<PolicyFormData>;
+  onPaymentVerified: (data: PaymentCompletionData) => void;
 }
 
 interface DiscountInfo {
@@ -34,16 +30,14 @@ interface DiscountInfo {
   };
 }
 
-const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) => {
+const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
   const theme = useTheme();
-  const navigation = useNavigation<any>();
   const user = useAppSelector(getUser);
   const [referralCodeValue, setReferralCodeValue] = useState('');
   const countryOfTravel = watch('countryOfTravel') || '';
   const [applyReferralCode, { isLoading: isApplyingCode }] = useApply_referral_codeMutation();
   const [createPaymentOrder, { isLoading: isCreatingOrder }] = usePayment_ordersMutation();
   const [verifyPayment, { isLoading: isVerifyingPayment }] = usePayment_successMutation();
-  const [purchasePolicy, { isLoading: isPurchasingPolicy }] = usePolicy_purchase_formMutation();
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null);
   const [isCodeApplied, setIsCodeApplied] = useState(false);
 
@@ -187,11 +181,13 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
           contact: phone,
           name: name,
         },
-        theme: { color: theme.colors.primary || '#2196F3' },
-        // notes: {
-        //   policy_type: 'Umrah Travel Insurance',
-        //   referral_code: referralCodeValue || undefined,
+        theme: { color: theme.colors.primary || '#61dafb' },
+        // handler: (response: any) => {
+        //   console.log('Razorpay response:', response);
         // },
+        notes: {
+          address: '390 Victoria Street Golden Landmark #03-33 Singapore 188061',
+        },
       };
       console.log('options ----> ', options);
       const razorpayData = await RazorpayCheckout.open(options);
@@ -213,105 +209,21 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
 
         // Check if verification was successful
         if (verificationResponse?.success) {
-          // Step 4: Purchase policy after successful payment verification
-          try {
-            console.log('Purchasing policy...');
-            const formData = getValues();
-            const planId = parseInt(formData.umrahCoveragePlan || '0', 10);
-            if (!planId) {
-              showErrorToast('Please select a plan before proceeding', 'Error !!');
-              return;
-            }
+          const completionPayload: PaymentCompletionData = {
+            orderCreationId: orderId,
+            razorpayPaymentId: razorpayData?.razorpay_payment_id ?? '',
+            razorpayOrderId: razorpayData?.razorpay_order_id ?? '',
+            razorpaySignature: razorpayData?.razorpay_signature ?? '',
+            discountAmount: discountInfo?.discountAmount ?? 0,
+            billAmount,
+            finalBillAmount: amountToPay,
+            referralCode: isCodeApplied ? referralCodeValue.trim() : undefined,
+            referralDetails: discountInfo?.referralData,
+            paymentTimestamp: new Date().toISOString(),
+          };
 
-            const planDisplayName = formData.selectedPlanDisplayName;
-            const planCode = formData.selectedPlanCode;
-            const coveragePlanDetailsText = formData.coveragePlanDetailsText;
-            const planAdultPricing = formData.planAdultPricing;
-            const planChildPricing = formData.planChildPricing;
-            const selectedPlanDetails = formData.selectedPlanDetails;
-
-            if (!planDisplayName || !coveragePlanDetailsText || !planAdultPricing || !planChildPricing) {
-              showErrorToast('Plan details are missing. Please revisit Travel Details step.', 'Error !!');
-              return;
-            }
-
-            // Map customers to customer_information format
-            const customerInformation = (formData.customers || []).map((customer) => {
-              // Convert date format from YYYY-MM-DD to ISO string
-              const dobDate = customer.dateOfBirth ? new Date(customer.dateOfBirth + 'T00:00:00') : new Date();
-              const dobISO = dobDate.toISOString();
-
-              // Capitalize gender (Male/Female)
-              const genderCapitalized = customer.gender
-                ? customer.gender.charAt(0).toUpperCase() + customer.gender.slice(1).toLowerCase()
-                : '';
-
-              return {
-                id: `${customer.dateOfBirth}#${customer.passportNumber}`,
-                full_name: customer.fullName,
-                passport_number: customer.passportNumber,
-                nationality: customer.nationality,
-                gender: genderCapitalized,
-                dob: dobISO,
-                entry_type: customer.isChild ? 'CHILD' : 'ADULT',
-              };
-            });
-
-            // Prepare policy purchase payload
-            const policyPayload = {
-              travel_type: formData.travellingSaudiWith && formData.travellingSaudiWith.toLowerCase() !== 'individual' ? 'group' : 'individual',
-              name: formData.name,
-              phone: formData.phone,
-              email: formData.email,
-              ...(formData.travelAgencyName && { travel_agency_name: formData.travelAgencyName }),
-              name_nok: formData.nextOfKinName,
-              phone_nok: formData.nextOfKinPhone,
-              email_nok: formData.nextOfKinEmail,
-              date_of_departure: formData.departureDate ? new Date(formData.departureDate + 'T00:00:00').toISOString() : '',
-              date_of_arrival: formData.arrivalDate ? new Date(formData.arrivalDate + 'T00:00:00').toISOString() : '',
-              number_of_days: parseInt(formData.numberOfDays || '0', 10),
-              destination_country: formData.destination,
-              coverage_plan: planDisplayName,
-              coverage_plan_id: planId,
-              // coveragePlanDetailsText: coveragePlanDetailsText,
-              number_of_adults: formData.adults || 0,
-              number_of_children: formData.children || 0,
-              customer_information: customerInformation,
-              is_info_correct: formData.confirmInformationAccurate,
-              is_not_discharged_from_hospital: formData.notDischargedWithin30Days,
-              is_pdpa_consent_accepted: formData.pdpaConsent,
-              payment_details: {
-                orderCreationId: orderId,
-                razorpayPaymentId: razorpayData.razorpay_payment_id,
-                razorpayOrderId: razorpayData.razorpay_order_id,
-                discount_amount: discountInfo?.discountAmount ?? 0,
-                bill_amount: billAmount,
-                final_bill_amount: amountToPay,
-                referral_code: isCodeApplied ? referralCodeValue.trim() : '',
-              },
-              plan_details: {
-                plan: selectedPlanDetails,
-                adultPricing: planAdultPricing,
-                childPricing: planChildPricing,
-              },
-            };
-
-            console.log('Policy purchase payload:', JSON.stringify(policyPayload, null, 2));
-            const purchaseResponse = await purchasePolicy(policyPayload).unwrap();
-
-            console.log('Policy purchase response:', purchaseResponse);
-
-            if (purchaseResponse?.data?.success) {
-              showSuccessToast('Policy purchased successfully!', 'Success !!');
-              navigation.navigate(Screens.BuyPolicySuccess);
-            } else {
-              showErrorToast('Failed to purchase policy', 'Error !!');
-            }
-          } catch (purchaseError: any) {
-            console.error('Policy purchase error:', purchaseError);
-            const errorMessage = purchaseError?.data?.message || purchaseError?.message || 'Failed to purchase policy';
-            showErrorToast(errorMessage, 'Error !!');
-          }
+          onPaymentVerified(completionPayload);
+          showSuccessToast('Payment verified successfully. Review details before submitting.', 'Success !!');
         } else {
           showErrorToast('Payment verification failed', 'Error !!');
         }
@@ -418,11 +330,11 @@ const Payment: React.FC<PaymentProps> = ({ control, errors, watch, getValues }) 
             onPress={handleMakePayment}
             style={[
               styles(theme).makePaymentButton,
-              (isCreatingOrder || isVerifyingPayment || isPurchasingPolicy) && styles(theme).makePaymentButtonDisabled,
+              (isCreatingOrder || isVerifyingPayment) && styles(theme).makePaymentButtonDisabled,
             ]}
-            disabled={isCreatingOrder || isVerifyingPayment || isPurchasingPolicy}
+            disabled={isCreatingOrder || isVerifyingPayment}
           >
-            {(isCreatingOrder || isVerifyingPayment || isPurchasingPolicy) ? (
+            {(isCreatingOrder || isVerifyingPayment) ? (
               <ActivityIndicator color="white" size="small" />
             ) : (
               <Text style={styles(theme).makePaymentButtonText}>Make Payment</Text>

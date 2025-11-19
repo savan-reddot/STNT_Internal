@@ -55,9 +55,7 @@ export interface PolicyFormData {
   }>;
 
   // Notice & Declaration
-  importantNoticeDeclaration: boolean;
   pdpaConsent: boolean;
-  freeIndependentTraveller: boolean;
   notDischargedWithin30Days: boolean;
   confirmInformationAccurate: boolean;
 
@@ -72,5 +70,24 @@ export interface PolicyFormData {
   cvv: string;
   billingAddress: string;
   transactionId: string;
+}
+
+export interface PaymentCompletionData {
+  orderCreationId: string;
+  razorpayPaymentId: string;
+  razorpayOrderId: string;
+  razorpaySignature: string;
+  discountAmount: number;
+  billAmount: number;
+  finalBillAmount: number;
+  referralCode?: string;
+  referralDetails?: {
+    code?: string;
+    influencer_name?: string;
+    discount_type?: string;
+    discount_percentage?: string;
+    maximum_discount?: string;
+  };
+  paymentTimestamp?: string;
 }
 

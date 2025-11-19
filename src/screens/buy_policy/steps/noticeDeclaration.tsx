@@ -27,42 +27,11 @@ const NoticeDeclaration: React.FC<NoticeDeclarationProps> = ({
       <View>
         {/* Important notice & declaration section */}
         <View style={styles(theme).sectionContainer}>
-          <Controller
-            control={control}
-            name="importantNoticeDeclaration"
-            rules={{ required: 'You must agree to the important notice & declaration' }}
-            render={({ field: { onChange, value } }) => (
-              <View style={styles(theme).fieldContainer}>
-                <TouchableOpacity
-                  onPress={() => onChange(!value)}
-                  style={{ flexDirection: 'row', alignItems: 'flex-start' }}
-                >
-                  <View
-                    style={[
-                      styles(theme).checkbox,
-                      value && styles(theme).checkboxSelected,
-                      { marginEnd: metrics.baseMargin, marginTop: 2 },
-                    ]}
-                  >
-                    {value && <Text style={{ color: 'white', fontSize: 12 }}>✓</Text>}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[fontStyle(theme).headingSmall, { flex: 1 }]}>
-                      Important notice & declaration
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-                {errors.importantNoticeDeclaration && (
-                  <Text style={styles(theme).errorText}>
-                    {errors.importantNoticeDeclaration.message}
-                  </Text>
-                )}
-              </View>
-            )}
-          />
-
+          <Text style={styles(theme).bodyText}>
+            Important notice & declaration
+          </Text>
           <View style={styles(theme).textContainer}>
-            <Text style={styles(theme).bodyText}>
+            <Text style={[styles(theme).bodyText, { marginTop: metrics.baseMargin }]}>
               This insurance must be purchased before departure from Singapore and the journey/trip shall involve return to Singapore within the period of insurance.
             </Text>
             <Text style={[styles(theme).bodyText, { marginTop: metrics.baseMargin }]}>
@@ -92,12 +61,16 @@ const NoticeDeclaration: React.FC<NoticeDeclarationProps> = ({
 
         {/* PDPA Consent section */}
         <View style={styles(theme).sectionContainer}>
+          <Text style={styles(theme).bodyText}>
+            PDPA Consent
+          </Text>
+
           <Controller
             control={control}
             name="pdpaConsent"
             rules={{ required: 'You must agree to PDPA consent' }}
             render={({ field: { onChange, value } }) => (
-              <View style={styles(theme).fieldContainer}>
+              <View style={[styles(theme).fieldContainer, { marginTop: metrics.baseMargin }]}>
                 <TouchableOpacity
                   onPress={() => onChange(!value)}
                   style={{ flexDirection: 'row', alignItems: 'flex-start' }}
@@ -106,7 +79,7 @@ const NoticeDeclaration: React.FC<NoticeDeclarationProps> = ({
                     style={[
                       styles(theme).checkbox,
                       value && styles(theme).checkboxSelected,
-                      { marginEnd: metrics.baseMargin, marginTop: 2 },
+                      { marginEnd: metrics.baseMargin, marginTop: metrics.baseMargin, },
                     ]}
                   >
                     {value && <Text style={{ color: 'white', fontSize: 12 }}>✓</Text>}
@@ -161,40 +134,6 @@ const NoticeDeclaration: React.FC<NoticeDeclarationProps> = ({
         <View style={styles(theme).sectionContainer}>
           <Controller
             control={control}
-            name="freeIndependentTraveller"
-            rules={{ required: 'This field is required' }}
-            render={({ field: { onChange, value } }) => (
-              <View style={styles(theme).fieldContainer}>
-                <TouchableOpacity
-                  onPress={() => onChange(!value)}
-                  style={{ flexDirection: 'row', alignItems: 'flex-start' }}
-                >
-                  <View
-                    style={[
-                      styles(theme).checkbox,
-                      value && styles(theme).checkboxSelected,
-                      { marginEnd: metrics.baseMargin, marginTop: 2 },
-                    ]}
-                  >
-                    {value && <Text style={{ color: 'white', fontSize: 12 }}>✓</Text>}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[fontStyle(theme).headingSmall, { flex: 1 }]}>
-                      I am/We are not registered with any (Singapore) travel agency's umrah tour package and is/are on free independent traveller(s).<Text style={{ color: 'red' }}>*</Text>
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-                {errors.freeIndependentTraveller && (
-                  <Text style={styles(theme).errorText}>
-                    {errors.freeIndependentTraveller.message}
-                  </Text>
-                )}
-              </View>
-            )}
-          />
-
-          <Controller
-            control={control}
             name="notDischargedWithin30Days"
             rules={{ required: 'This field is required' }}
             render={({ field: { onChange, value } }) => (
@@ -207,7 +146,7 @@ const NoticeDeclaration: React.FC<NoticeDeclarationProps> = ({
                     style={[
                       styles(theme).checkbox,
                       value && styles(theme).checkboxSelected,
-                      { marginEnd: metrics.baseMargin, marginTop: 2 },
+                      { marginEnd: metrics.baseMargin, marginTop: metrics.baseMargin },
                     ]}
                   >
                     {value && <Text style={{ color: 'white', fontSize: 12 }}>✓</Text>}
@@ -241,7 +180,7 @@ const NoticeDeclaration: React.FC<NoticeDeclarationProps> = ({
                     style={[
                       styles(theme).checkbox,
                       value && styles(theme).checkboxSelected,
-                      { marginEnd: metrics.baseMargin, marginTop: 2 },
+                      { marginEnd: metrics.baseMargin, marginTop: metrics.baseMargin },
                     ]}
                   >
                     {value && <Text style={{ color: 'white', fontSize: 12 }}>✓</Text>}

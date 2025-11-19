@@ -169,16 +169,28 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
     setPreviousDestination(selectedDestination || '');
   }, [selectedDestination, previousDestination, setValue]);
 
+  const normalizeString = (value?: string) => (value || '').trim().toLowerCase();
+
   // Fetch plans when destination is selected (only once per destination)
   useEffect(() => {
     const fetchPlans = async () => {
       if (selectedDestination && !hasFetchedPlans) {
         try {
           const resp = await getplans(0);
+          console.log('fetchPlans', resp?.data?.data?.rows);
           if (resp?.data?.success) {
             const plansList = resp?.data?.data?.rows;
             if (Array.isArray(plansList) && plansList.length > 0) {
-              const options = plansList
+              const normalizedDestination = normalizeString(selectedDestination);
+              const filteredPlans = plansList.filter((plan: any) => {
+                const coverage = normalizeString(plan?.destination_coverage);
+                if (!coverage || coverage === 'worldwide') {
+                  return true;
+                }
+                return coverage === normalizedDestination;
+              });
+
+              const options = filteredPlans
                 .map((plan: any) => ({
                   label: plan.display_name,
                   value: plan.id?.toString(),
@@ -207,6 +219,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
         try {
           // Fetch all pricings at once
           const resp = await planPricing(0);
+          console.log('fetchAllPricing', resp?.data?.data?.rows);
           if (resp?.data?.success) {
             const allPricings = resp?.data?.data?.rows || [];
             // Process pricing for each plan
@@ -411,7 +424,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                 data={destinationOptions}
                 labelField="label"
                 valueField="value"
-                placeholder="Select"
+                placeholder="Select Destination"
                 value={value}
                 onChange={(item) => onChange(item.value)}
                 containerStyle={styles(theme).dropdownContainer}
@@ -445,7 +458,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                 data={umrahCoverageOptions}
                 labelField="label"
                 valueField="value"
-                placeholder={selectedDestination ? "Select" : "Please select destination first"}
+                placeholder={selectedDestination ? "Select plan" : "Please select destination first"}
                 value={value}
                 onChange={(item) => {
                   onChange(item.value);

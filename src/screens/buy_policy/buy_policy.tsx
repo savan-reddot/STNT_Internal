@@ -16,19 +16,24 @@ import UButton from '../../components/custombutton';
 import { useAppSelector } from '../../redux/hooks';
 import { getUser } from '../../redux/reducer';
 import { format } from 'date-fns';
-import { PolicyFormData } from './types';
+import { PaymentCompletionData, PolicyFormData } from './types';
 import ContactDetails from './steps/contactDetails';
 import TravelDetails from './steps/travelDetails';
 import CustomerDetails from './steps/customerDetails';
 import NoticeDeclaration from './steps/noticeDeclaration';
 import Payment from './steps/payment';
+import PaymentDetailsSummary from './steps/paymentDetailsSummary';
+import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
+import { usePolicy_purchase_formMutation } from '../../redux/services';
+import { Screens } from '../../common/screens';
 
 const steps = [
-  { id: 1, title: 'Contact Details', percentage: 20 },
-  { id: 2, title: 'Travel Details', percentage: 40 },
-  { id: 3, title: 'Customer Details', percentage: 60 },
-  { id: 4, title: 'Notice & Declaration', percentage: 80 },
-  { id: 5, title: 'Payment', percentage: 100 },
+  { id: 1, title: 'Contact Details', percentage: 15 },
+  { id: 2, title: 'Travel Details', percentage: 30 },
+  { id: 3, title: 'Customer Details', percentage: 50 },
+  { id: 4, title: 'Notice & Declaration', percentage: 65 },
+  { id: 5, title: 'Payment', percentage: 85 },
+  { id: 6, title: 'Payment Details', percentage: 100 },
 ];
 
 const BuyPolicy = ({ navigation }: any) => {
@@ -38,13 +43,14 @@ const BuyPolicy = ({ navigation }: any) => {
   const [datePickerVisible, setDatePickerVisible] = useState<string | null>(null);
   const [selectedDateField, setSelectedDateField] = useState<string>('');
   const [selectedCustomerIndex, setSelectedCustomerIndex] = useState<number | null>(null);
+  const [paymentMeta, setPaymentMeta] = useState<PaymentCompletionData | null>(null);
+  const [purchasePolicy, { isLoading: isPurchasingPolicy }] = usePolicy_purchase_formMutation();
 
   const {
     control,
     handleSubmit,
     watch,
     setValue,
-    getValues,
     trigger,
     formState: { errors },
   } = useForm<PolicyFormData>({
@@ -73,9 +79,7 @@ const BuyPolicy = ({ navigation }: any) => {
       adults: 0,
       children: 0,
       customers: [],
-      importantNoticeDeclaration: false,
       pdpaConsent: false,
-      freeIndependentTraveller: false,
       notDischargedWithin30Days: false,
       confirmInformationAccurate: false,
       referralCode: '',
@@ -88,6 +92,14 @@ const BuyPolicy = ({ navigation }: any) => {
       transactionId: '',
     },
   });
+
+  const goToStep = (nextStep: number) => {
+    const boundedStep = Math.max(0, Math.min(nextStep, steps.length - 1));
+    setCurrentStep(boundedStep);
+    if (boundedStep <= 4) {
+      setPaymentMeta(null);
+    }
+  };
 
   const validateCurrentStep = async (): Promise<boolean> => {
     switch (currentStep) {
@@ -160,16 +172,17 @@ const BuyPolicy = ({ navigation }: any) => {
         return customerResult;
       case 3: // Notice & Declaration
         const noticeFields: (keyof PolicyFormData)[] = [
-          'importantNoticeDeclaration',
           'pdpaConsent',
-          'freeIndependentTraveller',
           'notDischargedWithin30Days',
           'confirmInformationAccurate',
         ];
         const noticeResult = await trigger(noticeFields);
         return noticeResult;
       case 4: // Payment
-        // Payment step doesn't require validation - referral code is optional
+        if (!paymentMeta) {
+          Alert.alert('Payment required', 'Please complete your payment before proceeding.');
+          return false;
+        }
         return true;
       default:
         return true;
@@ -179,19 +192,19 @@ const BuyPolicy = ({ navigation }: any) => {
   const handleNext = async () => {
     const isValid = await validateCurrentStep();
     if (isValid && currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      goToStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      goToStep(currentStep - 1);
     }
   };
 
   const handleHeaderBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      goToStep(currentStep - 1);
     } else {
       navigation.goBack();
     }
@@ -287,14 +300,112 @@ const BuyPolicy = ({ navigation }: any) => {
     return undefined;
   };
 
-  const onSubmit = (data: PolicyFormData) => {
-    console.log('Policy Form Data:', data);
-    // TODO: Submit to API when available
-    Alert.alert(
-      'Success',
-      'Policy form submitted successfully! (API integration pending)',
-      [{ text: 'OK', onPress: () => navigation.goBack() }],
-    );
+  const handlePaymentVerified = (data: PaymentCompletionData) => {
+    setPaymentMeta(data);
+    goToStep(5);
+  };
+
+  const handleFinalSubmit = () => {
+    if (isPurchasingPolicy) {
+      return;
+    }
+    handleSubmit(onSubmit)();
+  };
+
+  const onSubmit = async (data: PolicyFormData) => {
+    if (!paymentMeta) {
+      showErrorToast('Complete your payment before submitting', 'Error !!');
+      goToStep(4);
+      return;
+    }
+
+    const planId = parseInt(data.umrahCoveragePlan || '0', 10);
+    if (!planId) {
+      showErrorToast('Please select a plan before proceeding', 'Error !!');
+      goToStep(1);
+      return;
+    }
+
+    const planDisplayName = data.selectedPlanDisplayName;
+    const planAdultPricing = data.planAdultPricing;
+    const planChildPricing = data.planChildPricing;
+    const selectedPlanDetails = data.selectedPlanDetails;
+
+    if (!planDisplayName || !planAdultPricing || !planChildPricing || !selectedPlanDetails) {
+      showErrorToast('Plan details are missing. Please revisit Travel Details step.', 'Error !!');
+      goToStep(1);
+      return;
+    }
+
+    const customerInformation = (data.customers || []).map((customer) => {
+      const dobDate = customer.dateOfBirth ? new Date(customer.dateOfBirth + 'T00:00:00') : new Date();
+      const dobISO = dobDate.toISOString();
+      const genderCapitalized = customer.gender
+        ? customer.gender.charAt(0).toUpperCase() + customer.gender.slice(1).toLowerCase()
+        : '';
+
+      return {
+        id: `${customer.dateOfBirth}#${customer.passportNumber}`,
+        full_name: customer.fullName,
+        passport_number: customer.passportNumber,
+        nationality: customer.nationality,
+        gender: genderCapitalized,
+        dob: dobISO,
+        entry_type: customer.isChild ? 'CHILD' : 'ADULT',
+      };
+    });
+
+    const policyPayload = {
+      travel_type:
+        data.travellingSaudiWith && data.travellingSaudiWith.toLowerCase() !== 'individual' ? 'group' : 'individual',
+      name: data.name,
+      phone: data.phone,
+      email: data.email,
+      ...(data.travelAgencyName && { travel_agency_name: data.travelAgencyName }),
+      name_nok: data.nextOfKinName,
+      phone_nok: data.nextOfKinPhone,
+      email_nok: data.nextOfKinEmail,
+      date_of_departure: data.departureDate ? new Date(data.departureDate + 'T00:00:00').toISOString() : '',
+      date_of_arrival: data.arrivalDate ? new Date(data.arrivalDate + 'T00:00:00').toISOString() : '',
+      number_of_days: parseInt(data.numberOfDays || '0', 10),
+      destination_country: data.destination,
+      coverage_plan: planDisplayName,
+      coverage_plan_id: planId,
+      number_of_adults: data.adults || 0,
+      number_of_children: data.children || 0,
+      customer_information: customerInformation,
+      is_info_correct: data.confirmInformationAccurate,
+      is_not_discharged_from_hospital: data.notDischargedWithin30Days,
+      is_pdpa_consent_accepted: data.pdpaConsent,
+      payment_details: {
+        orderCreationId: paymentMeta.orderCreationId,
+        razorpayPaymentId: paymentMeta.razorpayPaymentId,
+        razorpayOrderId: paymentMeta.razorpayOrderId,
+        discount_amount: paymentMeta.discountAmount,
+        bill_amount: paymentMeta.billAmount,
+        final_bill_amount: paymentMeta.finalBillAmount,
+        referral_code: paymentMeta.referralCode || '',
+      },
+      plan_details: {
+        plan: selectedPlanDetails,
+        adultPricing: planAdultPricing,
+        childPricing: planChildPricing,
+      },
+    };
+
+    try {
+      const response = await purchasePolicy(policyPayload).unwrap();
+      if (response?.data?.success) {
+        showSuccessToast('Policy purchased successfully!', 'Success !!');
+        navigation.navigate(Screens.BuyPolicySuccess);
+      } else {
+        showErrorToast('Failed to purchase policy', 'Error !!');
+      }
+    } catch (error: any) {
+      console.error('Policy purchase error:', error);
+      const errorMessage = error?.data?.message || error?.message || 'Failed to purchase policy';
+      showErrorToast(errorMessage, 'Error !!');
+    }
   };
 
   const renderStep = () => {
@@ -324,7 +435,19 @@ const BuyPolicy = ({ navigation }: any) => {
       case 3:
         return <NoticeDeclaration control={control} errors={errors} />;
       case 4:
-        return <Payment control={control} errors={errors} watch={watch} getValues={getValues} />;
+        return (
+          <Payment
+            watch={watch}
+            onPaymentVerified={handlePaymentVerified}
+          />
+        );
+      case 5:
+        return (
+          <PaymentDetailsSummary
+            watch={watch}
+            paymentMeta={paymentMeta}
+          />
+        );
       default:
         return null;
     }
@@ -368,11 +491,25 @@ const BuyPolicy = ({ navigation }: any) => {
         </View>
 
         <View style={[styles(theme).buttonRow, { padding: metrics.doubleMargin, paddingTop: metrics.baseMargin }]}>
+          {currentStep === steps.length - 1 && (
+            <Text style={[fontStyle(theme).bodySmall, { textAlign: 'center', marginBottom: metrics.smallMargin }]}>
+              Review the details above and tap submit to purchase the policy.
+            </Text>
+          )}
+          {isPurchasingPolicy && currentStep === steps.length - 1 && (
+            <Text style={[fontStyle(theme).bodySmall, { textAlign: 'center', marginBottom: metrics.smallMargin }]}>
+              Processing payment, please wait...
+            </Text>
+          )}
           <UButton
-            title={currentStep === steps.length - 1 ? 'Submit' : 'Next'}
+            title={
+              currentStep === steps.length - 1
+                ? (isPurchasingPolicy ? 'Submitting...' : 'Submit')
+                : 'Next'
+            }
             onPress={
               currentStep === steps.length - 1
-                ? handleSubmit(onSubmit)
+                ? handleFinalSubmit
                 : handleNext
             }
             style={styles(theme).buttonFull}
