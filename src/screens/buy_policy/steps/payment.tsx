@@ -169,24 +169,14 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
 
       // Step 2: Open Razorpay checkout with order_id
       const options = {
-        description: 'Umrah Travel Insurance Policy Payment',
-        image: '', // Optional: Add your company logo URL
         currency: 'SGD',
-        key: RAZORPAY_KEY_ID,
+        key: __DEV__ ? 'rzp_test_sg_jTyhhA2UxKAEaT' : RAZORPAY_KEY_ID,
         amount: amountInSGD,
-        order_id: orderId, // Use order_id from API response
-        name: 'ST&T International',
+        order_id: orderId,
         prefill: {
           email: email,
           contact: phone,
           name: name,
-        },
-        theme: { color: theme.colors.primary || '#61dafb' },
-        // handler: (response: any) => {
-        //   console.log('Razorpay response:', response);
-        // },
-        notes: {
-          address: '390 Victoria Street Golden Landmark #03-33 Singapore 188061',
         },
       };
       console.log('options ----> ', options);

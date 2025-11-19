@@ -28,13 +28,16 @@ import { usePolicy_purchase_formMutation } from '../../redux/services';
 import { Screens } from '../../common/screens';
 
 const steps = [
-  { id: 1, title: 'Contact Details', percentage: 15 },
-  { id: 2, title: 'Travel Details', percentage: 30 },
-  { id: 3, title: 'Customer Details', percentage: 50 },
-  { id: 4, title: 'Notice & Declaration', percentage: 65 },
-  { id: 5, title: 'Payment', percentage: 85 },
-  { id: 6, title: 'Payment Details', percentage: 100 },
+  { id: 1, title: 'Contact Details' },
+  { id: 2, title: 'Travel Details' },
+  { id: 3, title: 'Customer Details' },
+  { id: 4, title: 'Notice & Declaration' },
+  { id: 5, title: 'Payment' },
+  { id: 6, title: 'Payment Details' },
 ];
+
+const getStepPercentage = (stepIndex: number) =>
+  Math.round(((stepIndex + 1) / steps.length) * 100);
 
 const BuyPolicy = ({ navigation }: any) => {
   const theme = useTheme();
@@ -56,17 +59,17 @@ const BuyPolicy = ({ navigation }: any) => {
   } = useForm<PolicyFormData>({
     mode: 'onChange',
     defaultValues: {
-      travellingSaudiWith: 'Individual',
+      travellingSaudiWith: '',
       travelAgencyName: '',
       name: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '',
-      phone: '7698533947',
+      phone: '',
       email: user?.email || '',
-      nextOfKinName: 'test',
-      nextOfKinPhone: '7698533947',
-      nextOfKinEmail: 'savan@gmail.com',
-      departureDate: '15/11/2025',
-      arrivalDate: '25/11/2025',
-      numberOfDays: '0',
+      nextOfKinName: '',
+      nextOfKinPhone: '',
+      nextOfKinEmail: '',
+      departureDate: '',
+      arrivalDate: '',
+      numberOfDays: '',
       destination: '',
       umrahCoveragePlan: '',
       countryOfTravel: '',
@@ -473,14 +476,14 @@ const BuyPolicy = ({ navigation }: any) => {
             </Text>
             <View style={{ flex: 1 }} />
             <Text style={[fontStyle(theme).headingSmall, { marginTop: 0 }]}>
-              {steps[currentStep].percentage}%
+              {getStepPercentage(currentStep)}%
             </Text>
           </View>
           <View style={styles(theme).progressBarContainer}>
             <View
               style={[
                 styles(theme).progressBar,
-                { width: `${steps[currentStep].percentage}%` },
+                { width: `${getStepPercentage(currentStep)}%` },
               ]}
             />
           </View>
@@ -548,7 +551,6 @@ const styles = (theme: MD3Theme) =>
       borderRadius: 2,
     },
     buttonRow: {
-      flexDirection: 'row',
       backgroundColor: theme.colors.background,
     },
     buttonHalf: {

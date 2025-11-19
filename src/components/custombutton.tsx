@@ -38,11 +38,10 @@ const styles = (theme: MD3Theme) =>
       paddingVertical: metrics.doubleMargin,
       paddingHorizontal: metrics.baseMargin,
       alignItems: 'center',
-      flex: 1,
-      // width: '100%',
+      width: '100%',
     },
     buttonText: {
-      color: theme.colors.background,
+      color: '#FFFFFF',
       fontSize: 16,
       fontWeight: 'bold',
     },

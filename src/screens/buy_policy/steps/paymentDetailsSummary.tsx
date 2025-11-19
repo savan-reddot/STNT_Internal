@@ -53,7 +53,7 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
   const childFee = (values.planChildPricing?.base_premium || 0) * (values.children || 0);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} style={{ flexGrow: 0 }}>
       <View style={styles.section}>
         {renderSectionHeader('Contact Details')}
         {renderRow('Travelling to Saudi with', values.travellingSaudiWith)}
