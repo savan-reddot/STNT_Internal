@@ -2,6 +2,8 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+project.ext.hermesEnabled = "true"
+
 project.ext.vectoricons = [
         iconFontNames: [ 'MaterialIcons.ttf', 'FontAwesome.ttf', 'Ionicons.ttf', 'MaterialCommunityIcons.ttf' ] // Add as needed
 ]
@@ -88,8 +90,8 @@ android {
         applicationId "com.umrah_traveller_new"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 18
-        versionName "18.0"
+        versionCode 21
+        versionName "21.0"
     }
     signingConfigs {
         debug {
