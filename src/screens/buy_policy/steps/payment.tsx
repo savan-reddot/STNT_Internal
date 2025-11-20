@@ -170,7 +170,7 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
       // Step 2: Open Razorpay checkout with order_id
       const options = {
         currency: 'SGD',
-        key: __DEV__ ? 'rzp_test_sg_0a26QO4pWeTsIH' : RAZORPAY_KEY_ID,
+        key: __DEV__ ? 'rzp_test_sg_jTyhhA2UxKAEaT' : RAZORPAY_KEY_ID,
         amount: amountInSGD,
         order_id: orderId,
         prefill: {
