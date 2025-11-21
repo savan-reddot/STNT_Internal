@@ -21,9 +21,6 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import {
   requestAppPermission,
-  requestCameraPermission,
-  requestGalleryPermission,
-  requestStoragePermission,
 } from '../../utils/permissions';
 import { metrics } from '../../utils/metrics';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
