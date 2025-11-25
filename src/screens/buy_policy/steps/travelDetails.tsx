@@ -139,17 +139,37 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
         const resp = await countries(0);
         if (resp?.data) {
           const { countries: countriesList } = resp.data;
+          const saudiOnlyOption = [{
+            label: 'Saudi Arabia',
+            value: 'Saudi Arabia',
+          }];
+
           if (countriesList?.length > 0) {
-            setDestinationOptions(
-              countriesList.map((country: string) => ({
-                label: country,
-                value: country,
-              })),
+            const filtered = countriesList.filter(
+              (country: string) => country?.toLowerCase() === 'saudi arabia',
             );
+
+            if (filtered.length > 0) {
+              setDestinationOptions(
+                filtered.map((country: string) => ({
+                  label: country,
+                  value: country,
+                })),
+              );
+              return;
+            }
           }
+
+          // Fallback to default Saudi Arabia option if API doesn't include it
+          setDestinationOptions(saudiOnlyOption);
+        } else {
+          setDestinationOptions([
+            { label: 'Saudi Arabia', value: 'Saudi Arabia' },
+          ]);
         }
       } catch (error) {
         console.error('Error fetching countries:', error);
+        setDestinationOptions([{ label: 'Saudi Arabia', value: 'Saudi Arabia' }]);
       }
     };
     fetchCountries();

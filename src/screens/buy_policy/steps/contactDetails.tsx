@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, Linking } from 'react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
 import { Control, Controller, FieldErrors, UseFormWatch } from 'react-hook-form';
 import { Dropdown } from 'react-native-element-dropdown';
+import CountryPicker, { Country, CountryCode } from 'react-native-country-picker-modal';
 import fontStyle from '../../../styles/fontStyle';
 import { metrics } from '../../../utils/metrics';
 import { globalStyle } from '../../../utils/globalStyles';
@@ -71,10 +72,19 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
 }) => {
   const theme = useTheme();
   const travellingSaudiWith = watch('travellingSaudiWith');
+  const phoneValue = watch('phone');
+  const phoneCodeValue = watch('phone_code');
+  const phoneCodeNokValue = watch('phone_code_nok');
+  const emailValue = watch('email');
   const isIndividual = travellingSaudiWith === 'individual';
   const isPartneredAgency = travellingSaudiWith === 'partnered_travel_agency';
   const isNonPartneredAgency = travellingSaudiWith === 'non_partnered_travel_agency';
   const showContactFields = isIndividual || isNonPartneredAgency;
+
+  const [phoneCountryCode, setPhoneCountryCode] = useState<CountryCode>('SG');
+  const [nextOfKinPhoneCountryCode, setNextOfKinPhoneCountryCode] = useState<CountryCode>('SG');
+  const [phoneCallingCode, setPhoneCallingCode] = useState('65');
+  const [nextOfKinPhoneCallingCode, setNextOfKinPhoneCallingCode] = useState('65');
 
   const handlePhonePress = (phone: string) => {
     Linking.openURL(`tel:${phone.replace(/\s/g, '')}`).catch((err) =>
@@ -225,31 +235,62 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
               )}
             />
 
-            <Controller
-              control={control}
-              name="phone"
-              rules={{ required: 'Phone number is required' }}
-              render={({ field: { onChange, value } }) => (
-                <View style={styles(theme).fieldContainer}>
-                  <Text style={fontStyle(theme).headingSmall}>
-                    Phone number<Text style={{ color: 'red' }}>*</Text>
-                  </Text>
-                  <TextInput
-                    mode="outlined"
-                    placeholder="Enter your phone number"
-                    value={value}
-                    onChangeText={onChange}
-                    keyboardType="phone-pad"
-                    style={{ height: metrics.screenWidth * 0.13 }}
-                    outlineStyle={{ borderRadius: metrics.baseRadius }}
-                    error={!!errors.phone}
-                  />
-                  {errors.phone && (
-                    <Text style={styles(theme).errorText}>{errors.phone.message}</Text>
+            <View style={styles(theme).fieldContainer}>
+              <Text style={fontStyle(theme).headingSmall}>
+                Phone Number<Text style={{ color: 'red' }}>*</Text>
+              </Text>
+              <View style={styles(theme).phoneContainer}>
+                <Controller
+                  control={control}
+                  name="phone_code"
+                  rules={{ required: 'Country code is required' }}
+                  render={({ field: { onChange } }) => (
+                    <View style={styles(theme).countryCodeContainer}>
+                      <CountryPicker
+                        countryCode={phoneCountryCode}
+                        withCallingCode
+                        withFlag
+                        withCallingCodeButton
+                        withFilter
+                        withAlphaFilter
+                        containerButtonStyle={styles(theme).countryPickerButton}
+                        onSelect={(country) => {
+                          setPhoneCountryCode(country.cca2);
+                          const callingCode = country.callingCode[0];
+                          setPhoneCallingCode(callingCode);
+                          onChange(`+${callingCode}`);
+                        }}
+                      />
+                    </View>
                   )}
-                </View>
+                />
+                <Controller
+                  control={control}
+                  name="phone"
+                  rules={{ required: 'Phone Number is required' }}
+                  render={({ field: { onChange, value } }) => (
+                    <View style={styles(theme).phoneInputContainer}>
+                      <TextInput
+                        mode="outlined"
+                        placeholder="Enter Phone Number"
+                        value={value}
+                        onChangeText={onChange}
+                        keyboardType="phone-pad"
+                        style={styles(theme).phoneInput}
+                        outlineStyle={{ borderRadius: metrics.baseRadius }}
+                        error={!!errors.phone}
+                      />
+                    </View>
+                  )}
+                />
+              </View>
+              {errors.phone && (
+                <Text style={styles(theme).errorText}>{errors.phone.message}</Text>
               )}
-            />
+              {errors.phone_code && (
+                <Text style={styles(theme).errorText}>{errors.phone_code.message}</Text>
+              )}
+            </View>
 
             <Controller
               control={control}
@@ -286,15 +327,15 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
             <Controller
               control={control}
               name="nextOfKinName"
-              rules={{ required: 'Next of Kin Name is required' }}
+              rules={{ required: 'Name (NOK) is required' }}
               render={({ field: { onChange, value } }) => (
                 <View style={styles(theme).fieldContainer}>
                   <Text style={fontStyle(theme).headingSmall}>
-                    Next of Kin Name<Text style={{ color: 'red' }}>*</Text>
+                    Name (NOK)<Text style={{ color: 'red' }}>*</Text>
                   </Text>
                   <TextInput
                     mode="outlined"
-                    placeholder="Enter NOK name"
+                    placeholder="Enter Name (NOK)"
                     value={value}
                     onChangeText={onChange}
                     style={{ height: metrics.screenWidth * 0.13 }}
@@ -310,52 +351,98 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
               )}
             />
 
-            <Controller
-              control={control}
-              name="nextOfKinPhone"
-              rules={{ required: 'Next of Kin Phone is required' }}
-              render={({ field: { onChange, value } }) => (
-                <View style={styles(theme).fieldContainer}>
-                  <Text style={fontStyle(theme).headingSmall}>
-                    Next of Kin Phone<Text style={{ color: 'red' }}>*</Text>
-                  </Text>
-                  <TextInput
-                    mode="outlined"
-                    placeholder="Enter NOK phone number"
-                    value={value}
-                    onChangeText={onChange}
-                    keyboardType="phone-pad"
-                    style={{ height: metrics.screenWidth * 0.13 }}
-                    outlineStyle={{ borderRadius: metrics.baseRadius }}
-                    error={!!errors.nextOfKinPhone}
-                  />
-                  {errors.nextOfKinPhone && (
-                    <Text style={styles(theme).errorText}>
-                      {errors.nextOfKinPhone.message}
-                    </Text>
+            <View style={styles(theme).fieldContainer}>
+              <Text style={fontStyle(theme).headingSmall}>
+                Phone Number (NOK)<Text style={{ color: 'red' }}>*</Text>
+              </Text>
+              <View style={styles(theme).phoneContainer}>
+                <Controller
+                  control={control}
+                  name="phone_code_nok"
+                  rules={{ required: 'Country code is required' }}
+                  render={({ field: { onChange } }) => (
+                    <View style={styles(theme).countryCodeContainer}>
+                      <CountryPicker
+                        countryCode={nextOfKinPhoneCountryCode}
+                        withCallingCode
+                        withFlag
+                        withCallingCodeButton
+                        withFilter
+                        withAlphaFilter
+                        containerButtonStyle={styles(theme).countryPickerButton}
+                        onSelect={(country) => {
+                          setNextOfKinPhoneCountryCode(country.cca2);
+                          const callingCode = country.callingCode[0];
+                          setNextOfKinPhoneCallingCode(callingCode);
+                          onChange(`+${callingCode}`);
+                        }}
+                      />
+                    </View>
                   )}
-                </View>
+                />
+                <Controller
+                  control={control}
+                  name="nextOfKinPhone"
+                  rules={{
+                    required: 'Phone Number (NOK) is required',
+                    validate: (value) => {
+                      const primaryFull = `${phoneCodeValue || ''}${phoneValue || ''}`.trim();
+                      const nokFull = `${phoneCodeNokValue || ''}${value || ''}`.trim();
+                      return primaryFull !== nokFull || 'Phone Number (NOK) must be different from Phone Number';
+                    },
+                  }}
+                  render={({ field: { onChange, value } }) => (
+                    <View style={styles(theme).phoneInputContainer}>
+                      <TextInput
+                        mode="outlined"
+                        placeholder="Enter Phone Number (NOK)"
+                        value={value}
+                        onChangeText={onChange}
+                        keyboardType="phone-pad"
+                        style={styles(theme).phoneInput}
+                        outlineStyle={{ borderRadius: metrics.baseRadius }}
+                        error={!!errors.nextOfKinPhone}
+                      />
+                    </View>
+                  )}
+                />
+              </View>
+              {errors.nextOfKinPhone && (
+                <Text style={styles(theme).errorText}>
+                  {errors.nextOfKinPhone.message}
+                </Text>
               )}
-            />
+              {errors.phone_code_nok && (
+                <Text style={styles(theme).errorText}>
+                  {errors.phone_code_nok.message}
+                </Text>
+              )}
+            </View>
 
             <Controller
               control={control}
               name="nextOfKinEmail"
               rules={{
-                required: 'Next of Kin Email is required',
+                required: 'Email (NOK) is required',
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: 'Invalid email address',
+                },
+                validate: (value) => {
+                  if (!value || !emailValue) {
+                    return true;
+                  }
+                  return value.toLowerCase() !== emailValue.toLowerCase() || 'Email (NOK) must be different from Email';
                 },
               }}
               render={({ field: { onChange, value } }) => (
                 <View style={styles(theme).fieldContainer}>
                   <Text style={fontStyle(theme).headingSmall}>
-                    Next of Kin Email<Text style={{ color: 'red' }}>*</Text>
+                    Email (NOK)<Text style={{ color: 'red' }}>*</Text>
                   </Text>
                   <TextInput
                     mode="outlined"
-                    placeholder="Enter NOK email address"
+                    placeholder="Enter Email (NOK)"
                     value={value}
                     onChangeText={onChange}
                     keyboardType="email-address"
@@ -420,6 +507,35 @@ const styles = (theme: MD3Theme) =>
       color: theme.colors.onSurface,
       lineHeight: 24,
       marginBottom: metrics.smallMargin,
+    },
+    phoneContainer: {
+      flexDirection: 'row',
+      gap: metrics.baseMargin,
+    },
+    countryCodeContainer: {
+      width: '30%',
+      height: metrics.screenWidth * 0.13,
+      backgroundColor: theme.colors.surface,
+      borderRadius: metrics.baseRadius,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: metrics.smallMargin,
+      overflow: 'hidden',
+    },
+    countryPickerButton: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    phoneInputContainer: {
+      flex: 1,
+    },
+    phoneInput: {
+      height: metrics.screenWidth * 0.13,
     },
   });
 

@@ -69,7 +69,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
         const isChild = currentCustomers.length + i >= adults;
         append({
           fullName: __DEV__ ? 'Savan' : '',
-          passportNumber: __DEV__ ? '1234567890' : '',
+          passportNumber: __DEV__ ? 'S5185801H' : '',
           nationality: __DEV__ ? 'Singaporean' : '',
           gender: __DEV__ ? 'Male' : '',
           dateOfBirth: __DEV__ ? '1990-01-01' : '',
@@ -226,7 +226,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
           render={({ field: { value } }) => (
             <View style={styles(theme).fieldContainer}>
               <Text style={fontStyle(theme).headingSmall}>
-                Date of birth<Text style={{ color: 'red' }}>*</Text>
+                Date of Birth<Text style={{ color: 'red' }}>*</Text>
               </Text>
               <TouchableOpacity
                 onPress={() => openDatePicker('dateOfBirth', index)}

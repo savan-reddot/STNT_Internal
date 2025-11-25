@@ -22,9 +22,11 @@ export interface PolicyFormData {
   travellingSaudiWith: string;
   travelAgencyName: string;
   name: string;
+  phone_code: string;
   phone: string;
   email: string;
   nextOfKinName: string;
+  phone_code_nok: string;
   nextOfKinPhone: string;
   nextOfKinEmail: string;
 

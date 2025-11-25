@@ -75,6 +75,8 @@ const BuyPolicy = ({ navigation }: any) => {
     watch,
     setValue,
     trigger,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<PolicyFormData>({
     mode: 'onChange',
@@ -82,14 +84,16 @@ const BuyPolicy = ({ navigation }: any) => {
       travellingSaudiWith: __DEV__ ? 'individual' : '',
       travelAgencyName: '',
       name: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '',
+      phone_code: '+65',
       phone: __DEV__ ? '7698533947' : '',
       email: user?.email || '',
       nextOfKinName: __DEV__ ? 'test' : '',
-      nextOfKinPhone: __DEV__ ? '7698533947' : '',
+      phone_code_nok: '+65',
+      nextOfKinPhone: __DEV__ ? '7698533944' : '',
       nextOfKinEmail: __DEV__ ? 'savan@gmail.com' : '',
-      departureDate: __DEV__ ? '19/11/2025' : '',
+      departureDate: __DEV__ ? '25/11/2025' : '',
       arrivalDate: __DEV__ ? '26/11/2025' : '',
-      numberOfDays: __DEV__ ? '7' : '',
+      numberOfDays: __DEV__ ? "2" : '',
       destination: __DEV__ ? 'Saudi Arabia' : '',
       umrahCoveragePlan: '',
       countryOfTravel: '',
@@ -192,6 +196,24 @@ const BuyPolicy = ({ navigation }: any) => {
           );
         }
         const customerResult = await trigger(customerFields as any);
+
+        const passportRegex = /^[A-Za-z]\d{7}[A-Za-z]?$/;
+        let hasInvalidPassport = false;
+        customers.forEach((customer, index) => {
+          const passport = (customer?.passportNumber || '').trim();
+          if (!passportRegex.test(passport)) {
+            setError(`customers.${index}.passportNumber` as any, {
+              type: 'manual',
+              message: 'Passport number format is incorrect',
+            });
+            hasInvalidPassport = true;
+          } else {
+            clearErrors && clearErrors(`customers.${index}.passportNumber` as any);
+          }
+        });
+        if (hasInvalidPassport) {
+          return false;
+        }
         return customerResult;
       case 3: // Notice & Declaration
         const noticeFields: (keyof PolicyFormData)[] = [
@@ -259,9 +281,12 @@ const BuyPolicy = ({ navigation }: any) => {
           if (departureDate && arrivalDate) {
             const depDate = new Date(departureDate);
             const arrDate = new Date(arrivalDate);
-            const diffTime = Math.abs(arrDate.getTime() - depDate.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            setValue('numberOfDays', diffDays.toString());
+            depDate.setHours(0, 0, 0, 0);
+            arrDate.setHours(0, 0, 0, 0);
+            const diff = arrDate.getTime() - depDate.getTime();
+            const dayInMs = 1000 * 60 * 60 * 24;
+            const inclusiveDays = Math.floor(Math.max(0, diff) / dayInMs) + 1;
+            setValue('numberOfDays', inclusiveDays.toString());
           }
         }
       }
@@ -309,10 +334,7 @@ const BuyPolicy = ({ navigation }: any) => {
       if (departureDate) {
         const depDate = new Date(departureDate);
         depDate.setHours(0, 0, 0, 0);
-        // Add 6 days to departure date
-        const minArrivalDate = new Date(depDate);
-        minArrivalDate.setDate(depDate.getDate() + 7);
-        return { startDate: minArrivalDate };
+        return { startDate: depDate };
       }
       // If no departure date selected, disable past dates
       return { startDate: today };
@@ -382,10 +404,12 @@ const BuyPolicy = ({ navigation }: any) => {
         data.travellingSaudiWith && data.travellingSaudiWith.toLowerCase() !== 'individual' ? 'group' : 'individual',
       name: data.name,
       phone: data.phone,
+      phone_code: data.phone_code || '+65',
       email: data.email,
       ...(data.travelAgencyName && { travel_agency_name: data.travelAgencyName }),
       name_nok: data.nextOfKinName,
       phone_nok: data.nextOfKinPhone,
+      phone_code_nok: data.phone_code_nok || '+65',
       email_nok: data.nextOfKinEmail,
       date_of_departure: convertDateToISO(data.departureDate),
       date_of_arrival: convertDateToISO(data.arrivalDate),
@@ -427,7 +451,7 @@ const BuyPolicy = ({ navigation }: any) => {
       }
     } catch (error: any) {
       console.error('Policy purchase error:', error);
-      const errorMessage = error?.data?.message || error?.message || 'Failed to purchase policy';
+      const errorMessage = error?.data?.errorMessage || error?.message || 'Failed to purchase policy';
       showErrorToast(errorMessage, 'Error !!');
     }
   };

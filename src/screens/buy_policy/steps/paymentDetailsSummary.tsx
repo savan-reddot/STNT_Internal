@@ -58,10 +58,10 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
         {renderSectionHeader('Contact Details')}
         {renderRow('Travelling to Saudi with', values.travellingSaudiWith)}
         {renderRow('Name', values.name)}
-        {renderRow('Phone Number', values.phone)}
+        {renderRow('Phone Number', `${values.phone_code || '+65'}${values.phone}`)}
         {renderRow('Email ID', values.email)}
         {renderRow('Next of Kin Name', values.nextOfKinName)}
-        {renderRow('Next of Kin Phone Number', values.nextOfKinPhone)}
+        {renderRow('Next of Kin Phone Number', `${values.phone_code_nok || '+65'}${values.nextOfKinPhone}`)}
         {renderRow('Next of Kin Email ID', values.nextOfKinEmail)}
       </View>
 

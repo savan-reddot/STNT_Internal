@@ -75,10 +75,11 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
   };
   const referralMessage = isCodeApplied
     ? (() => {
+      const influencerName = discountInfo?.referralData?.influencer_name;
       const percentage = formatOptionalNumber(discountInfo?.referralData?.discount_percentage);
       const maximum = formatOptionalNumber(discountInfo?.referralData?.maximum_discount);
-      if (percentage && maximum) {
-        return `Referral code applied successfully. You get ${percentage}% extra discount (Upto $${maximum})`;
+      if (influencerName && percentage && maximum) {
+        return `Referral code by ${influencerName} gets you ${percentage}% extra discount (Upto $${maximum})`;
       }
       return 'Referral code applied successfully.';
     })()
