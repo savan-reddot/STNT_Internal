@@ -20,120 +20,65 @@ import ScreenLoader from '../../components/loader';
 import NoDataFound from '../../components/no_data_found';
 import { showErrorToast } from '../../utils/toastUtils';
 
-const merchantsData: any[] = [
-  {
-    id: 5,
-    name: 'City Shop 1',
-    address: 'zdghjgbfvdsa',
-    phoneNumber: '+65 123456778',
-    workingHours: 'rdgdf',
-    imageUrl:
-      'https://stnt-stag.s3.ap-southeast-1.amazonaws.com/static/uploads/profile-pictures/4d1622bb-1bf3-4090-a723-66ce9699ec54_galgotais-logo-official.png',
-    city: 'Mecca',
-    category: 'pharmacy',
-    status: 'active',
-    dashboardType: 'stnt',
-    userId: 7,
-    createdAt: '2025-11-19T09:44:09.000Z',
-    updatedAt: '2025-11-19T09:45:38.000Z',
-  },
-  {
-    id: 1,
-    name: 'Shop',
-    address: 'hjgjjh jhhjh',
-    phoneNumber: '+966 123456789',
-    workingHours: '10',
-    imageUrl:
-      'https://stnt-stag.s3.ap-southeast-1.amazonaws.com/static/uploads/profile-pictures/d3b36123-0616-4e54-babf-e5785dcdcd0egalgotias-university-vector-logo.png',
-    city: 'Mecca',
-    category: 'shopping',
-    status: 'active',
-    dashboardType: 'stnt',
-    userId: 7,
-    createdAt: '2025-11-17T06:59:58.000Z',
-    updatedAt: '2025-11-19T09:46:05.000Z',
-  },
-  {
-    id: 3,
-    name: 'TEST SHOP',
-    address: 'SAUDI ARABIA',
-    phoneNumber: '+966 123456789',
-    workingHours: '10',
-    imageUrl: null,
-    city: null,
-    category: null,
-    status: 'active',
-    dashboardType: 'stnt',
-    userId: 7,
-    createdAt: '2025-11-17T07:48:07.000Z',
-    updatedAt: '2025-11-17T07:48:07.000Z',
-  },
-  {
-    id: 4,
-    name: 'testing',
-    address: 'jhbhbbjhb',
-    phoneNumber: '+65 12345678',
-    workingHours: 'bbjhbjbjhb',
-    imageUrl: null,
-    city: 'Mecca',
-    category: 'food',
-    status: 'active',
-    dashboardType: 'stnt',
-    userId: 7,
-    createdAt: '2025-11-19T09:09:56.000Z',
-    updatedAt: '2025-11-19T09:09:56.000Z',
-  },
-];
-
 const PreferredMerchants = ({ navigation }: any) => {
   const theme = useTheme();
   const [preferred_merchants, { isLoading }] = useLazyPreferred_merchantsQuery();
-  const [outlets, setMerchantsData] = useState<any[]>();
+
+  // FIX: Always keep merchantsData as an array
+  const [merchantsData, setMerchantsData] = useState<any[]>([]);
+
   const [selectedCity, setSelectedCity] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
+  // FIX: Generate city options only after data loads
   const cityOptions = useMemo(() => {
+    if (!merchantsData || merchantsData.length === 0) return ['All'];
+
     const uniqueCities = new Set(
       merchantsData.map(item => item?.city?.trim() || 'Others'),
     );
+
     return ['All', ...Array.from(uniqueCities)];
   }, [merchantsData]);
 
+  // FIX: Generate category options only after data loads
   const categoryOptions = useMemo(() => {
+    if (!merchantsData || merchantsData.length === 0) return ['All'];
+
     const uniqueCategories = new Set(
-      merchantsData.map(item => item?.category ? item.category.trim() : 'Others'),
+      merchantsData.map(item => item?.category?.trim() || 'Others'),
     );
+
     return ['All', ...Array.from(uniqueCategories)];
   }, [merchantsData]);
 
+  // FIX: Filter merchants AFTER merchantsData loads
   const filteredMerchants = useMemo(() => {
+    if (!merchantsData || merchantsData.length === 0) return [];
+
     return merchantsData.filter(item => {
       const cityLabel = item?.city?.trim() || 'Others';
-      const categoryLabel = item?.category ? item.category.trim() : 'Others';
+      const categoryLabel = item?.category?.trim() || 'Others';
 
-      const cityMatch = selectedCity === 'All' || cityLabel === selectedCity;
+      const cityMatch = selectedCity === 'All' || selectedCity === cityLabel;
       const categoryMatch =
-        selectedCategory === 'All' || categoryLabel === selectedCategory;
+        selectedCategory === 'All' || selectedCategory === categoryLabel;
 
       return cityMatch && categoryMatch;
     });
-  }, [merchantsData, selectedCategory, selectedCity]);
+  }, [merchantsData, selectedCity, selectedCategory]);
 
   useEffect(() => {
-    // getPreferredMerchants();
+    getPreferredMerchants();
   }, []);
 
   const getPreferredMerchants = async () => {
-    const resp = await preferred_merchants(0);
-    console.log('preferred_merchants==>>', resp?.data);
-    if (resp?.data?.status && resp?.data?.data) {
-      const { hospitals, totalHospitals } = resp?.data?.data;
-      if (hospitals?.length > 0) {
-        setMerchantsData(hospitals);
-      } else {
-        setMerchantsData([]);
-      }
-    } else {
+    try {
+      const resp = await preferred_merchants(0);
+      const list = resp?.data?.data ?? [];
+
+      setMerchantsData(Array.isArray(list) ? list : []);
+    } catch (e) {
       setMerchantsData([]);
     }
   };
@@ -141,11 +86,11 @@ const PreferredMerchants = ({ navigation }: any) => {
   const openDialer = (phoneNumber: any) => {
     const url = `tel:${phoneNumber}`;
     Linking.canOpenURL(url)
-      .then((supported: boolean) => {
+      .then(supported => {
         if (!supported) {
           showErrorToast('Dialer not supported on this device', 'Error');
         } else {
-          return Linking.openURL(url);
+          Linking.openURL(url);
         }
       })
       .catch(err => console.error('Error opening dialer', err));
@@ -155,19 +100,18 @@ const PreferredMerchants = ({ navigation }: any) => {
     let url = '';
 
     if (Platform.OS === 'ios') {
-      // Apple Maps
       url = `http://maps.apple.com/?q=${encodeURIComponent(address)}`;
     } else {
-      // Google Maps (default on most Android devices)
       url = `geo:0,0?q=${encodeURIComponent(address)}`;
     }
 
-    Linking.openURL(url)
+    Linking.openURL(url);
   };
 
   return (
     <AppLayout title="Preferred Merchants" onBackPress={() => navigation.pop()}>
       <View style={[globalStyle(theme).container]}>
+        {/* City Filter Chips */}
         <View style={styles(theme).chipWrapper}>
           <ScrollView
             horizontal
@@ -200,6 +144,7 @@ const PreferredMerchants = ({ navigation }: any) => {
           </ScrollView>
         </View>
 
+        {/* Category Tabs */}
         <View style={styles(theme).categoryTabsWrapper}>
           <ScrollView
             horizontal
@@ -235,110 +180,109 @@ const PreferredMerchants = ({ navigation }: any) => {
             })}
           </ScrollView>
         </View>
+
+        {/* Merchants List */}
         <ScrollView
           style={{ flex: 1, backgroundColor: theme.colors.background }}
           showsVerticalScrollIndicator={false}
         >
           <ScreenLoader visible={isLoading} />
+
           <View
             style={[
               globalStyle(theme).container,
               { padding: metrics.doubleMargin },
             ]}
           >
-            {filteredMerchants && filteredMerchants?.length > 0 ? (
-              filteredMerchants?.map((hotel, index) => {
-                return (
-                  <View style={styles(theme).list_parent} key={index}>
-                    <Image
-                      source={
-                        hotel?.imageUrl
-                          ? { uri: hotel?.imageUrl }
-                          : require('../../../assets/images/logo.png')
-                      }
-                      style={styles(theme).parent_img}
-                    />
-                    <View style={styles(theme).child_view}>
-                      <Text
-                        style={[
-                          fontStyle(theme).headingMedium,
-                          styles(theme).title,
-                        ]}
-                      >
-                        {hotel?.name}
-                      </Text>
-                      <View style={styles(theme).item_view}>
-                        <Image
-                          source={require('../../../assets/images/pin.png')}
-                          style={styles(theme).list_item_img}
-                          resizeMode="contain"
-                        />
-                        <TouchableOpacity
-                          onPress={() => openMap(hotel?.address)}
-                        >
-                          <Text
-                            style={[
-                              fontStyle(theme).headingMedium,
-                              styles(theme).list_subtitle,
-                              { textDecorationLine: 'underline' },
-                            ]}
-                          >
-                            {hotel?.address || 'N/A'}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles(theme).item_view}>
-                        <Image
-                          source={require('../../../assets/images/call.png')}
-                          style={styles(theme).call_img}
-                          resizeMode="contain"
-                        />
-                        <TouchableOpacity
-                          onPress={() =>
-                            hotel?.phoneNumber && openDialer(hotel?.phoneNumber)
-                          }
-                        >
-                          <Text
-                            style={[
-                              fontStyle(theme).headingMedium,
-                              styles(theme).list_subtitle,
-                              {
-                                textDecorationLine: hotel?.phoneNumber
-                                  ? 'underline'
-                                  : 'none',
-                              },
-                            ]}
-                          >
-                            {hotel?.phoneNumber || 'N/A'}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles(theme).item_view}>
-                        <Image
-                          source={require('../../../assets/images/24.png')}
-                          style={[
-                            styles(theme).call_img,
-                            {
-                              tintColor: hotel?.is24_Operation
-                                ? undefined
-                                : 'red',
-                            },
-                          ]}
-                          resizeMode="contain"
-                        />
+            {filteredMerchants.length > 0 ? (
+              filteredMerchants.map((hotel, index) => (
+                <View style={styles(theme).list_parent} key={index}>
+                  <Image
+                    source={
+                      hotel?.imageUrl
+                        ? { uri: hotel?.imageUrl }
+                        : require('../../../assets/images/logo.png')
+                    }
+                    style={styles(theme).parent_img}
+                  />
+
+                  <View style={styles(theme).child_view}>
+                    <Text
+                      style={[
+                        fontStyle(theme).headingMedium,
+                        styles(theme).title,
+                      ]}
+                    >
+                      {hotel?.name}
+                    </Text>
+
+                    <View style={styles(theme).item_view}>
+                      <Image
+                        source={require('../../../assets/images/pin.png')}
+                        style={styles(theme).list_item_img}
+                        resizeMode="contain"
+                      />
+                      <TouchableOpacity onPress={() => openMap(hotel?.address)}>
                         <Text
                           style={[
                             fontStyle(theme).headingMedium,
                             styles(theme).list_subtitle,
+                            { textDecorationLine: 'underline' },
                           ]}
                         >
-                          {hotel?.workingHours || '-'}
+                          {hotel?.address || 'N/A'}
                         </Text>
-                      </View>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles(theme).item_view}>
+                      <Image
+                        source={require('../../../assets/images/call.png')}
+                        style={styles(theme).call_img}
+                        resizeMode="contain"
+                      />
+                      <TouchableOpacity
+                        onPress={() =>
+                          hotel?.phoneNumber && openDialer(hotel?.phoneNumber)
+                        }
+                      >
+                        <Text
+                          style={[
+                            fontStyle(theme).headingMedium,
+                            styles(theme).list_subtitle,
+                            {
+                              textDecorationLine: hotel?.phoneNumber
+                                ? 'underline'
+                                : 'none',
+                            },
+                          ]}
+                        >
+                          {hotel?.phoneNumber || 'N/A'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles(theme).item_view}>
+                      <Image
+                        source={require('../../../assets/images/24.png')}
+                        style={[
+                          styles(theme).call_img,
+                          { tintColor: hotel?.is24_Operation ? undefined : 'red' },
+                        ]}
+                        resizeMode="contain"
+                      />
+                      <Text
+                        style={[
+                          fontStyle(theme).headingMedium,
+                          styles(theme).list_subtitle,
+                        ]}
+                      >
+                        {hotel?.workingHours || '-'}
+                      </Text>
                     </View>
                   </View>
-                );
-              })
+                </View>
+              ))
             ) : (
               <View
                 style={{
@@ -382,13 +326,11 @@ const styles = (theme: MD3Theme) =>
       resizeMode: 'contain',
     },
     child_view: {
-      // padding: metrics.baseMargin,
       paddingTop: 0,
       paddingHorizontal: metrics.baseMargin * 1.5,
       paddingBottom: metrics.baseMargin * 1.5,
     },
     title: {
-      // marginHorizontal: metrics.baseMargin,
       fontFamily: Font_Bold,
       fontWeight: '700',
       fontSize: metrics.moderateScale(16),
@@ -464,13 +406,13 @@ const styles = (theme: MD3Theme) =>
       color: '#475467',
       fontWeight: '500',
       textTransform: 'capitalize',
-      width: "100%",
+      width: '100%',
       textAlign: 'center',
     },
     categoryTextSelected: {
       color: '#008069',
       fontWeight: '700',
-      width: "100%",
+      width: '100%',
     },
     tabIndicator: {
       height: 3,
@@ -481,6 +423,6 @@ const styles = (theme: MD3Theme) =>
     },
     tabIndicatorActive: {
       backgroundColor: '#008069',
-      width: "80%",
+      width: '80%',
     },
   });
