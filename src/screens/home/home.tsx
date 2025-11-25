@@ -71,6 +71,12 @@ const Home = ({ navigation }: any) => {
       icon: require('../../../assets/images/trusted_hospitals.png'),
       onPress: () => navigation.navigate(Screens.TrustedHospitals),
     },
+    {
+      id: 5,
+      title: 'Preferred Merchants',
+      icon: require('../../../assets/images/preferredmerchants.png'),
+      onPress: () => navigation.navigate(Screens.PreferredMerchants),
+    },
   ];
 
   useFocusEffect(
@@ -106,13 +112,20 @@ const Home = ({ navigation }: any) => {
 
   const openWhatsApp = () => {
     const phone = '6591362973';
+    const passportNumber = user?.passportNo ?? '';
+    const maskedPassport =
+      passportNumber && passportNumber.length > 4
+        ? passportNumber.replace(
+          /^(\w{2})\w*(\w{2})$/,
+          (_match: string, start: string, end: string) =>
+            `${start}${'*'.repeat(Math.max(0, passportNumber.length - 4))}${end}`,
+        )
+        : passportNumber;
+
     const message = `Hello ST&T Team,
 My details are as follow\n
 Name - ${user?.firstName} ${user?.lastName}
-Passport - ${user?.passportNo.replace(
-      /^(\w{2})\w*(\w{2})$/,
-      (_, a, b) => a + '*'.repeat(user?.passportNo.length - 4) + b,
-    )}
+Passport - ${maskedPassport}
 Email - ${user?.email}
 I need some help.
 `; // optional preset text
@@ -231,45 +244,39 @@ I need some help.
             </View>
           </TouchableWithoutFeedback>
         </View>
-        <View
-          style={{
-            // paddingHorizontal: metrics.baseMargin,
-            marginHorizontal: metrics.baseMargin,
-            marginTop: metrics.baseMargin * 2,
-          }}
-        >
-          <FlatList
-            data={action_list}
-            numColumns={2}
-            keyExtractor={(item: any) => item.id.toString()}
-            contentContainerStyle={styles(theme).gridContainer}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => item.onPress()}
-                style={styles(theme).card}
-                key={item.id}
+
+        <FlatList
+          data={action_list}
+          numColumns={2}
+          keyExtractor={(item: any) => item.id.toString()}
+          contentContainerStyle={styles(theme).gridContainer}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => item.onPress()}
+              style={styles(theme).card}
+              key={item.id}
+            >
+              <Image
+                resizeMode="contain"
+                source={item.icon}
+                style={styles(theme).icon}
+              />
+              <Text
+                style={[
+                  fontStyle(theme).headingMedium,
+                  {
+                    fontSize: 16,
+                    fontWeight: '500',
+                    marginTop: metrics.baseMargin,
+                  },
+                ]}
               >
-                <Image
-                  resizeMode="contain"
-                  source={item.icon}
-                  style={styles(theme).icon}
-                />
-                <Text
-                  style={[
-                    fontStyle(theme).headingMedium,
-                    {
-                      fontSize: 16,
-                      fontWeight: '500',
-                      marginTop: metrics.baseMargin,
-                    },
-                  ]}
-                >
-                  {item.title}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
+                {item.title}
+              </Text>
+            </TouchableOpacity>
+          )}
+          style={{ marginTop: metrics.baseMargin * 1 }}
+        />
 
         <TouchableOpacity
           style={styles(theme).fab}
@@ -377,9 +384,9 @@ const styles = (theme: MD3Theme) =>
       padding: metrics.baseMargin,
     },
     gridContainer: {
-      // marginHorizontal: CARD_MARGIN,
-      // marginEnd: -CARD_MARGIN,
       paddingTop: 10,
+      marginHorizontal: metrics.baseMargin,
+      paddingBottom: metrics.baseMargin * 10,
     },
     card: {
       width: CARD_WIDTH,

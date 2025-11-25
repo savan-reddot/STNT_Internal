@@ -286,6 +286,9 @@ export const apiClient = createApi({
         body: request,
       }),
     }),
+    preferred_merchants: builder.query({
+      query: () => `mobile-data/trusted-retail-outlets?size=10&page=1`,
+    }),
   }),
 });
 
@@ -329,4 +332,5 @@ export const {
   usePolicy_purchase_formMutation,
   useLazyGetplansQuery,
   useLazyPlanPricingQuery,
+  useLazyPreferred_merchantsQuery,
 } = apiClient;

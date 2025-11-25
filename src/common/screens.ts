@@ -18,6 +18,7 @@ export const Screens = {
   DraftClaims: 'DraftClaims',
   Notification: 'Notification',
   TrustedHospitals: 'TrustedHospitals',
+  PreferredMerchants: 'PreferredMerchants',
   Splash: 'Splash',
   Onboard: 'Onboard',
   BottomTab: 'BottomTab',
