@@ -4,7 +4,6 @@ import {
   Pressable,
   StyleSheet,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import React, { useState } from 'react';
@@ -39,8 +38,7 @@ const Login = ({ navigation }: any) => {
   const { control, handleSubmit } = useForm();
   const dispatch = useAppDispatch();
   const [loginUser, { isLoading }] = useLoginUserMutation();
-  const [verificationUser, { isLoading: isVerificationLoading }] =
-    useLazyVerificationUserQuery();
+  const [verificationUser] = useLazyVerificationUserQuery();
   const [passportById, { isLoading: isPassportNoLoading }] =
     usePassportByIdMutation();
   const [showPassword, setShowPassword] = useState(false);
@@ -77,12 +75,6 @@ const Login = ({ navigation }: any) => {
           return;
         }
 
-        // Navigate to BottomTab immediately after basic login
-        navigation.reset({
-          index: 0,
-          routes: [{ name: Screens.BottomTab }],
-        });
-
         // Continue with additional verification in background
         try {
           const passportResp = await passportById({ uidNo: latestUid });
@@ -101,7 +93,7 @@ const Login = ({ navigation }: any) => {
 
                 // Store additional verification data
                 try {
-                  await AsyncStorage.setItem('webtoken', webToken);
+                  await AsyncStorage.setItem('webtoken', JSON.stringify(webToken));
                   await AsyncStorage.setItem('userdetails', JSON.stringify(verificationUserData));
                   dispatch(setUserDetails(verificationUserData));
                   dispatch(setWebToken(webToken));
@@ -122,6 +114,14 @@ const Login = ({ navigation }: any) => {
           // Don't show error toast for background verification failures
           // User is already logged in and can use the app
         }
+
+        // navigation.reset({
+        //   index: 0,
+        //   routes: [{ name: Screens.BottomTab }],
+        // });
+        setTimeout(() => {
+          navigation.navigate(Screens.BottomTab);
+        }, 500);
       } else {
         showErrorToast(resp?.data?.message, 'Error !!');
       }
@@ -131,7 +131,7 @@ const Login = ({ navigation }: any) => {
     }
   };
 
-  const isLoad = isLoading || isVerificationLoading;
+  const isLoad = isLoading;
 
   return (
     <KeyboardAwareScrollView
@@ -141,210 +141,199 @@ const Login = ({ navigation }: any) => {
     >
       <AppLayout title="">
         <ScreenLoader visible={isLoad} />
-        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-          <View
-            style={[
-              globalStyle(theme).container,
-              { padding: metrics.doubleMargin },
-            ]}
-          >
-            <Text style={fontStyle(theme).headingMedium}>Login</Text>
-            <Text style={[fontStyle(theme).titleSmall, { color: '#4F4F4F' }]}>
-              Sign in securely using your email or passport number to continue.
-            </Text>
+        <View
+          style={[
+            globalStyle(theme).container,
+            { padding: metrics.doubleMargin },
+          ]}
+        >
+          <Text style={fontStyle(theme).headingMedium}>Login</Text>
+          <Text style={[fontStyle(theme).titleSmall, { color: '#4F4F4F' }]}>
+            Sign in securely using your email or passport number to continue.
+          </Text>
 
-            <View style={[styles(theme).parent_view, { flex: 1 }]}>
-              <Controller
-                key={'emailOrPassport'}
-                control={control}
-                name={'emailOrPassport'}
-                rules={{ required: true }}
-                render={({ field: { onChange, value } }) => (
-                  <View style={styles(theme).child_view}>
-                    <Text style={fontStyle(theme).headingSmall}>
-                      Email or passport number
-                    </Text>
-                    <TextInput
-                      mode="outlined"
-                      onChangeText={onChange}
-                      value={value}
-                      placeholder="Enter your email or passport number"
-                      outlineStyle={{ borderRadius: metrics.baseRadius }}
-                      style={{
-                        height: metrics.screenWidth * 0.13,
-                        borderColor: '#BDBDBD',
-                        fontSize: 14,
-                      }}
-                    />
-                  </View>
-                )}
-              />
-
-              <Controller
-                key={'password'}
-                control={control}
-                name={'password'}
-                rules={{ required: true }}
-                render={({ field: { onChange, value } }) => (
-                  <View style={styles(theme).child_view}>
-                    <Text style={fontStyle(theme).headingSmall}>Password</Text>
-                    <TextInput
-                      mode="outlined"
-                      placeholder="Enter password"
-                      value={value}
-                      onChangeText={onChange}
-                      outlineStyle={{ borderRadius: metrics.baseRadius }}
-                      style={{
-                        height: metrics.screenWidth * 0.13,
-                        fontSize: 14,
-                      }}
-                      secureTextEntry={!showPassword}
-                      right={
-                        <TextInput.Icon
-                          icon={showPassword ? 'eye-off' : 'eye'}
-                          onPress={() => setShowPassword(!showPassword)}
-                        />
-                      }
-                    />
-                  </View>
-                )}
-              />
-
-              <View style={styles(theme).child_view}>
-                <UButton
-                  title={'Continue'}
-                  onPress={handleSubmit(onLogin)}
-                  style={{ flex: 0 }}
-                />
-              </View>
-
-              <TouchableOpacity onPress={() => setShowForgotPassword(true)}>
-                <View
-                  style={[
-                    styles(theme).child_view,
-                    {
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginTop: metrics.doubleMargin,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      {
-                        color: theme.colors.primary,
-                        textDecorationLine: 'underline',
-                      },
-                    ]}
-                  >
-                    Forgot Password?
+          <View style={[styles(theme).parent_view, { flex: 1 }]}>
+            <Controller
+              key={'emailOrPassport'}
+              control={control}
+              name={'emailOrPassport'}
+              rules={{ required: true }}
+              render={({ field: { onChange, value } }) => (
+                <View style={styles(theme).child_view}>
+                  <Text style={fontStyle(theme).headingSmall}>
+                    Email or passport number
                   </Text>
+                  <TextInput
+                    mode="outlined"
+                    onChangeText={onChange}
+                    value={value}
+                    placeholder="Enter your email or passport number"
+                    outlineStyle={{ borderRadius: metrics.baseRadius }}
+                    style={{
+                      height: metrics.screenWidth * 0.13,
+                      borderColor: '#BDBDBD',
+                      fontSize: 14,
+                    }}
+                    keyboardType="email-address"
+                  />
                 </View>
-              </TouchableOpacity>
-            </View>
-            <View
-              style={[
-                styles(theme).child_view,
-                {
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginTop: metrics.doubleMargin,
-                },
-              ]}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={[fontStyle(theme).headingSmall]}>
-                  Don’t have an account?
-                </Text>
-                <Pressable
-                  onPress={() => navigation.navigate(Screens.Register)}
-                >
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      {
-                        color: theme.colors.primary,
-                        textDecorationLine: 'underline',
-                        marginLeft: metrics.baseMargin,
-                      },
-                    ]}
-                  >
-                    Register?
-                  </Text>
-                </Pressable>
-              </View>
+              )}
+            />
 
+            <Controller
+              key={'password'}
+              control={control}
+              name={'password'}
+              rules={{ required: true }}
+              render={({ field: { onChange, value } }) => (
+                <View style={styles(theme).child_view}>
+                  <Text style={fontStyle(theme).headingSmall}>Password</Text>
+                  <TextInput
+                    mode="outlined"
+                    placeholder="Enter password"
+                    value={value}
+                    onChangeText={onChange}
+                    outlineStyle={{ borderRadius: metrics.baseRadius }}
+                    style={{
+                      height: metrics.screenWidth * 0.13,
+                      fontSize: 14,
+                    }}
+                    secureTextEntry={!showPassword}
+                    right={
+                      <TextInput.Icon
+                        icon={showPassword ? 'eye-off' : 'eye'}
+                        onPress={() => setShowPassword(!showPassword)}
+                      />
+                    }
+                  />
+                </View>
+              )}
+            />
+
+            <View style={styles(theme).child_view}>
+              <UButton
+                title={'Continue'}
+                onPress={handleSubmit(onLogin)}
+              // style={{ flex: 0 }}
+              />
+            </View>
+
+            <TouchableOpacity onPress={() => setShowForgotPassword(true)}>
               <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginHorizontal: metrics.doubleMargin,
-                  // width: '100%',
-                }}
+                style={[
+                  styles(theme).child_view,
+                  {
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: metrics.doubleMargin,
+                  },
+                ]}
               >
                 <Text
                   style={[
                     fontStyle(theme).headingSmall,
                     {
-                      textAlign: 'center',
-                      color: 'grey',
-                      // alignItems: 'center',
-                      marginEnd: metrics.baseMargin,
-                      fontSize: 14,
-                      margin: 0,
+                      color: theme.colors.primary,
+                      textDecorationLine: 'underline',
                     },
                   ]}
                 >
-                  {' '}
-                  By Signing in you agree to our
-                  <TouchableWithoutFeedback
-                    onPress={() =>
-                      navigation.navigate(Screens.WebView, {
-                        url: 'https://claims.stntinternational.com/web/terms-conditions',
-                      })
-                    }
-                  >
-                    <Text
-                      style={[
-                        fontStyle(theme).headingSmall,
-                        {
-                          color: theme.colors.primary,
-                          marginHorizontal: metrics.baseMargin,
-                          fontSize: 14,
-                        },
-                      ]}
-                    >
-                      {' ' + 'Terms & Conditions'}
-                    </Text>
-                  </TouchableWithoutFeedback>{' '}
-                  and
-                  <TouchableWithoutFeedback
-                    onPress={() =>
-                      navigation.navigate(Screens.WebView, {
-                        url: 'https://claims.stntinternational.com/web/privacy-policy',
-                      })
-                    }
-                  >
-                    <Text
-                      style={[
-                        fontStyle(theme).headingSmall,
-                        {
-                          color: theme.colors.primary,
-                          fontSize: 14,
-                          marginHorizontal: metrics.baseMargin,
-                        },
-                      ]}
-                    >
-                      {' ' + 'Privacy Policy'}
-                    </Text>
-                  </TouchableWithoutFeedback>
+                  Forgot Password?
                 </Text>
               </View>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={[
+              styles(theme).child_view,
+              {
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: metrics.doubleMargin,
+              },
+            ]}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={[fontStyle(theme).headingSmall]}>
+                Don’t have an account?
+              </Text>
+              <Pressable
+                onPress={() => navigation.navigate(Screens.Register)}
+              >
+                <Text
+                  style={[
+                    fontStyle(theme).headingSmall,
+                    {
+                      color: theme.colors.primary,
+                      textDecorationLine: 'underline',
+                      marginLeft: metrics.baseMargin,
+                    },
+                  ]}
+                >
+                  Register?
+                </Text>
+              </Pressable>
+            </View>
+
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginHorizontal: metrics.doubleMargin,
+              }}
+            >
+              <Text
+                style={[
+                  fontStyle(theme).headingSmall,
+                  {
+                    textAlign: 'center',
+                    color: 'grey',
+                    marginEnd: metrics.baseMargin,
+                    fontSize: 14,
+                    margin: 0,
+                  },
+                ]}
+              >
+                By Signing in you agree to our
+                <Text
+                  onPress={() =>
+                    navigation.navigate(Screens.WebView, {
+                      url: 'https://claims.stntinternational.com/web/terms-conditions',
+                    })
+                  }
+                  style={[
+                    fontStyle(theme).headingSmall,
+                    {
+                      color: theme.colors.primary,
+                      fontSize: 14,
+                      marginHorizontal: metrics.baseMargin / 2,
+                    },
+                  ]}
+                >
+                  {' Terms & Conditions '}
+                </Text>
+                and
+                <Text
+                  onPress={() =>
+                    navigation.navigate(Screens.WebView, {
+                      url: 'https://claims.stntinternational.com/web/privacy-policy',
+                    })
+                  }
+                  style={[
+                    fontStyle(theme).headingSmall,
+                    {
+                      color: theme.colors.primary,
+                      fontSize: 14,
+                      marginHorizontal: metrics.baseMargin / 2,
+                    },
+                  ]}
+                >
+                  {' Privacy Policy'}
+                </Text>
+              </Text>
             </View>
           </View>
-        </TouchableWithoutFeedback>
+        </View>
         <ForgotPassword
           isVisible={showForgotPassword}
           onDismiss={() => setShowForgotPassword(false)}

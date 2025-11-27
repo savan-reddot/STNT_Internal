@@ -343,11 +343,7 @@ const UserProfile = ({ navigation }: any) => {
     navigation.navigate(Screens.Splash);
   };
 
-  const isLoad =
-    isLoading ||
-    isProfileLoading ||
-    isVerificationLoading ||
-    isPassportNoLoading;
+  const isLoad = isLoading;
 
   return (
     <KeyboardAwareScrollView

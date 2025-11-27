@@ -43,6 +43,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         <TouchableOpacity
           style={styles(theme).iconButton}
           onPress={onBackPress}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Icon
             name="chevron-back-outline"

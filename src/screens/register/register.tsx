@@ -85,11 +85,16 @@ const Register = ({ navigation }: any) => {
         }
       } else {
         showErrorToast('Passport Not Found !!', 'Error !!');
-        navigation.reset({
-          index: 0,
-          routes: [{ name: Screens.BottomTab }],
-        });
+        // navigation.reset({
+        //   index: 0,
+        //   routes: [{ name: Screens.BottomTab }],
+        // });
+        setTimeout(() => {
+          navigation.navigate(Screens.BottomTab);
+        }, 500);
       }
+    } else if (resp?.error) {
+      showErrorToast(resp?.error?.data?.message || 'Registration failed', 'Error !!');
     }
   };
 
@@ -108,14 +113,17 @@ const Register = ({ navigation }: any) => {
       dispatch(setUserDetails(user));
       dispatch(setWebToken(token));
 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: Screens.BottomTab }],
-      });
+      // navigation.reset({
+      //   index: 0,
+      //   routes: [{ name: Screens.BottomTab }],
+      // });
+      setTimeout(() => {
+        navigation.navigate(Screens.BottomTab);
+      }, 500);
     }
   };
 
-  const isLoad = isLoading || isVerificationLoading;
+  const isLoad = isLoading;
 
   return (
     <KeyboardAwareScrollView

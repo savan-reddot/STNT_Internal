@@ -3,26 +3,23 @@ import {
   FlatList,
   Image,
   Linking,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import React, { useCallback, useState } from 'react';
-import { globalStyle } from '../../utils/globalStyles';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import { metrics } from '../../utils/metrics';
 import fontStyle from '../../styles/fontStyle';
-import { Font_Regular } from '../../theme/fonts';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Font_Bold, Font_Regular } from '../../theme/fonts';
 import { Screens } from '../../common/screens';
 import { useAppSelector } from '../../redux/hooks';
 import { getUser } from '../../redux/reducer';
 import { useLazyGet_policyQuery } from '../../redux/services';
 import ScreenLoader from '../../components/loader';
 import { useFocusEffect } from '@react-navigation/native';
+import AppLayout from '../../components/safeareawrapper';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 10;
@@ -134,21 +131,12 @@ I need some help.
   };
 
   return (
-    // <AppLayout title="">
-    <SafeAreaView
-      edges={['top']}
-      style={[
-        globalStyle(theme).container,
-        { backgroundColor: theme.colors.primary },
-      ]}
-    >
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={theme.colors.primary}
-      />
-
+    <AppLayout title="">
       <ScreenLoader visible={isLoading} />
-      <View style={[globalStyle(theme).container]}>
+      <View style={{
+        flex: 1,
+        backgroundColor: theme.colors.background,
+      }}>
         <View style={styles(theme).custom_header}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image
@@ -186,63 +174,61 @@ I need some help.
             </TouchableOpacity>
           </View>
         </View>
+
         <View style={styles(theme).tiles_view}>
-          <TouchableWithoutFeedback
+          <TouchableOpacity
             onPress={() =>
               navigation.navigate(Screens.Policies, { type: 'all' })
             }
+            style={styles(theme).tile_child}
           >
-            <View style={styles(theme).tile_child}>
-              <Text style={fontStyle(theme).headingMedium}>
-                {policy_data?.totalPolicies || 0}
-              </Text>
-              <Text
-                style={[
-                  fontStyle(theme).headingSmall,
-                  { textAlign: 'center', marginHorizontal: metrics.baseMargin },
-                ]}
-              >
-                Total Policies
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
+            <Text style={styles(theme).headingMedium}>
+              {policy_data?.totalPolicies || 0}
+            </Text>
+            <Text
+              style={[
+                styles(theme).headingSmall,
+                { textAlign: 'center', marginHorizontal: metrics.baseMargin },
+              ]}
+            >
+              Total Policies
+            </Text>
+          </TouchableOpacity>
           <View style={styles(theme).seprator} />
-          <TouchableWithoutFeedback
+          <TouchableOpacity
             onPress={() =>
               navigation.navigate(Screens.Policies, { type: 'active' })
             }
+            style={styles(theme).tile_child}
           >
-            <View style={styles(theme).tile_child}>
-              <Text style={fontStyle(theme).headingMedium}>
-                {policy_data?.activePolicies || 0}
-              </Text>
-              <Text
-                style={[
-                  fontStyle(theme).headingSmall,
-                  { textAlign: 'center', marginHorizontal: metrics.baseMargin },
-                ]}
-              >
-                Active Policies
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
+            <Text style={styles(theme).headingMedium}>
+              {policy_data?.activePolicies || 0}
+            </Text>
+            <Text
+              style={[
+                styles(theme).headingSmall,
+                { textAlign: 'center', marginHorizontal: metrics.baseMargin },
+              ]}
+            >
+              Active Policies
+            </Text>
+          </TouchableOpacity>
           <View style={styles(theme).seprator} />
-          <TouchableWithoutFeedback
+          <TouchableOpacity
             onPress={() =>
               navigation.navigate(Screens.Policies, { type: 'expired' })
             }
+            style={styles(theme).tile_child}
           >
-            <View style={styles(theme).tile_child}>
-              <Text style={fontStyle(theme).headingMedium}>
-                {policy_data?.expiredPolicies || 0}
-              </Text>
-              <Text
-                style={[fontStyle(theme).headingSmall, { textAlign: 'center' }]}
-              >
-                Expired Policies
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
+            <Text style={styles(theme).headingMedium}>
+              {policy_data?.expiredPolicies || 0}
+            </Text>
+            <Text
+              style={[styles(theme).headingSmall, { textAlign: 'center' }]}
+            >
+              Expired Policies
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <FlatList
@@ -290,52 +276,9 @@ I need some help.
             }}
           />
         </TouchableOpacity>
-        {/* <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            margin: metrics.baseMargin,
-            marginHorizontal: metrics.baseMargin * 2,
-          }}
-        >
-          {action_list.map((item, index) => (
-            <TouchableOpacity key={index} onPress={item.onPress}>
-              <View
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: metrics.baseMargin,
-                  backgroundColor: theme.colors.background,
-                  borderRadius: metrics.baseRadius,
-                  // margin: metrics.baseMargin / 2,
-                  marginEnd: metrics.baseMargin,
-                  // flex: 1,
-                  width: metrics.screenWidth * 0.4,
-                  elevation: 1,
-                }}
-              >
-                <Image
-                  source={item.icon}
-                  style={{
-                    width: metrics.screenWidth * 0.2,
-                    height: metrics.screenWidth * 0.2,
-                    marginRight: metrics.baseMargin,
-                  }}
-                />
-                <Text
-                  style={[
-                    fontStyle(theme).headingMedium,
-                    { fontWeight: '500', fontSize: 16 },
-                  ]}
-                >
-                  {item.title}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View> */}
       </View>
-    </SafeAreaView>
+    </AppLayout >
+
   );
 };
 
@@ -345,9 +288,7 @@ const styles = (theme: MD3Theme) =>
   StyleSheet.create({
     custom_header: {
       backgroundColor: theme.colors.primary,
-      paddingTop: metrics.baseMargin,
       paddingHorizontal: metrics.baseMargin * 2,
-      paddingBottom: metrics.doubleMargin * 3,
       height: metrics.screenWidth * 0.28,
     },
     day: {
@@ -384,7 +325,6 @@ const styles = (theme: MD3Theme) =>
       padding: metrics.baseMargin,
     },
     gridContainer: {
-      paddingTop: 10,
       marginHorizontal: metrics.baseMargin,
       paddingBottom: metrics.baseMargin * 10,
     },
@@ -424,5 +364,22 @@ const styles = (theme: MD3Theme) =>
       margin: 16,
       right: 0,
       bottom: 0,
+    },
+    headingMedium: {
+      fontFamily: Font_Bold,
+      fontWeight: '700',
+      fontSize: metrics.moderateScale(20),
+      letterSpacing: 0.2,
+      lineHeight: 19.3,
+      marginHorizontal: 0,
+      color: theme.colors.onBackground,
+    },
+    headingSmall: {
+      fontFamily: Font_Bold,
+      fontWeight: '700',
+      fontSize: metrics.moderateScale(14),
+      margin: metrics.baseMargin,
+      marginHorizontal: 0,
+      color: theme.colors.onBackground,
     },
   });

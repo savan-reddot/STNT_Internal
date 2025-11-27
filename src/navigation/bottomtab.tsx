@@ -23,7 +23,7 @@ const getScreenOptions = ({
   theme,
 }: {
   theme: MD3Theme;
-  route: RouteProp;
+  route: RouteProp<any, any>;
 }): BottomTabNavigationOptions => ({
   tabBarIcon: ({ focused, color, size }: any) => {
     let iconName: string;
@@ -86,7 +86,7 @@ const getScreenOptions = ({
 const BottomTab = () => {
   const theme = useTheme();
   return (
-    <Tab.Navigator screenOptions={getScreenOptions}>
+    <Tab.Navigator screenOptions={getScreenOptions as any}>
       <Tab.Screen name={Screens.Home} component={Home} />
       <Tab.Screen name={Screens.Certification} component={VirtualCard} />
       <Tab.Screen name={Screens.Policies} component={Policies} />

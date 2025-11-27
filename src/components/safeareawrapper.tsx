@@ -1,8 +1,6 @@
 import React from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
-  View,
   StatusBar,
   StyleProp,
   ViewStyle,
@@ -33,7 +31,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 }) => {
   const theme = useTheme();
   return (
-    // <SafeAreaView style={styles(theme).safeArea}>
     <>
       <StatusBar
         barStyle="dark-content"
@@ -50,18 +47,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       <KeyboardAvoidingView
         style={styles(theme).container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        // keyboardVerticalOffset={Platform.OS === 'ios' ? keyboardOffset : 0}
       >
         {children}
       </KeyboardAvoidingView>
     </>
-    // </SafeAreaView>
   );
 };
 
 const styles = (theme: MD3Theme) =>
   StyleSheet.create({
-    safeArea: { flex: 1 },
     container: { flex: 1 },
   });
 

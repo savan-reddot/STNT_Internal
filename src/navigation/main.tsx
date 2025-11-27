@@ -31,7 +31,7 @@ const Stack = createStackNavigator();
 
 const MainStack = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, gestureEnabled: false }}>
       <Stack.Screen name={Screens.Splash} component={Splash} />
       <Stack.Screen name={Screens.Onboard} component={Onboard} />
       <Stack.Screen name={Screens.Login} component={Login} />
