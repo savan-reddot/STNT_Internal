@@ -7,9 +7,12 @@ import {
   Text,
   TouchableOpacity,
   View,
+  AppState,
 } from 'react-native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';
+// @ts-ignore - react-native-version-check doesn't have TypeScript definitions
+import VersionCheck from 'react-native-version-check';
 import { metrics } from '../../utils/metrics';
 import fontStyle from '../../styles/fontStyle';
 import { Font_Bold, Font_Regular } from '../../theme/fonts';
@@ -20,6 +23,7 @@ import { useLazyGet_policyQuery } from '../../redux/services';
 import ScreenLoader from '../../components/loader';
 import { useFocusEffect } from '@react-navigation/native';
 import AppLayout from '../../components/safeareawrapper';
+import UpdateModal from '../../components/update_modal';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 10;
@@ -42,6 +46,10 @@ const Home = ({ navigation }: any) => {
     expiredPolicies: 0,
   };
   const [policy_data, setPolicy_Data] = useState<POLICY_DATA>(initPolicyData);
+  const [updateInfo, setUpdateInfo] = useState({});
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+
   const user = useAppSelector(getUser);
   const action_list = [
     {
@@ -76,9 +84,41 @@ const Home = ({ navigation }: any) => {
     },
   ];
 
+  const checkAppVersion = useCallback(async () => {
+    try {
+      const updateNeeded = await VersionCheck.needUpdate();
+      if (updateNeeded.isNeeded) {
+        setUpdateInfo(updateNeeded);
+        setTimeout(() => {
+          setShowUpdateModal(updateNeeded.isNeeded);
+        }, 500);
+      } else {
+        console.log('App is up to date. Current:', updateNeeded.currentVersion, 'Latest:', updateNeeded.latestVersion);
+        setUpdateInfo({});
+        setShowUpdateModal(false);
+      }
+    } catch (error) {
+      console.error('Error checking app version:', error);
+    }
+  }, []);
+
+  // Listen for app state changes (background/foreground)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        checkAppVersion();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [checkAppVersion]);
+
   useFocusEffect(
     useCallback(() => {
       init();
+      checkAppVersion();
       return () => {
         // console.log('Screen is unfocused ❌');
       };
@@ -133,6 +173,7 @@ I need some help.
   return (
     <AppLayout title="">
       <ScreenLoader visible={isLoading} />
+
       <View style={{
         flex: 1,
         backgroundColor: theme.colors.background,
@@ -277,6 +318,14 @@ I need some help.
           />
         </TouchableOpacity>
       </View>
+
+      <UpdateModal
+        visible={showUpdateModal}
+        updateInfo={updateInfo}
+        onUpdate={() => {
+          setShowUpdateModal(false);
+        }}
+      />
     </AppLayout >
 
   );
