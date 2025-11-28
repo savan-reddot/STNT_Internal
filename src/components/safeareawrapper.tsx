@@ -6,6 +6,7 @@ import {
   ViewStyle,
   KeyboardAvoidingView,
   Platform,
+  TextStyle,
 } from 'react-native';
 import AppHeader from './header';
 import { MD3Theme, useTheme } from 'react-native-paper';
@@ -14,10 +15,11 @@ interface AppLayoutProps {
   children: React.ReactNode;
   showHeader?: boolean;
   title?: string;
-  right?: any[];
+  right?: React.ReactNode;
   onBackPress?: () => void;
   headerStyle?: StyleProp<ViewStyle>;
   keyboardOffset?: number;
+  titleExtraStyle?: StyleProp<TextStyle>;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({
@@ -28,6 +30,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onBackPress,
   headerStyle = {},
   keyboardOffset = 64,
+  titleExtraStyle
 }) => {
   const theme = useTheme();
   return (
@@ -42,6 +45,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           title={title}
           right={right}
           onBackPress={onBackPress}
+          titleExtraStyle={titleExtraStyle}
         />
       )}
       <KeyboardAvoidingView

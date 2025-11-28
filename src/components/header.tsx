@@ -6,19 +6,20 @@ import {
   TouchableOpacity,
   StyleProp,
   ViewStyle,
-  Platform,
+  TextStyle,
 } from 'react-native';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Ionicons'; // Make sure you installed react-native-vector-icons
+import Icon from 'react-native-vector-icons/Ionicons';
 import { metrics } from '../utils/metrics';
 import { Font_Bold } from '../theme/fonts';
 
 interface AppHeaderProps {
   title?: string;
-  right?: any[];
+  right?: React.ReactNode;
   onBackPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  titleExtraStyle?: StyleProp<TextStyle>;
 }
 
 const AppHeader: React.FC<AppHeaderProps> = ({
@@ -26,6 +27,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   onBackPress,
   right,
   style,
+  titleExtraStyle
 }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -57,12 +59,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       <Text
         style={[
           styles(theme).title,
+          titleExtraStyle && titleExtraStyle,
           { marginEnd: !right ? metrics.doubleMargin * 2.5 : 0 },
         ]}
       >
         {title}
       </Text>
-      {right && right}
+      {right || <View style={styles(theme).iconButton} />}
     </View>
   );
 };

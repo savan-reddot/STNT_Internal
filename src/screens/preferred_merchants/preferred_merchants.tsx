@@ -1,4 +1,5 @@
 import {
+  FlatList,
   Image,
   Linking,
   Platform,
@@ -19,6 +20,8 @@ import { useLazyPreferred_merchantsQuery } from '../../redux/services';
 import ScreenLoader from '../../components/loader';
 import NoDataFound from '../../components/no_data_found';
 import { showErrorToast } from '../../utils/toastUtils';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { Dropdown } from 'react-native-element-dropdown';
 
 const PreferredMerchants = ({ navigation }: any) => {
   const theme = useTheme();
@@ -108,197 +111,219 @@ const PreferredMerchants = ({ navigation }: any) => {
     Linking.openURL(url);
   };
 
-  return (
-    <AppLayout title="Preferred Merchants" onBackPress={() => navigation.pop()}>
-      <View style={[globalStyle(theme).container]}>
-        {/* City Filter Chips */}
-        <View style={styles(theme).chipWrapper}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles(theme).chipRow}
-          >
-            {cityOptions.map(city => {
-              const isSelected = selectedCity === city;
-              return (
-                <TouchableOpacity
-                  key={city}
-                  style={[
-                    styles(theme).chip,
-                    isSelected && styles(theme).chipSelected,
-                  ]}
-                  onPress={() => setSelectedCity(city)}
-                >
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      styles(theme).chipText,
-                      isSelected && styles(theme).chipTextSelected,
-                    ]}
-                  >
-                    {city}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Category Tabs */}
-        <View style={styles(theme).categoryTabsWrapper}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles(theme).categoryTabs}
-          >
-            {categoryOptions.map(category => {
-              const isSelected = selectedCategory === category;
-              return (
-                <TouchableOpacity
-                  style={styles(theme).categoryTab}
-                  key={category}
-                  onPress={() => setSelectedCategory(category)}
-                >
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      styles(theme).categoryText,
-                      isSelected && styles(theme).categoryTextSelected,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {category}
-                  </Text>
-                  <View
-                    style={[
-                      styles(theme).tabIndicator,
-                      isSelected && styles(theme).tabIndicatorActive,
-                    ]}
-                  />
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Merchants List */}
-        <ScrollView
-          style={{ flex: 1, backgroundColor: theme.colors.background }}
-          showsVerticalScrollIndicator={false}
-        >
-          <ScreenLoader visible={isLoading} />
-
-          <View
+  const renderCityDropdown = () => (
+    <Dropdown
+      style={styles(theme).dropdownContainer}
+      containerStyle={styles(theme).dropdownMenu}
+      value={selectedCity || 'All'}
+      data={cityOptions.map(city => ({ label: city, value: city }))}
+      labelField="label"
+      valueField="value"
+      placeholder="All"
+      renderLeftIcon={() => (
+        <Image
+          source={require('../../../assets/images/pin.png')}
+          style={styles(theme).citySelectorIcon}
+          resizeMode="contain"
+        />
+      )}
+      renderItem={item => (
+        <View style={styles(theme).dropdownItem}>
+          <Text
             style={[
-              globalStyle(theme).container,
-              { padding: metrics.doubleMargin },
+              fontStyle(theme).headingSmall,
+              {
+                color:
+                  item.value === selectedCity
+                    ? theme.colors.primary
+                    : theme.colors.onBackground,
+              },
             ]}
           >
-            {filteredMerchants.length > 0 ? (
-              filteredMerchants.map((hotel, index) => (
-                <View style={styles(theme).list_parent} key={index}>
-                  <Image
-                    source={
-                      hotel?.imageUrl
-                        ? { uri: hotel?.imageUrl }
-                        : require('../../../assets/images/logo.png')
-                    }
-                    style={styles(theme).parent_img}
-                  />
+            {item.label}
+          </Text>
+        </View>
+      )}
+      selectedTextStyle={[
+        fontStyle(theme).headingSmall,
+        styles(theme).citySelectorText,
+      ]}
+      itemTextStyle={fontStyle(theme).headingSmall}
+      onChange={item => setSelectedCity(item.value)}
+      renderRightIcon={() => (
+        <Icon
+          name="chevron-down"
+          size={metrics.moderateScale(16)}
+          color="#1D3557"
+        />
+      )}
+    />
+  );
 
-                  <View style={styles(theme).child_view}>
+  return (
+    <AppLayout
+      title="Merchants"
+      onBackPress={() => navigation.pop()}
+      right={renderCityDropdown()}
+      titleExtraStyle={{ marginLeft: 50 }}
+    >
+      <View style={[globalStyle(theme).container]}>
+        {/* Category Tabs */}
+        {categoryOptions.length > 0 && (
+          <View style={styles(theme).categoryTabsWrapper}>
+            <FlatList
+              horizontal
+              data={categoryOptions}
+              keyExtractor={item => `category-${item}`}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles(theme).categoryTabs}
+              renderItem={({ item: category }) => {
+                const isSelected = selectedCategory === category;
+                return (
+                  <TouchableOpacity
+                    style={styles(theme).categoryTab}
+                    onPress={() => setSelectedCategory(category)}
+                  >
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        styles(theme).categoryText,
+                        isSelected && styles(theme).categoryTextSelected,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {category}
+                    </Text>
+                    <View
+                      style={[
+                        styles(theme).tabIndicator,
+                        isSelected && styles(theme).tabIndicatorActive,
+                      ]}
+                    />
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        )}
+
+        <ScreenLoader visible={isLoading} />
+
+        <FlatList
+          style={{ flex: 1 }}
+          data={filteredMerchants}
+          keyExtractor={(item, index) =>
+            item?.id ? item.id.toString() : `merchant-${index}`
+          }
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            padding: metrics.doubleMargin,
+            paddingBottom: metrics.doubleMargin * 4,
+            flexGrow: 1,
+          }}
+          ListEmptyComponent={
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: metrics.screenHeight * 0.7,
+              }}
+            >
+              <NoDataFound
+                title={'No Data Found'}
+                description={'Looks like there’s nothing here yet.'}
+              />
+            </View>
+          }
+          renderItem={({ item: hotel }) => (
+            <View style={styles(theme).list_parent}>
+              <Image
+                source={
+                  hotel?.imageUrl
+                    ? { uri: hotel?.imageUrl }
+                    : require('../../../assets/images/logo.png')
+                }
+                style={styles(theme).parent_img}
+              />
+
+              <View style={styles(theme).child_view}>
+                <Text
+                  style={[
+                    fontStyle(theme).headingMedium,
+                    styles(theme).title,
+                  ]}
+                >
+                  {hotel?.name}
+                </Text>
+
+                <View style={styles(theme).item_view}>
+                  <Image
+                    source={require('../../../assets/images/pin.png')}
+                    style={styles(theme).list_item_img}
+                    resizeMode="contain"
+                  />
+                  <TouchableOpacity onPress={() => openMap(hotel?.address)}>
                     <Text
                       style={[
                         fontStyle(theme).headingMedium,
-                        styles(theme).title,
+                        styles(theme).list_subtitle,
+                        { textDecorationLine: 'underline' },
                       ]}
                     >
-                      {hotel?.name}
+                      {hotel?.address || 'N/A'}
                     </Text>
-
-                    <View style={styles(theme).item_view}>
-                      <Image
-                        source={require('../../../assets/images/pin.png')}
-                        style={styles(theme).list_item_img}
-                        resizeMode="contain"
-                      />
-                      <TouchableOpacity onPress={() => openMap(hotel?.address)}>
-                        <Text
-                          style={[
-                            fontStyle(theme).headingMedium,
-                            styles(theme).list_subtitle,
-                            { textDecorationLine: 'underline' },
-                          ]}
-                        >
-                          {hotel?.address || 'N/A'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    <View style={styles(theme).item_view}>
-                      <Image
-                        source={require('../../../assets/images/call.png')}
-                        style={styles(theme).call_img}
-                        resizeMode="contain"
-                      />
-                      <TouchableOpacity
-                        onPress={() =>
-                          hotel?.phoneNumber && openDialer(hotel?.phoneNumber)
-                        }
-                      >
-                        <Text
-                          style={[
-                            fontStyle(theme).headingMedium,
-                            styles(theme).list_subtitle,
-                            {
-                              textDecorationLine: hotel?.phoneNumber
-                                ? 'underline'
-                                : 'none',
-                            },
-                          ]}
-                        >
-                          {hotel?.phoneNumber || 'N/A'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    <View style={styles(theme).item_view}>
-                      <Image
-                        source={require('../../../assets/images/24.png')}
-                        style={[
-                          styles(theme).call_img,
-                          { tintColor: hotel?.is24_Operation ? undefined : 'red' },
-                        ]}
-                        resizeMode="contain"
-                      />
-                      <Text
-                        style={[
-                          fontStyle(theme).headingMedium,
-                          styles(theme).list_subtitle,
-                        ]}
-                      >
-                        {hotel?.workingHours || '-'}
-                      </Text>
-                    </View>
-                  </View>
+                  </TouchableOpacity>
                 </View>
-              ))
-            ) : (
-              <View
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: metrics.screenHeight * 0.7,
-                }}
-              >
-                <NoDataFound
-                  title={'No Data Found'}
-                  description={'Looks like there’s nothing here yet.'}
-                />
+
+                <View style={styles(theme).item_view}>
+                  <Image
+                    source={require('../../../assets/images/call.png')}
+                    style={styles(theme).call_img}
+                    resizeMode="contain"
+                  />
+                  <TouchableOpacity
+                    onPress={() =>
+                      hotel?.phoneNumber && openDialer(hotel?.phoneNumber)
+                    }
+                  >
+                    <Text
+                      style={[
+                        fontStyle(theme).headingMedium,
+                        styles(theme).list_subtitle,
+                        {
+                          textDecorationLine: hotel?.phoneNumber
+                            ? 'underline'
+                            : 'none',
+                        },
+                      ]}
+                    >
+                      {hotel?.phoneNumber || 'N/A'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles(theme).item_view}>
+                  <Image
+                    source={require('../../../assets/images/24.png')}
+                    style={[
+                      styles(theme).call_img,
+                      { tintColor: hotel?.is24_Operation ? undefined : 'red' },
+                    ]}
+                    resizeMode="contain"
+                  />
+                  <Text
+                    style={[
+                      fontStyle(theme).headingMedium,
+                      styles(theme).list_subtitle,
+                    ]}
+                  >
+                    {hotel?.workingHours || '-'}
+                  </Text>
+                </View>
               </View>
-            )}
-          </View>
-        </ScrollView>
+            </View>
+          )}
+        />
       </View>
     </AppLayout>
   );
@@ -330,6 +355,51 @@ const styles = (theme: MD3Theme) =>
       paddingHorizontal: metrics.baseMargin * 1.5,
       paddingBottom: metrics.baseMargin * 1.5,
     },
+    citySelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.background,
+      paddingHorizontal: metrics.doubleMargin,
+      paddingVertical: metrics.baseMargin * 0.6,
+      borderRadius: metrics.screenWidth * 0.08,
+      marginEnd: metrics.baseMargin,
+      elevation: 2,
+      shadowColor: '#00000020',
+      shadowOpacity: 0.2,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    citySelectorIcon: {
+      height: metrics.moderateScale(14),
+      width: metrics.moderateScale(14),
+      tintColor: '#00A878',
+      marginRight: metrics.smallMargin,
+    },
+    citySelectorText: {
+      color: '#1D3557',
+      fontWeight: '600',
+      marginRight: metrics.smallMargin,
+      maxWidth: metrics.screenWidth * 0.25,
+    },
+    menuContent: {
+      borderRadius: metrics.baseRadius,
+    },
+    dropdownContainer: {
+      minWidth: metrics.screenWidth * 0.3,
+      backgroundColor: theme.colors.background,
+      borderRadius: metrics.screenWidth * 0.08,
+      paddingHorizontal: metrics.baseMargin,
+      paddingVertical: metrics.baseMargin * 0,
+      borderWidth: 1,
+      borderColor: '#E0E0E0',
+    },
+    dropdownMenu: {
+      borderRadius: metrics.baseRadius,
+      paddingVertical: metrics.baseMargin,
+    },
+    dropdownItem: {
+      paddingVertical: metrics.baseMargin,
+      paddingHorizontal: metrics.doubleMargin,
+    },
     title: {
       fontFamily: Font_Bold,
       fontWeight: '700',
@@ -358,35 +428,6 @@ const styles = (theme: MD3Theme) =>
     call_img: {
       height: metrics.moderateScale(22),
       width: metrics.moderateScale(22),
-    },
-    chipWrapper: {
-      paddingTop: metrics.baseMargin,
-      paddingBottom: metrics.baseMargin * 0.5,
-      paddingHorizontal: metrics.doubleMargin,
-    },
-    chipRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    chip: {
-      paddingVertical: metrics.baseMargin * 0.6,
-      paddingHorizontal: metrics.doubleMargin,
-      borderRadius: metrics.doubleMargin,
-      borderWidth: 1,
-      borderColor: '#D0D5DD',
-      marginRight: metrics.baseMargin,
-      backgroundColor: '#FFFFFF',
-    },
-    chipSelected: {
-      backgroundColor: '#008069',
-      borderColor: '#008069',
-    },
-    chipText: {
-      color: '#1D2939',
-    },
-    chipTextSelected: {
-      color: '#FFFFFF',
-      fontWeight: '600',
     },
     categoryTabsWrapper: {
       paddingHorizontal: metrics.doubleMargin,

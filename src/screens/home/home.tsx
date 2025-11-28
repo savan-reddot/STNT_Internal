@@ -70,7 +70,7 @@ const Home = ({ navigation }: any) => {
     },
     {
       id: 5,
-      title: 'Preferred Merchants',
+      title: 'Merchants with ST&T offers',
       icon: require('../../../assets/images/preferredmerchants.png'),
       onPress: () => navigation.navigate(Screens.PreferredMerchants),
     },

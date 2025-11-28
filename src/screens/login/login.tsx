@@ -35,7 +35,12 @@ import ForgotPassword from '../../components/forgot_password';
 
 const Login = ({ navigation }: any) => {
   const theme = useTheme();
-  const { control, handleSubmit } = useForm();
+  const { control, handleSubmit } = useForm({
+    defaultValues: {
+      emailOrPassport: __DEV__ ? 'savan@reddotinnovative.com' : '',
+      password: __DEV__ ? '123456' : '',
+    },
+  });
   const dispatch = useAppDispatch();
   const [loginUser, { isLoading }] = useLoginUserMutation();
   const [verificationUser] = useLazyVerificationUserQuery();
