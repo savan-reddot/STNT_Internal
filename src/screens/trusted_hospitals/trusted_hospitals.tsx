@@ -198,7 +198,7 @@ const TrustedHospitals = ({ navigation }: any) => {
                       >
                         {hotel?.name}
                       </Text>
-                      <View style={styles(theme).item_view}>
+                      {hotel?.address && <View style={styles(theme).item_view}>
                         <Image
                           source={require('../../../assets/images/pin.png')}
                           style={styles(theme).list_item_img}
@@ -217,8 +217,8 @@ const TrustedHospitals = ({ navigation }: any) => {
                             {hotel?.address}
                           </Text>
                         </TouchableOpacity>
-                      </View>
-                      <View style={styles(theme).item_view}>
+                      </View>}
+                      {hotel?.phoneNumber && <View style={styles(theme).item_view}>
                         <Image
                           source={require('../../../assets/images/call.png')}
                           style={styles(theme).call_img}
@@ -243,8 +243,8 @@ const TrustedHospitals = ({ navigation }: any) => {
                             {hotel?.phoneNumber || 'N/A'}
                           </Text>
                         </TouchableOpacity>
-                      </View>
-                      <View style={styles(theme).item_view}>
+                      </View>}
+                      {hotel?.workingHours && <View style={styles(theme).item_view}>
                         <Image
                           source={require('../../../assets/images/24.png')}
                           style={[
@@ -265,7 +265,7 @@ const TrustedHospitals = ({ navigation }: any) => {
                         >
                           {hotel?.workingHours}
                         </Text>
-                      </View>
+                      </View>}
                     </View>
                   </View>
                 );
@@ -310,6 +310,7 @@ const styles = (theme: MD3Theme) =>
       borderRadius: metrics.baseRadius,
       borderBottomLeftRadius: 0,
       borderBottomRightRadius: 0,
+      // resizeMode: 'contain',
     },
     child_view: {
       // padding: metrics.baseMargin,

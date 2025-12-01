@@ -1,6 +1,7 @@
 import {
   FlatList,
   Image,
+  ImageBackground,
   Linking,
   Platform,
   ScrollView,
@@ -22,6 +23,7 @@ import NoDataFound from '../../components/no_data_found';
 import { showErrorToast } from '../../utils/toastUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Dropdown } from 'react-native-element-dropdown';
+import LinearGradient from 'react-native-linear-gradient';
 
 const PreferredMerchants = ({ navigation }: any) => {
   const theme = useTheme();
@@ -165,7 +167,7 @@ const PreferredMerchants = ({ navigation }: any) => {
       title="Merchants"
       onBackPress={() => navigation.pop()}
       right={renderCityDropdown()}
-      titleExtraStyle={{ marginLeft: 50 }}
+      titleExtraStyle={{ marginLeft: 70 }}
     >
       <View style={[globalStyle(theme).container]}>
         {/* Category Tabs */}
@@ -238,21 +240,27 @@ const PreferredMerchants = ({ navigation }: any) => {
           renderItem={({ item: hotel }) => {
             return (
               <View style={styles(theme).list_parent}>
-                <View style={{ position: 'relative' }}>
-                  <Image
-                    source={
-                      hotel?.imageUrl
-                        ? { uri: hotel?.imageUrl }
-                        : require('../../../assets/images/logo.png')
-                    }
-                    style={styles(theme).parent_img}
-                  />
+
+                <ImageBackground
+                  source={hotel?.imageUrl
+                    ? { uri: hotel?.imageUrl }
+                    : require('../../../assets/images/logo.png')
+                  }
+                  style={styles(theme).parent_img}
+                  // resizeMode="contain"
+                  borderRadius={metrics.baseRadius}
+                  borderBottomLeftRadius={0}
+                  borderBottomRightRadius={0}
+                >
+                  {hotel?.discount_offer && <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.9)']}
+                    style={styles(theme).gradient}
+                  />}
 
                   {hotel?.discount_offer && <View style={styles(theme).discountBadge}>
                     <Text style={styles(theme).discountText}>{hotel?.discount_offer}</Text>
                   </View>}
-                </View>
-
+                </ImageBackground>
 
 
                 <View style={styles(theme).child_view}>
@@ -265,7 +273,7 @@ const PreferredMerchants = ({ navigation }: any) => {
                     {hotel?.name}
                   </Text>
 
-                  <View style={styles(theme).item_view}>
+                  {hotel?.address && <View style={styles(theme).item_view}>
                     <Image
                       source={require('../../../assets/images/pin.png')}
                       style={styles(theme).list_item_img}
@@ -282,9 +290,9 @@ const PreferredMerchants = ({ navigation }: any) => {
                         {hotel?.address || 'N/A'}
                       </Text>
                     </TouchableOpacity>
-                  </View>
+                  </View>}
 
-                  <View style={styles(theme).item_view}>
+                  {hotel?.phoneNumber && <View style={styles(theme).item_view}>
                     <Image
                       source={require('../../../assets/images/call.png')}
                       style={styles(theme).call_img}
@@ -309,9 +317,9 @@ const PreferredMerchants = ({ navigation }: any) => {
                         {hotel?.phoneNumber || 'N/A'}
                       </Text>
                     </TouchableOpacity>
-                  </View>
+                  </View>}
 
-                  <View style={styles(theme).item_view}>
+                  {hotel?.workingHours && <View style={styles(theme).item_view}>
                     <Image
                       source={require('../../../assets/images/24.png')}
                       style={[
@@ -328,7 +336,7 @@ const PreferredMerchants = ({ navigation }: any) => {
                     >
                       {hotel?.workingHours || '-'}
                     </Text>
-                  </View>
+                  </View>}
                 </View>
               </View>
             )
@@ -355,10 +363,6 @@ const styles = (theme: MD3Theme) =>
     parent_img: {
       width: '100%',
       height: metrics.screenHeight * 0.2,
-      borderRadius: metrics.baseRadius,
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0,
-      resizeMode: 'contain',
     },
     child_view: {
       paddingTop: 0,
@@ -394,7 +398,7 @@ const styles = (theme: MD3Theme) =>
       borderRadius: metrics.baseRadius,
     },
     dropdownContainer: {
-      minWidth: metrics.screenWidth * 0.3,
+      minWidth: metrics.screenWidth * 0.33,
       backgroundColor: theme.colors.background,
       borderRadius: metrics.screenWidth * 0.08,
       paddingHorizontal: metrics.baseMargin,
@@ -481,19 +485,19 @@ const styles = (theme: MD3Theme) =>
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: 'rgba(128, 128, 128, 0.5)',
       paddingVertical: metrics.baseMargin,
       paddingHorizontal: metrics.baseMargin,
       alignItems: 'center',
       justifyContent: 'center',
-      // borderBottomLeftRadius: metrics.baseRadius,
-      // borderBottomRightRadius: metrics.baseRadius,
     },
     discountText: {
       ...fontStyle(theme).bodyLarge,
       color: '#FFFFFF',
-      fontWeight: '700',
+      fontWeight: '400',
       fontSize: metrics.moderateScale(14),
       letterSpacing: 0.5,
+    },
+    gradient: {
+      ...StyleSheet.absoluteFillObject,
     },
   });
