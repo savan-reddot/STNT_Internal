@@ -289,6 +289,13 @@ export const apiClient = createApi({
     preferred_merchants: builder.query({
       query: () => `mobile-data/trusted-retail-outlets?size=10&page=1`,
     }),
+    referral_code_users: builder.mutation({
+      query: (request: any) => ({
+        url: 'referral-code-users',
+        method: 'POST',
+        body: request,
+      }),
+    }),
   }),
 });
 
@@ -333,4 +340,5 @@ export const {
   useLazyGetplansQuery,
   useLazyPlanPricingQuery,
   useLazyPreferred_merchantsQuery,
+  useReferral_code_usersMutation,
 } = apiClient;

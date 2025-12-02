@@ -4,16 +4,14 @@ import { MD3Theme, useTheme } from 'react-native-paper';
 import { UseFormWatch } from 'react-hook-form';
 import fontStyle from '../../../styles/fontStyle';
 import { metrics } from '../../../utils/metrics';
-import { PaymentCompletionData, PolicyFormData } from '../types';
+import { PolicyFormData } from '../types';
 
 interface PaymentDetailsSummaryProps {
   watch: UseFormWatch<PolicyFormData>;
-  paymentMeta: PaymentCompletionData | null;
 }
 
 const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
   watch,
-  paymentMeta,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -24,6 +22,21 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
       return '$ 0.00';
     }
     return `$ ${value.toFixed(2)}`;
+  };
+
+  const formatDateForDisplay = (dateString?: string) => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      // Format as DD/MM/YYYY
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch {
+      return dateString;
+    }
   };
 
   const renderRow = (label: string, value?: string | number) => (
@@ -38,16 +51,6 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
       <Text style={[fontStyle(theme).headingSmall, { flex: 1 }]}>{title}</Text>
     </View>
   );
-
-  if (!paymentMeta) {
-    return (
-      <View style={styles.placeholderContainer}>
-        <Text style={fontStyle(theme).headingSmall}>
-          Complete the payment in Step 5 to review your policy details.
-        </Text>
-      </View>
-    );
-  }
 
   const adultFee = (values.planAdultPricing?.base_premium || 0) * (values.adults || 0);
   const childFee = (values.planChildPricing?.base_premium || 0) * (values.children || 0);
@@ -76,6 +79,41 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
         {renderRow('Children', values.children)}
       </View>
 
+      {values.customers && values.customers.length > 0 && (
+        <View style={styles.section}>
+          {renderSectionHeader('Customer Details')}
+          {values.customers.map((customer, index) => {
+            const customerType = customer.isChild ? 'Child' : 'Adult';
+            const customerNumber = customer.isChild
+              ? index - (values.adults || 0) + 1
+              : index + 1;
+            const genderCapitalized = customer.gender
+              ? customer.gender.charAt(0).toUpperCase() + customer.gender.slice(1).toLowerCase()
+              : '-';
+            const isLastCustomer = index === values.customers.length - 1;
+
+            return (
+              <View
+                key={index}
+                style={[
+                  styles.customerBlock,
+                  isLastCustomer && styles.customerBlockLast,
+                ]}
+              >
+                <Text style={[fontStyle(theme).headingSmall, styles.customerTitle]}>
+                  {customerType} {customerNumber}
+                </Text>
+                {renderRow('Full Name', customer.fullName)}
+                {renderRow('Passport Number', customer.passportNumber)}
+                {renderRow('Nationality', customer.nationality)}
+                {renderRow('Gender', genderCapitalized)}
+                {renderRow('Date of Birth', formatDateForDisplay(customer.dateOfBirth))}
+              </View>
+            );
+          })}
+        </View>
+      )}
+
       <View style={styles.section}>
         {renderSectionHeader('Notice & Declaration')}
         <Text style={styles.noticeText}>
@@ -96,31 +134,13 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
       </View>
 
       <View style={styles.section}>
-        {renderSectionHeader('Payment Details')}
-        {renderRow('Order ID', paymentMeta.orderCreationId)}
-        {renderRow('Razorpay Payment ID', paymentMeta.razorpayPaymentId)}
-        {renderRow('Payment Method', 'Razorpay')}
-        {renderRow('Referral Code', paymentMeta.referralCode || 'Not applied')}
-        {renderRow('Discount Amount', formatCurrency(paymentMeta.discountAmount))}
-        {renderRow('Final Bill Amount', formatCurrency(paymentMeta.finalBillAmount))}
-      </View>
-
-      <View style={styles.section}>
         {renderSectionHeader('Order')}
         {renderRow(`Adult Fees × ${values.adults || 0}`, formatCurrency(adultFee))}
         {renderRow(`Child Fees × ${values.children || 0}`, formatCurrency(childFee))}
-        {paymentMeta.discountAmount > 0 && (
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Discount</Text>
-            <Text style={[styles.rowValue, styles.discountText]}>
-              - {formatCurrency(paymentMeta.discountAmount)}
-            </Text>
-          </View>
-        )}
         <View style={[styles.row, styles.totalRow]}>
           <Text style={[styles.rowLabel, styles.totalLabel]}>Total Price</Text>
           <Text style={[styles.rowValue, styles.totalValue]}>
-            {formatCurrency(paymentMeta.finalBillAmount)}
+            {formatCurrency(adultFee + childFee)}
           </Text>
         </View>
       </View>
@@ -191,6 +211,21 @@ const getStyles = (theme: MD3Theme) =>
       padding: metrics.doubleMargin,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    customerBlock: {
+      marginBottom: metrics.doubleMargin,
+      paddingBottom: metrics.doubleMargin,
+      borderBottomWidth: 1,
+      borderBottomColor: '#ECECEC',
+    },
+    customerBlockLast: {
+      marginBottom: 0,
+      paddingBottom: 0,
+      borderBottomWidth: 0,
+    },
+    customerTitle: {
+      marginBottom: metrics.baseMargin,
+      color: theme.colors.primary,
     },
   });
 

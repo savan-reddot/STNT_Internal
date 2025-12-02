@@ -32,8 +32,8 @@ const steps = [
   { id: 2, title: 'Travel Details' },
   { id: 3, title: 'Customer Details' },
   { id: 4, title: 'Notice & Declaration' },
-  { id: 5, title: 'Payment' },
-  { id: 6, title: 'Payment Details' },
+  { id: 5, title: 'Preview Submission' },
+  { id: 6, title: 'Payment' },
 ];
 
 const getStepPercentage = (stepIndex: number) =>
@@ -123,7 +123,7 @@ const BuyPolicy = ({ navigation }: any) => {
   const goToStep = (nextStep: number) => {
     const boundedStep = Math.max(0, Math.min(nextStep, steps.length - 1));
     setCurrentStep(boundedStep);
-    if (boundedStep <= 4) {
+    if (boundedStep <= 3) {
       setPaymentMeta(null);
     }
   };
@@ -223,7 +223,10 @@ const BuyPolicy = ({ navigation }: any) => {
         ];
         const noticeResult = await trigger(noticeFields);
         return noticeResult;
-      case 4: // Payment
+      case 4: // Payment Details Summary
+        // No validation needed for summary step
+        return true;
+      case 5: // Payment
         if (!paymentMeta) {
           Alert.alert('Payment required', 'Please complete your payment before proceeding.');
           return false;
@@ -347,20 +350,25 @@ const BuyPolicy = ({ navigation }: any) => {
 
   const handlePaymentVerified = (data: PaymentCompletionData) => {
     setPaymentMeta(data);
-    goToStep(5);
+    handleFinalSubmit(data);
   };
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = (paymentData?: PaymentCompletionData) => {
     if (isPurchasingPolicy) {
       return;
     }
-    handleSubmit(onSubmit)();
+    // Use paymentData if provided, otherwise use paymentMeta from state
+    const finalPaymentData = paymentData || paymentMeta;
+    if (!finalPaymentData) {
+      showErrorToast('Complete your payment before submitting', 'Error !!');
+      return;
+    }
+    handleSubmit((formData) => onSubmit(formData, finalPaymentData))();
   };
 
-  const onSubmit = async (data: PolicyFormData) => {
-    if (!paymentMeta) {
+  const onSubmit = async (data: PolicyFormData, paymentData: PaymentCompletionData) => {
+    if (!paymentData?.razorpayPaymentId || !paymentData?.orderCreationId || !paymentData?.razorpayOrderId) {
       showErrorToast('Complete your payment before submitting', 'Error !!');
-      goToStep(4);
       return;
     }
 
@@ -424,13 +432,13 @@ const BuyPolicy = ({ navigation }: any) => {
       is_not_discharged_from_hospital: data.notDischargedWithin30Days,
       is_pdpa_consent_accepted: data.pdpaConsent,
       payment_details: {
-        orderCreationId: paymentMeta?.orderCreationId,
-        razorpayPaymentId: paymentMeta?.razorpayPaymentId,
-        razorpayOrderId: paymentMeta?.razorpayOrderId,
-        discount_amount: paymentMeta?.discountAmount,
-        bill_amount: paymentMeta?.billAmount,
-        final_bill_amount: paymentMeta?.finalBillAmount,
-        referral_code: paymentMeta?.referralCode || '',
+        orderCreationId: paymentData?.orderCreationId,
+        razorpayPaymentId: paymentData?.razorpayPaymentId,
+        razorpayOrderId: paymentData?.razorpayOrderId,
+        discount_amount: paymentData?.discountAmount,
+        bill_amount: paymentData?.billAmount,
+        final_bill_amount: paymentData?.finalBillAmount,
+        referral_code: paymentData?.referralCode || '',
       },
       plan_details: {
         plan: selectedPlanDetails,
@@ -484,16 +492,13 @@ const BuyPolicy = ({ navigation }: any) => {
         return <NoticeDeclaration control={control} errors={errors} />;
       case 4:
         return (
-          <Payment
-            watch={watch}
-            onPaymentVerified={handlePaymentVerified}
-          />
+          <PaymentDetailsSummary watch={watch} />
         );
       case 5:
         return (
-          <PaymentDetailsSummary
+          <Payment
             watch={watch}
-            paymentMeta={paymentMeta}
+            onPaymentVerified={handlePaymentVerified}
           />
         );
       default:

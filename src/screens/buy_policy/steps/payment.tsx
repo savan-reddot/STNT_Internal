@@ -8,7 +8,7 @@ import fontStyle from '../../../styles/fontStyle';
 import { metrics } from '../../../utils/metrics';
 import { PaymentCompletionData, PolicyFormData } from '../types';
 import KeyboardAwareContainer from '../components/KeyboardAwareContainer';
-import { useApply_referral_codeMutation, usePayment_ordersMutation, usePayment_successMutation } from '../../../redux/services';
+import { useApply_referral_codeMutation, usePayment_ordersMutation, usePayment_successMutation, useReferral_code_usersMutation } from '../../../redux/services';
 import { showErrorToast, showSuccessToast } from '../../../utils/toastUtils';
 import { useAppSelector } from '../../../redux/hooks';
 import { getUser } from '../../../redux/reducer';
@@ -38,6 +38,7 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
   const [apply_referral_code, { isLoading: isApplyingCode }] = useApply_referral_codeMutation();
   const [payment_orders, { isLoading: isCreatingOrder }] = usePayment_ordersMutation();
   const [payment_success, { isLoading: isVerifyingPayment }] = usePayment_successMutation();
+  const [referral_code_users] = useReferral_code_usersMutation();
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null);
   const [isCodeApplied, setIsCodeApplied] = useState(false);
 
@@ -200,6 +201,28 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
 
         // Check if verification was successful
         if (verificationResponse?.success) {
+          // If referral code was applied, call referral-code-users API
+          if (isCodeApplied && referralCodeValue.trim()) {
+            try {
+              console.log('Calling referral-code-users API...');
+              const referralUserResponse = await referral_code_users({
+                referral_code: referralCodeValue.trim(),
+                name: name,
+                email: email,
+                bill_amount: billAmount,
+                discount_amount: discountInfo?.discountAmount ?? 0,
+                final_bill_amount: amountToPay,
+              }).unwrap();
+
+              console.log('Referral code user saved:', referralUserResponse);
+            } catch (referralError: any) {
+              console.error('Error saving referral code user:', referralError);
+              // Don't block payment completion if referral user save fails
+              const errorMessage = referralError?.data?.message || referralError?.message || 'Failed to save referral code user';
+              console.warn('Referral code user save failed:', errorMessage);
+            }
+          }
+
           const completionPayload: PaymentCompletionData = {
             orderCreationId: orderId,
             razorpayPaymentId: razorpayData?.razorpay_payment_id ?? '',
@@ -214,7 +237,7 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
           };
 
           onPaymentVerified(completionPayload);
-          showSuccessToast('Payment verified successfully. Review details before submitting.', 'Success !!');
+          showSuccessToast('Payment verified successfully', 'Success !!');
         } else {
           showErrorToast('Payment verification failed', 'Error !!');
         }
