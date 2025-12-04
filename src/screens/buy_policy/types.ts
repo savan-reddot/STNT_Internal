@@ -45,6 +45,14 @@ export interface PolicyFormData {
   planChildPricing: PlanPriceBand | null;
   adults: number;
   children: number;
+  flightNumberDeparture: string;
+  flightDepartureDateDeparture: string;
+  flightNumberArrival: string;
+  flightDepartureDateArrival: string;
+  additionalFlights: Array<{
+    flight_number: string;
+    departure_date: string;
+  }>;
 
   // Customer Details (array for multiple customers)
   customers: Array<{

@@ -66,6 +66,9 @@ const BuyPolicy = ({ navigation }: any) => {
   const [datePickerVisible, setDatePickerVisible] = useState<string | null>(null);
   const [selectedDateField, setSelectedDateField] = useState<string>('');
   const [selectedCustomerIndex, setSelectedCustomerIndex] = useState<number | null>(null);
+  const [selectedFlightIndex, setSelectedFlightIndex] = useState<number | 'new' | null>(null);
+  const [newFlightDate, setNewFlightDate] = useState<string>('');
+  const [currentFlightModalDate, setCurrentFlightModalDate] = useState<string>('');
   const [paymentMeta, setPaymentMeta] = useState<PaymentCompletionData | null>(null);
   const [policy_purchase_form, { isLoading: isPurchasingPolicy }] = usePolicy_purchase_formMutation();
 
@@ -105,6 +108,11 @@ const BuyPolicy = ({ navigation }: any) => {
       planChildPricing: null,
       adults: __DEV__ ? 1 : 0,
       children: 0,
+      flightNumberDeparture: __DEV__ ? '111' : '',
+      flightDepartureDateDeparture: __DEV__ ? '25/11/2025' : '',
+      flightNumberArrival: __DEV__ ? '222' : '',
+      flightDepartureDateArrival: __DEV__ ? '26/11/2025' : '',
+      additionalFlights: __DEV__ ? [{ flight_number: '123', departure_date: '25/11/2025' }] : [],
       customers: [],
       pdpaConsent: __DEV__ ? true : false,
       notDischargedWithin30Days: __DEV__ ? true : false,
@@ -244,12 +252,6 @@ const BuyPolicy = ({ navigation }: any) => {
     }
   };
 
-  const handleBack = () => {
-    if (currentStep > 0) {
-      goToStep(currentStep - 1);
-    }
-  };
-
   const handleHeaderBack = () => {
     if (currentStep > 0) {
       goToStep(currentStep - 1);
@@ -269,6 +271,25 @@ const BuyPolicy = ({ navigation }: any) => {
       // Handle customer details date fields
       if (selectedCustomerIndex !== null && selectedDateField === 'dateOfBirth') {
         setValue(`customers.${selectedCustomerIndex}.${selectedDateField}` as any, formattedDate);
+      } else if (selectedFlightIndex !== null && selectedDateField.startsWith('additionalFlightDate')) {
+        // Handle additional flight date - update the flight in the array
+        if (selectedFlightIndex === 'new') {
+          // For new flights, store the date in state to be picked up by travelDetails
+          setNewFlightDate(formattedDate);
+        } else if (typeof selectedFlightIndex === 'number') {
+          // For editing existing flights, also update via newFlightDate so travelDetails can pick it up
+          setNewFlightDate(formattedDate);
+          // Also update directly in the array
+          const currentFlights = watch('additionalFlights') || [];
+          const updatedFlights = [...currentFlights];
+          if (updatedFlights[selectedFlightIndex]) {
+            updatedFlights[selectedFlightIndex] = {
+              ...updatedFlights[selectedFlightIndex],
+              departure_date: formattedDate,
+            };
+            setValue('additionalFlights', updatedFlights);
+          }
+        }
       } else {
         setValue(selectedDateField as any, formattedDate);
 
@@ -297,11 +318,17 @@ const BuyPolicy = ({ navigation }: any) => {
     setDatePickerVisible(null);
     setSelectedDateField('');
     setSelectedCustomerIndex(null);
+    setSelectedFlightIndex(null);
+    setCurrentFlightModalDate('');
   };
 
-  const openDatePicker = (fieldName: string, index?: number) => {
+  const openDatePicker = (fieldName: string, index?: number, flightIndex?: number | 'new', currentDate?: string) => {
     setSelectedDateField(fieldName);
     setSelectedCustomerIndex(index !== undefined ? index : null);
+    setSelectedFlightIndex(flightIndex !== undefined ? flightIndex : null);
+    if (currentDate) {
+      setCurrentFlightModalDate(currentDate);
+    }
     setDatePickerVisible('single');
   };
 
@@ -313,6 +340,41 @@ const BuyPolicy = ({ navigation }: any) => {
       if (customer && customer.dateOfBirth) {
         const date = new Date(customer.dateOfBirth);
         return isNaN(date.getTime()) ? undefined : date;
+      }
+      return undefined;
+    }
+
+    // Handle additional flight date fields
+    if (selectedFlightIndex !== null && fieldName.startsWith('additionalFlightDate')) {
+      if (selectedFlightIndex === 'new') {
+        // For new flights, use newFlightDate if available, otherwise use currentFlightModalDate
+        if (newFlightDate) {
+          const date = new Date(newFlightDate);
+          return isNaN(date.getTime()) ? undefined : date;
+        }
+        if (currentFlightModalDate) {
+          const date = new Date(currentFlightModalDate);
+          return isNaN(date.getTime()) ? undefined : date;
+        }
+        // Return today's date as default for new flights
+        return new Date();
+      } else if (typeof selectedFlightIndex === 'number') {
+        // First check if we have a currentFlightModalDate (from the modal)
+        if (currentFlightModalDate) {
+          const date = new Date(currentFlightModalDate);
+          if (!isNaN(date.getTime())) {
+            return date;
+          }
+        }
+        // Otherwise, get from the flights array
+        const flights = watch('additionalFlights') || [];
+        const flight = flights[selectedFlightIndex];
+        if (flight && flight.departure_date) {
+          const date = new Date(flight.departure_date);
+          return isNaN(date.getTime()) ? undefined : date;
+        }
+        // If editing but no date exists, return today's date
+        return new Date();
       }
       return undefined;
     }
@@ -407,6 +469,12 @@ const BuyPolicy = ({ navigation }: any) => {
       };
     });
 
+    // Format additional flights for backend
+    const additionalFlightDetails = (data.additionalFlights || []).map((flight) => ({
+      flight_number: flight.flight_number,
+      departure_date: convertDateToISO(flight.departure_date),
+    }));
+
     const policyPayload = {
       travel_type:
         data.travellingSaudiWith && data.travellingSaudiWith.toLowerCase() !== 'individual' ? 'group' : 'individual',
@@ -427,6 +495,11 @@ const BuyPolicy = ({ navigation }: any) => {
       coverage_plan_id: planId,
       number_of_adults: data.adults || 0,
       number_of_children: data.children || 0,
+      departure_flight_number: data.flightNumberDeparture || null,
+      departure_flight_date: data.flightDepartureDateDeparture ? convertDateToISO(data.flightDepartureDateDeparture) : null,
+      arrival_flight_number: data.flightNumberArrival || null,
+      arrival_flight_date: data.flightDepartureDateArrival ? convertDateToISO(data.flightDepartureDateArrival) : null,
+      additional_flight_details: additionalFlightDetails.length > 0 ? additionalFlightDetails : null,
       customer_information: customerInformation,
       is_info_correct: data.confirmInformationAccurate,
       is_not_discharged_from_hospital: data.notDischargedWithin30Days,
@@ -476,6 +549,8 @@ const BuyPolicy = ({ navigation }: any) => {
             openDatePicker={openDatePicker}
             watch={watch}
             setValue={setValue}
+            newFlightDate={newFlightDate}
+            onNewFlightDateUsed={() => setNewFlightDate('')}
           />
         );
       case 2:
@@ -610,3 +685,4 @@ const styles = (theme: MD3Theme) =>
       width: '100%',
     },
   });
+
