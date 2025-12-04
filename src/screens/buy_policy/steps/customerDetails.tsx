@@ -24,9 +24,19 @@ const genderOptions = [
 const formatDateForDisplay = (dateString: string): string => {
   if (!dateString) return '';
   try {
-    // Parse YYYY-MM-DD format
+    // Handle ISO string (full timestamp) format
+    if (dateString.includes('T') && (dateString.includes('Z') || dateString.includes('+'))) {
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return format(date, 'dd/MM/yyyy');
+      }
+    }
+    // Parse YYYY-MM-DD format (legacy support)
     const date = parse(dateString, 'yyyy-MM-dd', new Date());
-    return format(date, 'dd/MM/yyyy');
+    if (!isNaN(date.getTime())) {
+      return format(date, 'dd/MM/yyyy');
+    }
+    return dateString;
   } catch {
     return dateString;
   }

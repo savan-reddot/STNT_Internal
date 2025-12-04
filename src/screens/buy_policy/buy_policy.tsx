@@ -43,10 +43,25 @@ const convertDateToISO = (value?: string) => {
   if (!value) {
     return '';
   }
-  if (value.includes('T')) {
-    return new Date(value).toISOString();
+  // If already an ISO string (full timestamp), return as is
+  if (value.includes('T') && value.includes('Z')) {
+    return value;
   }
-  // expect DD/MM/YYYY
+  // If it's an ISO string without Z, try to parse it
+  if (value.includes('T')) {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString();
+    }
+  }
+  // Handle YYYY-MM-DD format (legacy support)
+  if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString();
+    }
+  }
+  // expect DD/MM/YYYY (legacy support)
   const parts = value.split('/');
   if (parts.length === 3) {
     const [day, month, year] = parts;
@@ -266,7 +281,31 @@ const BuyPolicy = ({ navigation }: any) => {
 
   const onConfirm = (params: any) => {
     if (selectedDateField && params?.date) {
-      const formattedDate = format(params.date, 'yyyy-MM-dd');
+      // Get selected date components
+      const selectedYear = params.date.getFullYear();
+      const selectedMonth = params.date.getMonth();
+      const selectedDay = params.date.getDate();
+
+      // Get current time components
+      const now = new Date();
+      const currentHours = now.getUTCHours();
+      const currentMinutes = now.getUTCMinutes();
+      const currentSeconds = now.getUTCSeconds();
+      const currentMilliseconds = now.getUTCMilliseconds();
+
+      // Combine selected date with current time in UTC
+      const combinedTimestamp = Date.UTC(
+        selectedYear,
+        selectedMonth,
+        selectedDay,
+        currentHours,
+        currentMinutes,
+        currentSeconds,
+        currentMilliseconds
+      );
+      const combinedDate = new Date(combinedTimestamp);
+      const fullTimestampISO = combinedDate.toISOString();
+      const formattedDate = fullTimestampISO;
 
       // Handle customer details date fields
       if (selectedCustomerIndex !== null && selectedDateField === 'dateOfBirth') {
@@ -303,11 +342,23 @@ const BuyPolicy = ({ navigation }: any) => {
             : watch('arrivalDate');
 
           if (departureDate && arrivalDate) {
+            // Parse the ISO timestamps and extract just the date part (UTC)
             const depDate = new Date(departureDate);
             const arrDate = new Date(arrivalDate);
-            depDate.setHours(0, 0, 0, 0);
-            arrDate.setHours(0, 0, 0, 0);
-            const diff = arrDate.getTime() - depDate.getTime();
+
+            // Extract UTC date components to calculate days difference
+            const depUTC = Date.UTC(
+              depDate.getUTCFullYear(),
+              depDate.getUTCMonth(),
+              depDate.getUTCDate()
+            );
+            const arrUTC = Date.UTC(
+              arrDate.getUTCFullYear(),
+              arrDate.getUTCMonth(),
+              arrDate.getUTCDate()
+            );
+
+            const diff = arrUTC - depUTC;
             const dayInMs = 1000 * 60 * 60 * 24;
             const inclusiveDays = Math.floor(Math.max(0, diff) / dayInMs) + 1;
             setValue('numberOfDays', inclusiveDays.toString());
@@ -381,6 +432,17 @@ const BuyPolicy = ({ navigation }: any) => {
 
     const value = watch(fieldName as keyof PolicyFormData);
     if (value && typeof value === 'string') {
+      // Handle ISO string (full timestamp) format
+      if (value.includes('T') && (value.includes('Z') || value.includes('+'))) {
+        const date = new Date(value);
+        return isNaN(date.getTime()) ? undefined : date;
+      }
+      // Handle YYYY-MM-DD format (legacy support)
+      if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const date = new Date(value);
+        return isNaN(date.getTime()) ? undefined : date;
+      }
+      // Fallback to direct parsing
       const date = new Date(value);
       return isNaN(date.getTime()) ? undefined : date;
     }

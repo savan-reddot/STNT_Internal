@@ -37,9 +37,19 @@ interface PlanPricingData {
 const formatDateForDisplay = (dateString: string): string => {
   if (!dateString) return '';
   try {
-    // Parse YYYY-MM-DD format
+    // Handle ISO string (full timestamp) format
+    if (dateString.includes('T') && (dateString.includes('Z') || dateString.includes('+'))) {
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return format(date, 'dd/MM/yyyy');
+      }
+    }
+    // Parse YYYY-MM-DD format (legacy support)
     const date = parse(dateString, 'yyyy-MM-dd', new Date());
-    return format(date, 'dd/MM/yyyy');
+    if (!isNaN(date.getTime())) {
+      return format(date, 'dd/MM/yyyy');
+    }
+    return dateString;
   } catch {
     return dateString;
   }
@@ -410,21 +420,28 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
   const formatDateForModal = (dateString: string): string => {
     if (!dateString) return '';
     try {
-      // Parse YYYY-MM-DD format
-      const date = parse(dateString, 'yyyy-MM-dd', new Date());
-      if (isNaN(date.getTime())) {
-        // Try parsing as DD-MM-YYYY if YYYY-MM-DD fails
-        const parts = dateString.split('-');
-        if (parts.length === 3) {
-          const [day, month, year] = parts;
-          const parsedDate = new Date(`${year}-${month}-${day}`);
-          if (!isNaN(parsedDate.getTime())) {
-            return format(parsedDate, 'dd-MM-yyyy');
-          }
+      // Handle ISO string (full timestamp) format
+      if (dateString.includes('T') && (dateString.includes('Z') || dateString.includes('+'))) {
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+          return format(date, 'dd/MM/yyyy');
         }
-        return dateString;
       }
-      return format(date, 'dd-MM-yyyy');
+      // Parse YYYY-MM-DD format (legacy support)
+      const date = parse(dateString, 'yyyy-MM-dd', new Date());
+      if (!isNaN(date.getTime())) {
+        return format(date, 'dd/MM/yyyy');
+      }
+      // Try parsing as DD-MM-YYYY if YYYY-MM-DD fails
+      const parts = dateString.split('-');
+      if (parts.length === 3 && parts[0].length === 2) {
+        const [day, month, year] = parts;
+        const parsedDate = new Date(`${year}-${month}-${day}`);
+        if (!isNaN(parsedDate.getTime())) {
+          return format(parsedDate, 'dd/MM/yyyy');
+        }
+      }
+      return dateString;
     } catch {
       return dateString;
     }
@@ -433,21 +450,28 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
   const parseDateForPicker = (dateString: string): Date | undefined => {
     if (!dateString) return undefined;
     try {
-      // Parse YYYY-MM-DD format
-      const date = parse(dateString, 'yyyy-MM-dd', new Date());
-      if (isNaN(date.getTime())) {
-        // Try parsing as DD-MM-YYYY if YYYY-MM-DD fails
-        const parts = dateString.split('-');
-        if (parts.length === 3 && parts[0].length === 2) {
-          const [day, month, year] = parts;
-          const parsedDate = new Date(`${year}-${month}-${day}`);
-          if (!isNaN(parsedDate.getTime())) {
-            return parsedDate;
-          }
+      // Handle ISO string (full timestamp) format
+      if (dateString.includes('T') && (dateString.includes('Z') || dateString.includes('+'))) {
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+          return date;
         }
-        return undefined;
       }
-      return date;
+      // Parse YYYY-MM-DD format (legacy support)
+      const date = parse(dateString, 'yyyy-MM-dd', new Date());
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+      // Try parsing as DD-MM-YYYY if YYYY-MM-DD fails
+      const parts = dateString.split('-');
+      if (parts.length === 3 && parts[0].length === 2) {
+        const [day, month, year] = parts;
+        const parsedDate = new Date(`${year}-${month}-${day}`);
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate;
+        }
+      }
+      return undefined;
     } catch {
       return undefined;
     }
@@ -536,7 +560,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
               >
                 <TextInput
                   mode="outlined"
-                  placeholder="DD-MM-YYYY"
+                  placeholder="DD/MM/YYYY"
                   value={formatDateForModal(value)}
                   editable={false}
                   pointerEvents="box-none"
@@ -634,7 +658,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
               >
                 <TextInput
                   mode="outlined"
-                  placeholder="DD-MM-YYYY"
+                  placeholder="DD/MM/YYYY"
                   value={formatDateForModal(value)}
                   editable={false}
                   pointerEvents="box-none"
@@ -928,7 +952,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                   >
                     <TextInput
                       mode="outlined"
-                      placeholder="DD-MM-YYYY"
+                      placeholder="DD/MM/YYYY"
                       value={formatDateForModal(flightModalData.departureDate)}
                       editable={false}
                       pointerEvents="box-none"
