@@ -167,6 +167,13 @@ export const apiClient = createApi({
         body: formData,
       }),
     }),
+    upload_picture: builder.mutation({
+      query: (formData: FormData) => ({
+        url: 'upload-picture',
+        method: 'POST',
+        body: formData,
+      }),
+    }),
     submit_payment_details: builder.mutation({
       query: (request: any) => ({
         url: 'website/claim-request/payment',
@@ -310,6 +317,7 @@ export const {
   useLazyTrusted_hospitalsQuery,
   useDelete_docMutation,
   useUpload_profile_pictureMutation,
+  useUpload_pictureMutation,
   useClaim_request_submitMutation,
   useClaim_request_putMutation,
   useSubmit_payment_detailsMutation,

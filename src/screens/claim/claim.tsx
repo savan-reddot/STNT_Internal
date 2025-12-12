@@ -354,7 +354,7 @@ const Claim = ({ navigation }: any) => {
                   'Please update Passport Number in Profile Settings first. If updated and still not able to see? contact us via (enquiry@stntinternational.com)',
                 );
                 return;
-              } else if (user?.availableUids.length == 0) {
+              } else if (user?.availableUids?.length == 0) {
                 Alert.alert(
                   'Error !!',
                   'We could not found any attached policy with your account. Please contact on (enquiry@stntinternational.com)',

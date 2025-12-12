@@ -564,131 +564,200 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     },
                   ]}
                 >
-                  {user_review?.paymentDetails?.paymentOptions}
+                  {user_review?.paymentDetails?.paymentOptions == 'Paynow Linked Account'
+                    ? 'PayNow'
+                    : user_review?.paymentDetails?.paymentOptions}
                 </Text>
               </View>
-              <View style={styles(theme).travel_detail_item}>
-                <Text
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    {
-                      fontSize: 14,
-                      fontWeight: '400',
-                      color: '#616161',
-                      flex: 1,
-                    },
-                  ]}
-                >
-                  Payee Name
-                </Text>
-                <Text
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    {
-                      fontSize: 14,
-                      fontWeight: '500',
-                      color: theme.colors.onBackground,
-                    },
-                  ]}
-                >
-                  {user_review?.paymentDetails?.payeeName}
-                </Text>
-              </View>
-              <View style={styles(theme).travel_detail_item}>
-                <Text
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    {
-                      fontSize: 14,
-                      fontWeight: '400',
-                      color: '#616161',
-                      flex: 1,
-                    },
-                  ]}
-                >
-                  Payee Relationship
-                </Text>
-                <Text
-                  numberOfLines={2}
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    {
-                      fontSize: 14,
-                      fontWeight: '500',
-                      color: theme.colors.onBackground,
-                      flex: 1,
-                      textAlign: 'right',
-                    },
-                  ]}
-                >
-                  {user_review?.paymentDetails?.payeeRelationship}
-                </Text>
-              </View>
-              <View style={styles(theme).travel_detail_item}>
-                <Text
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    {
-                      fontSize: 14,
-                      fontWeight: '400',
-                      color: '#616161',
-                      flex: 1,
-                    },
-                  ]}
-                >
-                  Bank Name
-                </Text>
-                <Text
-                  numberOfLines={2}
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    {
-                      fontSize: 14,
-                      fontWeight: '500',
-                      color: theme.colors.onBackground,
 
-                      textAlign: 'right',
-                    },
-                  ]}
-                >
-                  {user_review?.paymentDetails?.bankName}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles(theme).travel_detail_item,
-                  { borderBottomWidth: 0 },
-                ]}
-              >
-                <Text
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    {
-                      fontSize: 14,
-                      fontWeight: '400',
-                      color: '#616161',
-                      flex: 1,
-                    },
-                  ]}
-                >
-                  Bank Account Number
-                </Text>
-                <Text
-                  numberOfLines={2}
-                  style={[
-                    fontStyle(theme).headingSmall,
-                    {
-                      fontSize: 14,
-                      fontWeight: '500',
-                      color: theme.colors.onBackground,
-                      flex: 1,
-                      textAlign: 'right',
-                    },
-                  ]}
-                >
-                  {user_review?.paymentDetails?.bankAccountNumber}
-                </Text>
-              </View>
+              {user_review?.paymentDetails?.paymentOptions == 'Paynow Linked Account' ? (
+                <>
+                  <View style={styles(theme).travel_detail_item}>
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '400',
+                          color: '#616161',
+                          flex: 1,
+                        },
+                      ]}
+                    >
+                      PayNow Username
+                    </Text>
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '500',
+                          color: theme.colors.onBackground,
+                        },
+                      ]}
+                    >
+                      {user_review?.paymentDetails?.payNowUsername}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles(theme).travel_detail_item,
+                      { borderBottomWidth: 0 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '400',
+                          color: '#616161',
+                          flex: 1,
+                        },
+                      ]}
+                    >
+                      PayNow NRIC/FIN
+                    </Text>
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '500',
+                          color: theme.colors.onBackground,
+                        },
+                      ]}
+                    >
+                      {user_review?.paymentDetails?.payNow}
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <View style={styles(theme).travel_detail_item}>
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '400',
+                          color: '#616161',
+                          flex: 1,
+                        },
+                      ]}
+                    >
+                      Payee Name
+                    </Text>
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '500',
+                          color: theme.colors.onBackground,
+                        },
+                      ]}
+                    >
+                      {user_review?.paymentDetails?.payeeName}
+                    </Text>
+                  </View>
+                  <View style={styles(theme).travel_detail_item}>
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '400',
+                          color: '#616161',
+                          flex: 1,
+                        },
+                      ]}
+                    >
+                      Payee Relationship
+                    </Text>
+                    <Text
+                      numberOfLines={2}
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '500',
+                          color: theme.colors.onBackground,
+                          flex: 1,
+                          textAlign: 'right',
+                        },
+                      ]}
+                    >
+                      {user_review?.paymentDetails?.payeeRelationship}
+                    </Text>
+                  </View>
+                  <View style={styles(theme).travel_detail_item}>
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '400',
+                          color: '#616161',
+                          flex: 1,
+                        },
+                      ]}
+                    >
+                      Bank Name
+                    </Text>
+                    <Text
+                      numberOfLines={2}
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '500',
+                          color: theme.colors.onBackground,
+
+                          textAlign: 'right',
+                        },
+                      ]}
+                    >
+                      {user_review?.paymentDetails?.bankName}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles(theme).travel_detail_item,
+                      { borderBottomWidth: 0 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '400',
+                          color: '#616161',
+                          flex: 1,
+                        },
+                      ]}
+                    >
+                      Bank Account Number
+                    </Text>
+                    <Text
+                      numberOfLines={2}
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        {
+                          fontSize: 14,
+                          fontWeight: '500',
+                          color: theme.colors.onBackground,
+                          flex: 1,
+                          textAlign: 'right',
+                        },
+                      ]}
+                    >
+                      {user_review?.paymentDetails?.bankAccountNumber}
+                    </Text>
+                  </View>
+                </>
+              )}
             </View>
 
             <View style={[styles(theme).section]}>
