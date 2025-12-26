@@ -156,12 +156,12 @@ const DynamicFormNew = forwardRef(
     }: any,
     ref,
   ) => {
-    console.log('structure -----> ', structure);
+    // console.log('structure -----> ', structure);
     const formSchema = useMemo(
       () => generateFormSchema(structure),
       [structure],
     );
-    console.log('formSchema -----> ', formSchema);
+    // console.log('formSchema -----> ', formSchema);
     const theme = useTheme();
     const {
       control,

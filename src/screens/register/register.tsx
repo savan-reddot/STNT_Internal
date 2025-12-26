@@ -147,9 +147,9 @@ const Register = ({ navigation }: any) => {
               { padding: metrics.doubleMargin },
             ]}
           >
-            <Text style={fontStyle(theme).headingMedium}>Register</Text>
+            <Text style={fontStyle(theme).headingMedium}>JOIN STNT</Text>
             <Text style={[fontStyle(theme).titleSmall, { color: '#4F4F4F' }]}>
-              Register now to manage your umrah insurance and travel documents.
+              Start your premium journey with us today.
             </Text>
 
             <View style={[styles(theme).parent_view]}>
@@ -280,7 +280,7 @@ const Register = ({ navigation }: any) => {
 
             <View style={styles(theme).child_view}>
               <UButton
-                title={'Register'}
+                title={'CREATE ACCOUNT'}
                 style={{ flex: 0 }}
                 onPress={handleSubmit(onRegister)}
               />

@@ -13,28 +13,29 @@ import { MD3Theme, useTheme } from 'react-native-paper';
 import { globalStyle } from '../utils/globalStyles';
 import { Font_Medium } from '../theme/fonts';
 import { Screens } from '../common/screens';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export const onboardingData = [
   {
     id: '1',
     image: require('../../assets/images/onboard_1.png'),
-    title: 'Plan & Travel with Confidence',
+    title: 'Spiritual Companion',
     description:
-      'Access your Umrah travel details, bookings, and tips in real-time.',
+      'Your personal guide for a blessed journey, featuring prayer times, Qibla, and daily rituals.',
   },
   {
     id: '2',
     image: require('../../assets/images/onboard_2.png'),
-    title: 'Protect Your Journey, Stay Secure',
+    title: 'Digital E-Visa',
     description:
-      'Get Umrah insurance instantly and find trusted hospitals near you',
+      'Seamless entry with your digital pass. Keep your visa and insurance details secure in one place.'
   },
   {
     id: '3',
     image: require('../../assets/images/onboard_3.png'),
-    title: 'All Your Travel Docs, Secured',
+    title: 'Pilgrim Support',
     description:
-      'Securely access your ePass, insurance, and ID anytime, anywhere',
+      '24/7 Concierge and Mutawwif assistance to guide you through every step of your pilgrimage.'
   },
 ];
 
@@ -74,7 +75,9 @@ const Onboard = ({ navigation }: any) => {
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <View style={[styles(theme).slide]}>
-            <Image source={item.image} style={styles(theme).image} />
+            <View style={styles(theme).imageContainer}>
+              <Image source={item.image} style={styles(theme).image} />
+            </View>
             <Text style={styles(theme).title}>{item.title}</Text>
             <Text style={styles(theme).description}>{item.description}</Text>
           </View>
@@ -110,7 +113,18 @@ const Onboard = ({ navigation }: any) => {
       {/* Button */}
       <TouchableOpacity style={styles(theme).button} onPress={handleNext}>
         <Text style={styles(theme).buttonText}>
-          {currentIndex === onboardingData.length - 1 ? 'Get Started' : 'Next'}
+          {currentIndex === onboardingData.length - 1 ? 'GET STARTED' : 'NEXT'}
+        </Text>
+        <Icon
+          name="arrow-forward-outline"
+          size={metrics.moderateScale(16)}
+          color={theme.colors.background}
+        />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles(theme).skipButton} onPress={() => navigation.navigate(Screens.Login)}>
+        <Text style={styles(theme).skipButtonText}>
+          Skip to Login
         </Text>
       </TouchableOpacity>
     </View>
@@ -136,6 +150,22 @@ const styles = (theme: MD3Theme) =>
       // paddingHorizontal: metrics.baseMargin,
       // backgroundColor: 'red',
     },
+    imageContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: metrics.doubleMargin,
+      backgroundColor: '#fff',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+      borderRadius: metrics.doubleMargin,
+      paddingHorizontal: metrics.smallMargin,
+      paddingVertical: 25,
+      transform: [{ rotate: '03deg' }],
+
+    },
     image: {
       width: metrics.screenWidth * 0.6,
       height: metrics.screenWidth * 0.6,
@@ -143,20 +173,24 @@ const styles = (theme: MD3Theme) =>
       marginBottom: metrics.doubleMargin,
     },
     title: {
-      fontSize: 16,
+      fontSize: metrics.moderateScale(20),
       fontWeight: '700',
       textAlign: 'center',
       color: theme.colors.onBackground,
       marginBottom: metrics.baseMargin,
       fontFamily: Font_Medium,
+      marginTop: metrics.doubleMargin,
+      textTransform: 'uppercase',
+      width: metrics.screenWidth,
     },
     description: {
       fontSize: 14,
       fontWeight: '400',
       color: theme.colors.onBackground,
       textAlign: 'center',
-      paddingHorizontal: metrics.doubleMargin,
+      paddingHorizontal: 30,
       fontFamily: Font_Medium,
+      marginTop: metrics.baseRadius,
     },
     pagination: {
       flexDirection: 'row',
@@ -170,18 +204,35 @@ const styles = (theme: MD3Theme) =>
       marginHorizontal: 4,
     },
     button: {
-      backgroundColor: theme.colors.primary,
-      borderRadius: metrics.baseRadius,
+      backgroundColor: "#022c22",
+      borderRadius: 24,
       paddingVertical: metrics.doubleMargin,
       paddingHorizontal: metrics.baseMargin,
-      //   position: 'absolute',
       alignItems: 'center',
-      //   bottom: 40,
+      justifyContent: 'center',
       width: '90%',
+      flexDirection: 'row',
+      gap: metrics.smallMargin,
+      alignSelf: 'center',
     },
     buttonText: {
       color: theme.colors.background,
       fontSize: 16,
       fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    skipButton: {
+      paddingVertical: metrics.doubleMargin,
+      paddingHorizontal: metrics.baseMargin,
+      alignItems: 'center',
+      width: '90%',
+    },
+    skipButtonText: {
+      color: "#A1A1AA",
+      fontSize: 14,
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      width: metrics.screenWidth,
+      textAlign: 'center',
     },
   });

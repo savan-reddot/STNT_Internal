@@ -152,9 +152,9 @@ const Login = ({ navigation }: any) => {
             { padding: metrics.doubleMargin },
           ]}
         >
-          <Text style={fontStyle(theme).headingMedium}>Login</Text>
+          <Text style={fontStyle(theme).headingMedium}>WELCOME BACK</Text>
           <Text style={[fontStyle(theme).titleSmall, { color: '#4F4F4F' }]}>
-            Sign in securely using your email or passport number to continue.
+            Log in to access your digital ePass and concierge services.
           </Text>
 
           <View style={[styles(theme).parent_view, { flex: 1 }]}>
@@ -217,7 +217,7 @@ const Login = ({ navigation }: any) => {
 
             <View style={styles(theme).child_view}>
               <UButton
-                title={'Continue'}
+                title={'LOGIN'}
                 onPress={handleSubmit(onLogin)}
               // style={{ flex: 0 }}
               />
