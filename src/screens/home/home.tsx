@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
   AppState,
+  ScrollView,
 } from 'react-native';
 import React, { useCallback, useState, useEffect } from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';
@@ -24,6 +25,8 @@ import ScreenLoader from '../../components/loader';
 import { useFocusEffect } from '@react-navigation/native';
 import AppLayout from '../../components/safeareawrapper';
 import UpdateModal from '../../components/update_modal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 10;
@@ -48,9 +51,10 @@ const Home = ({ navigation }: any) => {
   const [policy_data, setPolicy_Data] = useState<POLICY_DATA>(initPolicyData);
   const [updateInfo, setUpdateInfo] = useState({});
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-
+  const { top } = useSafeAreaInsets()
 
   const user = useAppSelector(getUser);
+
   const action_list = [
     {
       id: 1,
@@ -170,165 +174,390 @@ I need some help.
     Linking.openURL(url)
   };
 
-  return (
-    <AppLayout title="">
-      <ScreenLoader visible={isLoading} />
+  const isExpired = policy_data?.policies?.[0]?.isExpired;
+  const currentPlan = `${policy_data?.policies?.[0]?.manifest?.type} ${policy_data?.policies?.[0]?.manifest?.package}`
 
-      <View style={{
-        flex: 1,
-        backgroundColor: theme.colors.background,
-      }}>
-        <View style={styles(theme).custom_header}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image
-              source={require('../../../assets/images/day.png')}
-              style={styles(theme).day}
-            />
-            <Text
-              style={[
-                fontStyle(theme).headingMedium,
-                {
-                  color: 'white',
-                  fontWeight: '400',
-                  fontFamily: Font_Regular,
-                  flex: 1,
-                  marginHorizontal: metrics.baseMargin,
-                  fontSize: 18,
-                },
-              ]}
+
+  const SERVICES = [
+    {
+      id: 1, title: 'Policy', icon: 'shield-outline', iconColor: '#3BA66B',
+      bgColor: '#EAFBF2', onPress: () => navigation.navigate(Screens.Policies, { type: 'all' }),
+    },
+    {
+      id: 2, title: 'Claims', icon: 'document-text-outline', iconColor: '#3D6AF2',
+      bgColor: '#EEF3FF', onPress: () => navigation.navigate(Screens.Claim),
+    },
+    {
+      id: 3, title: 'Emergency', icon: 'call-outline', iconColor: '#E24A3B',
+      bgColor: '#FFF0EE', onPress: () => navigation.navigate(Screens.EmergencyHelp),
+    },
+    {
+      id: 4, title: 'Hospitals', icon: 'heart-outline', iconColor: '#D84A7A',
+      bgColor: '#FFF1F6', onPress: () => navigation.navigate(Screens.TrustedHospitals),
+    },
+    {
+      id: 5, title: 'Deals', icon: 'pricetag-outline', iconColor: '#D0893C',
+      bgColor: '#FFF8E8', onPress: () => navigation.navigate(Screens.PreferredMerchants),
+    },
+    {
+      id: 6, title: 'Vault', icon: 'lock-closed-outline', iconColor: '#5A67F2',
+      bgColor: '#F1F3FF',
+    },
+  ];
+
+  return (
+    <>
+      <View style={{ paddingTop: top, backgroundColor: '#fff' }}>
+        <ScreenLoader visible={isLoading} />
+
+        {/* ---------- HEADER ---------- */}
+        <View style={styles(theme).header}>
+          <View style={styles(theme).headerLeft}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate(Screens.Profile)}>
+              <Image
+                source={
+                  user?.profile_picture
+                    ? { uri: user.profile_picture }
+                    : require('../../../assets/images/account-circle-line.png')
+                }
+                style={styles(theme).avatar}
+              />
+            </TouchableOpacity>
+            <View>
+              <Text style={styles(theme).welcome}>WELCOME BACK,</Text>
+              <Text style={styles(theme).username}>
+                {user?.firstName?.toUpperCase()}
+              </Text>
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+
+            {/* WARNING ICON */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate(Screens.EmergencyHelp)}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: '#FDECEC',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              {`${getGreeting()}, ${user?.firstName} ${user?.lastName}`}
-            </Text>
+              <Icon
+                name="warning-outline"
+                size={22}
+                color="#EF4444"
+              />
+            </TouchableOpacity>
+
+            {/* NOTIFICATION ICON */}
             <TouchableOpacity
               onPress={() => navigation.navigate(Screens.Notification)}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: '#F5F6FA',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <View style={styles(theme).bell_parent}>
-                <Image
-                  source={require('../../../assets/images/bell.png')}
-                  style={{
-                    height: metrics.screenWidth * 0.05,
-                    width: metrics.screenWidth * 0.05,
-                  }}
-                  resizeMode="contain"
-                />
-              </View>
+              <Icon name="notifications-outline" size={24} color="#0B1320" />
             </TouchableOpacity>
+
           </View>
         </View>
 
-        <View style={styles(theme).tiles_view}>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate(Screens.Policies, { type: 'all' })
-            }
-            style={styles(theme).tile_child}
-          >
-            <Text style={styles(theme).headingMedium}>
-              {policy_data?.totalPolicies || 0}
-            </Text>
-            <Text
-              style={[
-                styles(theme).headingSmall,
-                { textAlign: 'center', marginHorizontal: metrics.baseMargin },
-              ]}
-            >
-              Total Policies
-            </Text>
-          </TouchableOpacity>
-          <View style={styles(theme).seprator} />
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate(Screens.Policies, { type: 'active' })
-            }
-            style={styles(theme).tile_child}
-          >
-            <Text style={styles(theme).headingMedium}>
-              {policy_data?.activePolicies || 0}
-            </Text>
-            <Text
-              style={[
-                styles(theme).headingSmall,
-                { textAlign: 'center', marginHorizontal: metrics.baseMargin },
-              ]}
-            >
-              Active Policies
-            </Text>
-          </TouchableOpacity>
-          <View style={styles(theme).seprator} />
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate(Screens.Policies, { type: 'expired' })
-            }
-            style={styles(theme).tile_child}
-          >
-            <Text style={styles(theme).headingMedium}>
-              {policy_data?.expiredPolicies || 0}
-            </Text>
-            <Text
-              style={[styles(theme).headingSmall, { textAlign: 'center' }]}
-            >
-              Expired Policies
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <FlatList
-          data={action_list}
-          numColumns={2}
-          keyExtractor={(item: any) => item.id.toString()}
-          contentContainerStyle={styles(theme).gridContainer}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => item.onPress()}
-              style={styles(theme).card}
-              key={item.id}
-            >
-              <Image
-                resizeMode="contain"
-                source={item.icon}
-                style={styles(theme).icon}
-              />
-              <Text
-                style={[
-                  fontStyle(theme).headingMedium,
-                  {
-                    fontSize: 16,
-                    fontWeight: '500',
-                    marginTop: metrics.baseMargin,
-                  },
-                ]}
-              >
-                {item.title}
-              </Text>
-            </TouchableOpacity>
-          )}
-          style={{ marginTop: metrics.baseMargin * 1 }}
-        />
-
-        <TouchableOpacity
-          style={styles(theme).fab}
-          onPress={() => openWhatsApp()}
+        <ScrollView
+          style={{ flexGrow: 1, backgroundColor: '#fff' }}
+          contentContainerStyle={{ paddingBottom: 150 }}
+          showsVerticalScrollIndicator={false}
         >
-          <Image
-            source={require('../../../assets/images/WhatsApp.png')}
-            style={{
-              height: metrics.screenWidth * 0.15,
-              width: metrics.screenWidth * 0.15,
-            }}
+          {/* ---------- PLAN CARD ---------- */}
+          <TouchableOpacity activeOpacity={0.8} style={styles(theme).planCard} onPress={() => navigation.navigate(Screens.Policies, { type: 'all' })}>
+            <View style={styles(theme).planHeader}>
+              <Icon name="shield-checkmark" size={32} color="#6EE7B7" />
+
+              <View style={styles(theme).activeBadge}>
+                <Icon
+                  name="ellipse"
+                  size={10}
+                  color={isExpired ? '#EF4444' : '#6EE7B7'}
+                />
+                <Text
+                  style={[
+                    styles(theme).activeText,
+                    isExpired && styles(theme).expiredText,
+                  ]}
+                >
+                  {isExpired ? 'PROTECTION EXPIRED' : 'ACTIVE PROTECTION'}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={styles(theme).planLabel}>CURRENT PLAN</Text>
+            <Text style={styles(theme).planName}>{currentPlan}</Text>
+
+            <View style={styles(theme).divider} />
+
+            <View style={styles(theme).coverageRow}>
+              <View>
+                <Text style={styles(theme).coverageLabel}>COVERAGE AMOUNT</Text>
+                <Text style={styles(theme).coverageAmount}>SGD 100,000</Text>
+              </View>
+
+              <Icon name="chevron-forward" size={24} color="#6EE7B7" />
+            </View>
+          </TouchableOpacity>
+
+          {/* ---------- ALERTS ---------- */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles(theme).alertContainer}
+          >
+            <View style={[styles(theme).alertCard, { backgroundColor: '#FFF6E8' }]}>
+              <Icon name="sunny-outline" size={30} color="#F59E0B" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles(theme).alertTitle}>EXTREME HEAT WARNING</Text>
+                <Text style={styles(theme).alertDesc}>
+                  Temperatures reaching 45°C in Mecca. Avoid direct sun between 12 PM - 3 PM.
+                </Text>
+              </View>
+            </View>
+
+            <View style={[styles(theme).alertCard, { backgroundColor: '#FFF0F0' }]}>
+              <Icon name="people-outline" size={30} color="#EF4444" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles(theme).alertTitle}>HIGH CROWD DENSITY</Text>
+                <Text style={styles(theme).alertDesc}>
+                  Mataf area is at 90% capacity. Use upper floors.
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* ---------- SERVICES ---------- */}
+          <View style={styles(theme).serviceHeader}>
+            <Text style={styles(theme).serviceTitle}>SERVICES</Text>
+            <TouchableOpacity>
+              <Text style={styles(theme).viewAll}>VIEW ALL</Text>
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={SERVICES}
+            numColumns={3}
+            keyExtractor={(item) => item.id.toString()}
+            scrollEnabled={false}
+            contentContainerStyle={styles(theme).serviceGrid}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles(theme).serviceCard} onPress={item?.onPress}>
+                <View
+                  style={[
+                    styles(theme).iconWrapper,
+                    { backgroundColor: item.bgColor },
+                  ]}
+                >
+                  <Icon
+                    name={item.icon}
+                    size={28}
+                    color={item.iconColor}
+                  />
+                </View>
+
+                <Text style={styles(theme).serviceText}>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            )}
           />
-        </TouchableOpacity>
+        </ScrollView>
+
+        <UpdateModal
+          visible={showUpdateModal}
+          updateInfo={updateInfo}
+          onUpdate={() => {
+            setShowUpdateModal(false);
+          }}
+        />
       </View>
 
-      <UpdateModal
-        visible={showUpdateModal}
-        updateInfo={updateInfo}
-        onUpdate={() => {
-          setShowUpdateModal(false);
-        }}
-      />
-    </AppLayout >
-
+      <TouchableOpacity
+        style={styles(theme).fab}
+        onPress={() => openWhatsApp()}
+      >
+        <Image
+          source={require('../../../assets/images/WhatsApp.png')}
+          style={{
+            height: metrics.screenWidth * 0.15,
+            width: metrics.screenWidth * 0.15,
+          }}
+        />
+      </TouchableOpacity>
+    </>
   );
+
+  // return (
+  //   <AppLayout title="">
+  //     <ScreenLoader visible={isLoading} />
+
+  //     <View style={{
+  //       flex: 1,
+  //       backgroundColor: theme.colors.background,
+  //     }}>
+  //       <View style={styles(theme).custom_header}>
+  //         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+  //           <Image
+  //             source={require('../../../assets/images/day.png')}
+  //             style={styles(theme).day}
+  //           />
+  //           <Text
+  //             style={[
+  //               fontStyle(theme).headingMedium,
+  //               {
+  //                 color: 'white',
+  //                 fontWeight: '400',
+  //                 fontFamily: Font_Regular,
+  //                 flex: 1,
+  //                 marginHorizontal: metrics.baseMargin,
+  //                 fontSize: 18,
+  //               },
+  //             ]}
+  //           >
+  //             {`${getGreeting()}, ${user?.firstName} ${user?.lastName}`}
+  //           </Text>
+  //           <TouchableOpacity
+  //             onPress={() => navigation.navigate(Screens.Notification)}
+  //           >
+  //             <View style={styles(theme).bell_parent}>
+  //               <Image
+  //                 source={require('../../../assets/images/bell.png')}
+  //                 style={{
+  //                   height: metrics.screenWidth * 0.05,
+  //                   width: metrics.screenWidth * 0.05,
+  //                 }}
+  //                 resizeMode="contain"
+  //               />
+  //             </View>
+  //           </TouchableOpacity>
+  //         </View>
+  //       </View>
+
+  //       <View style={styles(theme).tiles_view}>
+  //         <TouchableOpacity
+  //           onPress={() =>
+  //             navigation.navigate(Screens.Policies, { type: 'all' })
+  //           }
+  //           style={styles(theme).tile_child}
+  //         >
+  //           <Text style={styles(theme).headingMedium}>
+  //             {policy_data?.totalPolicies || 0}
+  //           </Text>
+  //           <Text
+  //             style={[
+  //               styles(theme).headingSmall,
+  //               { textAlign: 'center', marginHorizontal: metrics.baseMargin },
+  //             ]}
+  //           >
+  //             Total Policies
+  //           </Text>
+  //         </TouchableOpacity>
+  //         <View style={styles(theme).seprator} />
+  //         <TouchableOpacity
+  //           onPress={() =>
+  //             navigation.navigate(Screens.Policies, { type: 'active' })
+  //           }
+  //           style={styles(theme).tile_child}
+  //         >
+  //           <Text style={styles(theme).headingMedium}>
+  //             {policy_data?.activePolicies || 0}
+  //           </Text>
+  //           <Text
+  //             style={[
+  //               styles(theme).headingSmall,
+  //               { textAlign: 'center', marginHorizontal: metrics.baseMargin },
+  //             ]}
+  //           >
+  //             Active Policies
+  //           </Text>
+  //         </TouchableOpacity>
+  //         <View style={styles(theme).seprator} />
+  //         <TouchableOpacity
+  //           onPress={() =>
+  //             navigation.navigate(Screens.Policies, { type: 'expired' })
+  //           }
+  //           style={styles(theme).tile_child}
+  //         >
+  //           <Text style={styles(theme).headingMedium}>
+  //             {policy_data?.expiredPolicies || 0}
+  //           </Text>
+  //           <Text
+  //             style={[styles(theme).headingSmall, { textAlign: 'center' }]}
+  //           >
+  //             Expired Policies
+  //           </Text>
+  //         </TouchableOpacity>
+  //       </View>
+
+  //       <FlatList
+  //         data={action_list}
+  //         numColumns={2}
+  //         keyExtractor={(item: any) => item.id.toString()}
+  //         contentContainerStyle={styles(theme).gridContainer}
+  //         renderItem={({ item }) => (
+  //           <TouchableOpacity
+  //             onPress={() => item.onPress()}
+  //             style={styles(theme).card}
+  //             key={item.id}
+  //           >
+  //             <Image
+  //               resizeMode="contain"
+  //               source={item.icon}
+  //               style={styles(theme).icon}
+  //             />
+  //             <Text
+  //               style={[
+  //                 fontStyle(theme).headingMedium,
+  //                 {
+  //                   fontSize: 16,
+  //                   fontWeight: '500',
+  //                   marginTop: metrics.baseMargin,
+  //                 },
+  //               ]}
+  //             >
+  //               {item.title}
+  //             </Text>
+  //           </TouchableOpacity>
+  //         )}
+  //         style={{ marginTop: metrics.baseMargin * 1 }}
+  //       />
+
+  //       <TouchableOpacity
+  //         style={styles(theme).fab}
+  //         onPress={() => openWhatsApp()}
+  //       >
+  //         <Image
+  //           source={require('../../../assets/images/WhatsApp.png')}
+  //           style={{
+  //             height: metrics.screenWidth * 0.15,
+  //             width: metrics.screenWidth * 0.15,
+  //           }}
+  //         />
+  //       </TouchableOpacity>
+  //     </View>
+
+  //     <UpdateModal
+  //       visible={showUpdateModal}
+  //       updateInfo={updateInfo}
+  //       onUpdate={() => {
+  //         setShowUpdateModal(false);
+  //       }}
+  //     />
+  //   </AppLayout >
+  // );
 };
 
 export default Home;
@@ -430,5 +659,193 @@ const styles = (theme: MD3Theme) =>
       margin: metrics.baseMargin,
       marginHorizontal: 0,
       color: theme.colors.onBackground,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingVertical: 15,
+      alignItems: 'center',
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    avatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+    },
+    welcome: {
+      fontSize: 12,
+      color: '#8A94A6',
+      fontWeight: '600',
+    },
+    username: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: '#0B1320',
+    },
+    bell: {
+      position: 'relative',
+    },
+    bellIcon: {
+      width: 24,
+      height: 24,
+    },
+    badge: {
+      position: 'absolute',
+      top: -6,
+      right: -6,
+      backgroundColor: '#E53935',
+      borderRadius: 10,
+      paddingHorizontal: 5,
+    },
+    badgeText: {
+      color: '#fff',
+      fontSize: 10,
+      fontWeight: '700',
+    },
+    planCard: {
+      backgroundColor: '#0B1320',
+      borderRadius: 24,
+      marginHorizontal: 20,
+      padding: 20,
+      marginTop: 10,
+    },
+    planHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    shieldIcon: {
+      width: 32,
+      height: 32,
+    },
+    activeBadge: {
+      flexDirection: 'row',
+      backgroundColor: '#1F3D36',
+      borderRadius: 20,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      alignItems: 'center',
+      gap: 6,
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: '#6EE7B7',
+    },
+    activeText: {
+      color: '#6EE7B7',
+      fontWeight: '700',
+      fontSize: 12,
+    },
+    expiredText: {
+      color: '#EF4444',
+    },
+    planLabel: {
+      marginTop: 20,
+      color: '#9CA3AF',
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    planName: {
+      color: '#fff',
+      fontSize: 26,
+      fontWeight: '800',
+      marginTop: 6,
+      textTransform: "uppercase"
+    },
+    divider: {
+      height: 1,
+      backgroundColor: '#1F2937',
+      marginVertical: 20,
+    },
+    coverageRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    coverageLabel: {
+      color: '#9CA3AF',
+      fontSize: 12,
+    },
+    coverageAmount: {
+      color: '#fff',
+      fontSize: 22,
+      fontWeight: '800',
+      marginTop: 4,
+    },
+    arrow: {
+      width: 20,
+      height: 20,
+    },
+    alertContainer: {
+      paddingHorizontal: 20,
+      marginTop: 20,
+      gap: 16,
+    },
+    alertCard: {
+      flexDirection: 'row',
+      padding: 16,
+      borderRadius: 20,
+      width: 300,
+      gap: 12,
+    },
+    alertIcon: {
+      width: 40,
+      height: 40,
+    },
+    alertTitle: {
+      fontWeight: '800',
+      fontSize: 14,
+      color: '#111827',
+    },
+    alertDesc: {
+      fontSize: 13,
+      color: '#6B7280',
+      marginTop: 4,
+    },
+    serviceHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      marginTop: 30,
+    },
+    serviceTitle: {
+      fontSize: 22,
+      fontWeight: '800',
+    },
+    viewAll: {
+      color: '#4CAF50',
+      fontWeight: '700',
+    },
+    serviceGrid: {
+      paddingHorizontal: 10,
+      marginTop: 20,
+    },
+    serviceCard: {
+      flex: 1,
+      backgroundColor: '#F9FAFB',
+      borderRadius: 24,
+      alignItems: 'center',
+      paddingVertical: 24,
+      margin: 8,
+    },
+    iconWrapper: {
+      width: 64,
+      height: 64,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 14,
+    },
+    serviceText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#374151',
     },
   });

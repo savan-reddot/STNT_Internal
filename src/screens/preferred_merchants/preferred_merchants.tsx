@@ -4,7 +4,6 @@ import {
   ImageBackground,
   Linking,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -13,7 +12,6 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';
 import { MD3Theme, useTheme } from 'react-native-paper';
-import { globalStyle } from '../../utils/globalStyles';
 import { metrics } from '../../utils/metrics';
 import fontStyle from '../../styles/fontStyle';
 import { Font_Bold, Font_Regular } from '../../theme/fonts';
@@ -23,7 +21,6 @@ import NoDataFound from '../../components/no_data_found';
 import { showErrorToast } from '../../utils/toastUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Dropdown } from 'react-native-element-dropdown';
-import LinearGradient from 'react-native-linear-gradient';
 
 const PreferredMerchants = ({ navigation }: any) => {
   const theme = useTheme();
@@ -169,7 +166,7 @@ const PreferredMerchants = ({ navigation }: any) => {
       right={renderCityDropdown()}
       titleExtraStyle={{ marginLeft: 70 }}
     >
-      <View style={[globalStyle(theme).container]}>
+      <View style={{ flex: 1 }}>
         {/* Category Tabs */}
         {categoryOptions.length > 0 && (
           <View style={styles(theme).categoryTabsWrapper}>
@@ -239,108 +236,78 @@ const PreferredMerchants = ({ navigation }: any) => {
           }
           renderItem={({ item: hotel }) => {
             return (
-              <View style={styles(theme).list_parent}>
+              <View style={styles(theme).card}>
 
+                {/* IMAGE */}
                 <ImageBackground
-                  source={hotel?.imageUrl
-                    ? { uri: hotel?.imageUrl }
-                    : require('../../../assets/images/logo.png')
+                  source={
+                    hotel?.imageUrl
+                      ? { uri: hotel.imageUrl }
+                      : require('../../../assets/images/logo.png')
                   }
-                  style={styles(theme).parent_img}
-                  // resizeMode="contain"
-                  borderRadius={metrics.baseRadius}
-                  borderBottomLeftRadius={0}
-                  borderBottomRightRadius={0}
+                  style={styles(theme).cardImage}
+                  imageStyle={styles(theme).cardImageRadius}
                 >
-                  {hotel?.discount_offer && <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.9)']}
-                    style={styles(theme).gradient}
-                  />}
-
-                  {hotel?.discount_offer && <View style={styles(theme).discountBadge}>
-                    <Text style={styles(theme).discountText}>{hotel?.discount_offer}</Text>
-                  </View>}
+                  {/* Rating */}
+                  {hotel?.rating && (
+                    <View style={styles(theme).ratingBadge}>
+                      <Icon name="star" size={12} color="#FFC107" />
+                      <Text style={styles(theme).ratingText}>{hotel.rating}</Text>
+                    </View>
+                  )}
                 </ImageBackground>
 
+                {/* TAGS */}
+                {hotel?.category && (
+                  <View style={styles(theme).tag}>
+                    <Text style={styles(theme).tagText}>{hotel.category}</Text>
+                  </View>
+                )}
 
-                <View style={styles(theme).child_view}>
-                  <Text
-                    style={[
-                      fontStyle(theme).headingMedium,
-                      styles(theme).title,
-                    ]}
-                  >
-                    {hotel?.name}
-                  </Text>
+                {/* CONTENT */}
+                <View style={styles(theme).cardContent}>
+                  <View style={styles(theme).titleRow}>
+                    <Text style={styles(theme).cardTitle}>{hotel?.name}</Text>
 
-                  {hotel?.address && <View style={styles(theme).item_view}>
-                    <Image
-                      source={require('../../../assets/images/pin.png')}
-                      style={styles(theme).list_item_img}
-                      resizeMode="contain"
-                    />
-                    <TouchableOpacity onPress={() => openMap(hotel?.address)}>
-                      <Text
-                        style={[
-                          fontStyle(theme).headingMedium,
-                          styles(theme).list_subtitle,
-                          { textDecorationLine: 'underline' },
-                        ]}
+                    <View style={styles(theme).partnerBadge}>
+                      <Text style={styles(theme).partnerText}>PARTNER</Text>
+                    </View>
+                  </View>
+
+                  {/* ADDRESS */}
+                  {hotel?.address && (
+                    <View style={styles(theme).metaRow}>
+                      <Text style={styles(theme).metaText}>{hotel.address}</Text>
+                    </View>
+                  )}
+
+                  {/* ACTIONS */}
+                  <View style={styles(theme).actionRow}>
+                    {hotel?.phoneNumber && (
+                      <TouchableOpacity
+                        style={styles(theme).callButton}
+                        onPress={() => openDialer(hotel.phoneNumber)}
                       >
-                        {hotel?.address || 'N/A'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>}
+                        <Icon name="call-outline" size={18} color="#008069" />
+                        <Text style={styles(theme).callText}>CALL NOW</Text>
+                      </TouchableOpacity>
+                    )}
 
-                  {hotel?.phoneNumber && <View style={styles(theme).item_view}>
-                    <Image
-                      source={require('../../../assets/images/call.png')}
-                      style={styles(theme).call_img}
-                      resizeMode="contain"
-                    />
                     <TouchableOpacity
-                      onPress={() =>
-                        hotel?.phoneNumber && openDialer(hotel?.phoneNumber)
-                      }
+                      style={styles(theme).directionButton}
+                      onPress={() => openMap(hotel?.address)}
                     >
-                      <Text
-                        style={[
-                          fontStyle(theme).headingMedium,
-                          styles(theme).list_subtitle,
-                          {
-                            textDecorationLine: hotel?.phoneNumber
-                              ? 'underline'
-                              : 'none',
-                          },
-                        ]}
-                      >
-                        {hotel?.phoneNumber || 'N/A'}
+                      <Icon name="navigate-outline" size={18} color="#FFFFFF" />
+                      <Text style={styles(theme).directionText}>
+                        DIRECTIONS
                       </Text>
                     </TouchableOpacity>
-                  </View>}
-
-                  {hotel?.workingHours && <View style={styles(theme).item_view}>
-                    <Image
-                      source={require('../../../assets/images/24.png')}
-                      style={[
-                        styles(theme).call_img,
-                        { tintColor: hotel?.is24_Operation ? undefined : 'red' },
-                      ]}
-                      resizeMode="contain"
-                    />
-                    <Text
-                      style={[
-                        fontStyle(theme).headingMedium,
-                        styles(theme).list_subtitle,
-                      ]}
-                    >
-                      {hotel?.workingHours || '-'}
-                    </Text>
-                  </View>}
+                  </View>
                 </View>
               </View>
-            )
+            );
           }}
+
         />
       </View>
     </AppLayout>
@@ -398,7 +365,7 @@ const styles = (theme: MD3Theme) =>
       borderRadius: metrics.baseRadius,
     },
     dropdownContainer: {
-      minWidth: metrics.screenWidth * 0.33,
+      minWidth: metrics.screenWidth * 0.30,
       backgroundColor: theme.colors.background,
       borderRadius: metrics.screenWidth * 0.08,
       paddingHorizontal: metrics.baseMargin,
@@ -499,5 +466,135 @@ const styles = (theme: MD3Theme) =>
     },
     gradient: {
       ...StyleSheet.absoluteFillObject,
+    },
+    card: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: 20,
+      marginBottom: metrics.doubleMargin,
+      elevation: 3,
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowOffset: { width: 0, height: 4 },
+    },
+    cardImage: {
+      height: metrics.screenHeight * 0.22,
+    },
+    cardImageRadius: {
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+    },
+    ratingBadge: {
+      position: 'absolute',
+      right: metrics.baseMargin,
+      top: metrics.baseMargin,
+      backgroundColor: '#1F2937',
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 20,
+    },
+    ratingText: {
+      color: '#FFFFFF',
+      fontSize: 12,
+      marginLeft: 4,
+    },
+    cardContent: {
+      padding: metrics.doubleMargin,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    cardTitle: {
+      fontFamily: Font_Bold,
+      fontSize: 18,
+      color: '#101828',
+      flex: 1,
+      marginRight: 8,
+      fontWeight: "bold",
+      textTransform: "uppercase"
+    },
+    partnerBadge: {
+      borderWidth: 1,
+      borderColor: '#B7E4C7',
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 20,
+    },
+    partnerText: {
+      color: '#008069',
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 6,
+    },
+    metaIcon: {
+      width: 16,
+      height: 16,
+      marginRight: 6,
+    },
+    metaText: {
+      color: '#667085',
+      fontSize: 13,
+      flex: 1,
+    },
+    tag: {
+      backgroundColor: '#F2F4F7',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+      marginTop: 10,
+      position: "absolute",
+      left: 10,
+      flex: 1
+    },
+    tagText: {
+      fontSize: 12,
+      color: '#475467',
+      textTransform: "uppercase"
+    },
+    actionRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: metrics.doubleMargin,
+    },
+    callButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#008069',
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 14,
+      flex: 1,
+      marginRight: 10,
+      justifyContent: 'center',
+      height: 45
+    },
+    callText: {
+      color: '#008069',
+      fontWeight: '600',
+      marginLeft: 6,
+    },
+    directionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#0B132B',
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 14,
+      flex: 1,
+      justifyContent: 'center',
+      height: 45
+    },
+    directionText: {
+      color: '#FFFFFF',
+      fontWeight: '600',
+      marginLeft: 6,
     },
   });

@@ -1,76 +1,34 @@
 import {
-  Image,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   Linking,
   Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  Touchable,
-  TouchableOpacity,
-  View,
+  Image,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import { globalStyle } from '../../utils/globalStyles';
 import { metrics } from '../../utils/metrics';
-import fontStyle from '../../styles/fontStyle';
 import { Font_Bold, Font_Regular } from '../../theme/fonts';
 import { useLazyTrusted_hospitalsQuery } from '../../redux/services';
 import ScreenLoader from '../../components/loader';
 import NoDataFound from '../../components/no_data_found';
 import { showErrorToast } from '../../utils/toastUtils';
-
-const data = [
-  {
-    id: 1,
-    title: 'Albayt Medical Center',
-    address: 'P11 Abraj Albyat Clock Tower (Next to Movenpick Hotel)',
-    contact_number: '+ 966 12 571 840',
-    is24_Operation: true,
-    image: require('../../../assets/images/sample.png'),
-  },
-  {
-    id: 2,
-    title: 'Albayt Medical Center',
-    address: 'P11 Abraj Albyat Clock Tower (Next to Movenpick Hotel)',
-    contact_number: '+ 966 12 571 840',
-    is24_Operation: false,
-    image: require('../../../assets/images/sample.png'),
-  },
-  {
-    id: 3,
-    title: 'Albayt Medical Center',
-    address: 'P11 Abraj Albyat Clock Tower (Next to Movenpick Hotel)',
-    contact_number: '+ 966 12 571 840',
-    is24_Operation: false,
-    image: require('../../../assets/images/sample.png'),
-  },
-];
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const TrustedHospitals = ({ navigation }: any) => {
   const theme = useTheme();
-  const [trusted_hospitals, { isLoading }] = useLazyTrusted_hospitalsQuery();
-  const [hospitals, setHospitals] = useState<any[]>();
+  const [trusted_hospitals, { isLoading }] =
+    useLazyTrusted_hospitalsQuery();
+
+  const [hospitals, setHospitals] = useState<any[]>([]);
   const [selectedCat, setSelectedCat] = useState('Makkah');
 
-  const categories = [
-    {
-      title: 'Makkah',
-      value: 'Makkah',
-      onSelect: () => setSelectedCat('Makkah'),
-    },
-    {
-      title: 'Madinah',
-      value: 'Madinah',
-      onSelect: () => setSelectedCat('Madinah'),
-    },
-    {
-      title: 'Jeddah',
-      value: 'Jeddah',
-      onSelect: () => setSelectedCat('Jeddah'),
-    },
-  ];
+  const categories = ['Makkah', 'Madinah', 'Jeddah'];
 
   useEffect(() => {
     selectedCat && getHospitals(selectedCat);
@@ -78,213 +36,136 @@ const TrustedHospitals = ({ navigation }: any) => {
 
   const getHospitals = async (category: string) => {
     const resp = await trusted_hospitals({ category });
-    console.log('resp?.data?.trusted_hospitals -----> ', resp?.data?.data);
-    if (resp?.data?.status && resp?.data?.data) {
-      const { hospitals, totalHospitals } = resp?.data?.data;
-      if (hospitals?.length > 0) {
-        setHospitals(hospitals);
-      } else {
-        setHospitals([]);
-      }
+    if (resp?.data?.status && resp?.data?.data?.hospitals) {
+      setHospitals(resp.data.data.hospitals);
     } else {
       setHospitals([]);
     }
   };
 
-  const openDialer = (phoneNumber: any) => {
-    const url = `tel:${phoneNumber}`;
-    Linking.canOpenURL(url)
-      .then((supported: boolean) => {
-        if (!supported) {
-          showErrorToast('Dialer not supported on this device', 'Error');
-        } else {
-          return Linking.openURL(url);
-        }
-      })
-      .catch(err => console.error('Error opening dialer', err));
+  const openDialer = (phone: string) => {
+    Linking.openURL(`tel:${phone}`).catch(() =>
+      showErrorToast('Dialer not supported', 'Error'),
+    );
   };
 
   const openMap = (address: string) => {
-    let url = '';
-
-    if (Platform.OS === 'ios') {
-      // Apple Maps
-      url = `http://maps.apple.com/?q=${encodeURIComponent(address)}`;
-    } else {
-      // Google Maps (default on most Android devices)
-      url = `geo:0,0?q=${encodeURIComponent(address)}`;
-    }
-
-    Linking.openURL(url)
+    const url =
+      Platform.OS === 'ios'
+        ? `http://maps.apple.com/?q=${encodeURIComponent(address)}`
+        : `geo:0,0?q=${encodeURIComponent(address)}`;
+    Linking.openURL(url);
   };
 
   return (
     <AppLayout title="Trusted Hospitals" onBackPress={() => navigation.pop()}>
-      <View style={[globalStyle(theme).container]}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            height: metrics.screenHeight * 0.06,
-            width: metrics.screenWidth,
-          }}
-        >
-          {categories?.map((cat, index) => {
-            const isSelected = selectedCat === cat.value;
+      <View style={{ flex: 1 }}>
+
+        {/* Tabs */}
+        <View style={styles(theme).tabs}>
+          {categories.map(cat => {
+            const active = selectedCat === cat;
             return (
               <TouchableOpacity
-                style={{ flex: 1 }}
-                key={index + 'cat'}
-                onPress={cat.onSelect}
+                key={cat}
+                style={styles(theme).tab}
+                onPress={() => setSelectedCat(cat)}
               >
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderBottomWidth: isSelected ? 3 : 0.7,
-                    borderColor: isSelected
-                      ? theme.colors.primary
-                      : theme.colors.backdrop,
-                  }}
+                <Text
+                  style={[
+                    styles(theme).tabText,
+                    active && styles(theme).tabActiveText,
+                  ]}
                 >
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      {
-                        fontWeight: isSelected ? '700' : 'regular',
-                        color: isSelected
-                          ? theme.colors.primary
-                          : theme.colors.onBackground,
-                      },
-                    ]}
-                  >
-                    {cat.title}
-                  </Text>
-                </View>
+                  {cat}
+                </Text>
+                {active && <View style={styles(theme).tabIndicator} />}
               </TouchableOpacity>
             );
           })}
         </View>
+
         <ScrollView
-          style={{ flex: 1, backgroundColor: theme.colors.background }}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: metrics.doubleMargin }}
         >
           <ScreenLoader visible={isLoading} />
-          <View
-            style={[
-              globalStyle(theme).container,
-              { padding: metrics.doubleMargin },
-            ]}
-          >
-            {hospitals && hospitals?.length > 0 ? (
-              hospitals?.map((hotel, index) => {
-                return (
-                  <View style={styles(theme).list_parent} key={index}>
-                    <Image
-                      source={
-                        hotel?.imageUrl
-                          ? { uri: hotel?.imageUrl }
-                          : require('../../../assets/images/logo.png')
-                      }
-                      style={styles(theme).parent_img}
+
+          {hospitals.length > 0 ? (
+            hospitals.map((item, index) => (
+              <View key={index} style={styles(theme).card}>
+
+                {/* Hospital Image */}
+                <Image
+                  source={
+                    item?.imageUrl
+                      ? { uri: item.imageUrl }
+                      : require('../../../assets/images/logo.png')
+                  }
+                  style={styles(theme).hospitalImage}
+                  resizeMode="cover"
+                />
+
+                {/* Header */}
+                <View style={styles(theme).row}>
+                  <View style={styles(theme).iconWrap}>
+                    <Icon
+                      name="hospital-building"
+                      size={26}
+                      color="#D14343"
                     />
-                    <View style={styles(theme).child_view}>
-                      <Text
-                        style={[
-                          fontStyle(theme).headingMedium,
-                          styles(theme).title,
-                        ]}
-                      >
-                        {hotel?.name}
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles(theme).title}>{item?.name}</Text>
+
+                    <View style={styles(theme).addressRow}>
+                      <Icon name="map-marker" size={16} color="#9CA3AF" />
+                      <Text style={styles(theme).address}>
+                        {item?.address}
                       </Text>
-                      {hotel?.address && <View style={styles(theme).item_view}>
-                        <Image
-                          source={require('../../../assets/images/pin.png')}
-                          style={styles(theme).list_item_img}
-                          resizeMode="contain"
-                        />
-                        <TouchableOpacity
-                          onPress={() => openMap(hotel?.address)}
-                        >
-                          <Text
-                            style={[
-                              fontStyle(theme).headingMedium,
-                              styles(theme).list_subtitle,
-                              { textDecorationLine: 'underline' },
-                            ]}
-                          >
-                            {hotel?.address}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>}
-                      {hotel?.phoneNumber && <View style={styles(theme).item_view}>
-                        <Image
-                          source={require('../../../assets/images/call.png')}
-                          style={styles(theme).call_img}
-                          resizeMode="contain"
-                        />
-                        <TouchableOpacity
-                          onPress={() =>
-                            hotel?.phoneNumber && openDialer(hotel?.phoneNumber)
-                          }
-                        >
-                          <Text
-                            style={[
-                              fontStyle(theme).headingMedium,
-                              styles(theme).list_subtitle,
-                              {
-                                textDecorationLine: hotel?.phoneNumber
-                                  ? 'underline'
-                                  : 'none',
-                              },
-                            ]}
-                          >
-                            {hotel?.phoneNumber || 'N/A'}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>}
-                      {hotel?.workingHours && <View style={styles(theme).item_view}>
-                        <Image
-                          source={require('../../../assets/images/24.png')}
-                          style={[
-                            styles(theme).call_img,
-                            {
-                              tintColor: hotel?.is24_Operation
-                                ? undefined
-                                : 'red',
-                            },
-                          ]}
-                          resizeMode="contain"
-                        />
-                        <Text
-                          style={[
-                            fontStyle(theme).headingMedium,
-                            styles(theme).list_subtitle,
-                          ]}
-                        >
-                          {hotel?.workingHours}
-                        </Text>
-                      </View>}
                     </View>
                   </View>
-                );
-              })
-            ) : (
-              <View
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: metrics.screenHeight * 0.7,
-                }}
-              >
-                <NoDataFound
-                  title={'No Data Found'}
-                  description={'Looks like there’s nothing here yet.'}
-                />
+                </View>
+
+                {/* Actions */}
+                <View style={styles(theme).actions}>
+                  <TouchableOpacity
+                    disabled={!item?.phoneNumber}
+                    style={[
+                      styles(theme).callBtn,
+                      !item?.phoneNumber && { opacity: 0.5 },
+                    ]}
+                    onPress={() => openDialer(item.phoneNumber)}
+                  >
+                    <Icon name="phone" size={20} color="#4B5563" />
+                    <Text style={styles(theme).callText}>CALL NOW</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles(theme).routeBtn}
+                    onPress={() => openMap(item?.address)}
+                  >
+                    <Icon name="navigation" size={20} color="#fff" />
+                    <Text style={styles(theme).routeText}>ROUTE</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            )}
-          </View>
+            ))
+          ) : (
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: metrics.screenHeight * 0.7,
+              }}
+            >
+              <NoDataFound
+                title="No Data Found"
+                description="Looks like there’s nothing here yet."
+              />
+            </View>
+          )}
         </ScrollView>
       </View>
     </AppLayout>
@@ -295,57 +176,111 @@ export default TrustedHospitals;
 
 const styles = (theme: MD3Theme) =>
   StyleSheet.create({
-    list_parent: {
-      margin: metrics.baseMargin,
-      backgroundColor: theme.colors.background,
-      borderRadius: metrics.baseRadius,
-      elevation: 1,
-      shadowOpacity: 0.4,
-      shadowColor: theme.colors.backdrop,
-      shadowOffset: { width: 1, height: 1 },
+    tabs: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderColor: '#E5E7EB',
     },
-    parent_img: {
+    tab: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 14,
+    },
+    tabText: {
+      fontSize: 16,
+      color: '#111827',
+      fontFamily: Font_Regular,
+    },
+    tabActiveText: {
+      color: theme.colors.primary,
+      fontWeight: '700',
+    },
+    tabIndicator: {
+      height: 3,
       width: '100%',
-      height: metrics.screenHeight * 0.2,
-      borderRadius: metrics.baseRadius,
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0,
-      // resizeMode: 'contain',
+      backgroundColor: theme.colors.primary,
+      position: 'absolute',
+      bottom: 0,
     },
-    child_view: {
-      // padding: metrics.baseMargin,
-      paddingTop: 0,
-      paddingHorizontal: metrics.baseMargin * 1.5,
-      paddingBottom: metrics.baseMargin * 1.5,
+    card: {
+      backgroundColor: '#fff',
+      borderRadius: 24,
+      marginBottom: 20,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 4,
+    },
+    hospitalImage: {
+      width: '100%',
+      height: 160,
+    },
+    row: {
+      flexDirection: 'row',
+      gap: 14,
+      padding: 20,
+    },
+    iconWrap: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: '#FDECEC',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     title: {
-      // marginHorizontal: metrics.baseMargin,
+      fontSize: 18,
       fontFamily: Font_Bold,
-      fontWeight: '700',
-      fontSize: metrics.moderateScale(16),
-      color: theme.colors.onBackground,
-      margin: metrics.baseMargin,
-      marginLeft: 0,
-      marginTop: metrics.baseMargin * 2,
+      color: '#111827',
+      marginBottom: 4,
     },
-    item_view: {
+    addressRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginTop: metrics.baseMargin,
+      gap: 4,
     },
-    list_subtitle: {
-      marginHorizontal: metrics.baseMargin,
+    address: {
+      fontSize: 14,
+      color: '#9CA3AF',
       fontFamily: Font_Regular,
-      fontWeight: '400',
-      fontSize: metrics.moderateScale(14),
-      color: '#72849A',
     },
-    list_item_img: {
-      height: metrics.moderateScale(24),
-      width: metrics.moderateScale(24),
+    actions: {
+      flexDirection: 'row',
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+      gap: 12,
     },
-    call_img: {
-      height: metrics.moderateScale(22),
-      width: metrics.moderateScale(22),
+    callBtn: {
+      flex: 1,
+      height: 52,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+    },
+    callText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: '#4B5563',
+    },
+    routeBtn: {
+      flex: 1,
+      height: 52,
+      borderRadius: 16,
+      backgroundColor: '#2E8B57',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+    },
+    routeText: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: '#fff',
     },
   });

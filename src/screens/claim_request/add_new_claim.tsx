@@ -149,7 +149,7 @@ const AddNewClaim = ({ navigation }: any) => {
   const [claim_list, setClaim_List] = useState<FormData[]>([]);
   const [claim_skeleton, setClaim_Skeleton] = useState<single_claim>(initClaim);
 
-  console.log('claim item ---------> ', editClaim);
+  // console.log('claim item ---------> ', editClaim);
 
   useEffect(() => {
     if (

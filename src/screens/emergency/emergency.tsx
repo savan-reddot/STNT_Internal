@@ -13,33 +13,31 @@ import { useLazyEmergency_contactsQuery } from '../../redux/services';
 import { globalStyle } from '../../utils/globalStyles';
 import { metrics } from '../../utils/metrics';
 import fontStyle from '../../styles/fontStyle';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { showErrorToast } from '../../utils/toastUtils';
 import NoDataFound from '../../components/no_data_found';
 
 const EmergencyHelp = ({ navigation }: any) => {
   const theme = useTheme();
-  const [emergency_contacts, { isLoading }] = useLazyEmergency_contactsQuery();
+  const [emergency_contacts, { isLoading }] =
+    useLazyEmergency_contactsQuery();
   const [emg_contacts, setEmg_Contacts] = useState<any[]>();
 
   useEffect(() => {
     const init = async () => {
       const resp = await emergency_contacts(0);
-      console.log('resp?.data?.emergency_contacts -----> ', resp?.data?.data);
       if (resp?.data?.status && resp?.data?.data) {
-        const { contacts, totalContacts } = resp?.data?.data;
+        const { contacts } = resp?.data?.data;
         if (contacts?.length > 0) {
           setEmg_Contacts(contacts);
         }
       }
     };
-
     init();
   }, []);
 
   const openDialPad = (phoneNumber: string) => {
     let phoneUrl = `tel:${phoneNumber}`;
-
     Linking.canOpenURL(phoneUrl)
       .then(supported => {
         if (!supported) {
@@ -48,118 +46,67 @@ const EmergencyHelp = ({ navigation }: any) => {
           return Linking.openURL(phoneUrl);
         }
       })
-      .catch(err => console.error('Error opening dialer', err));
+      .catch(err => console.error(err));
   };
 
   return (
-    <AppLayout title="Need Help" onBackPress={() => navigation.pop()}>
+    <AppLayout title="Emergency Hub" onBackPress={() => navigation.pop()}>
       <View
         style={[
           globalStyle(theme).container,
           { padding: metrics.doubleMargin },
         ]}
       >
-        {emg_contacts && emg_contacts?.length > 0 ? (
-          emg_contacts?.map((emg, index) => {
-            return (
-              <Card
-                style={{
-                  borderRadius: metrics.baseRadius,
-                  marginTop: index === 0 ? 0 : metrics.baseMargin,
-                }}
-                key={index + 'emg'}
+        {emg_contacts && emg_contacts.length > 0 ? (
+          emg_contacts.map((emg, index) => (
+            <View
+              key={index}
+              style={styles.cardWrapper}
+            >
+              {/* LEFT ICON */}
+              <View style={styles.iconContainer}>
+                <Icon
+                  name="globe-outline"
+                  size={26}
+                  color="#3BA66B"
+                />
+              </View>
+
+              {/* CONTENT */}
+              <View style={{ flex: 1 }}>
+                <Text style={styles.title}>
+                  {emg?.name?.toUpperCase()}
+                </Text>
+
+                {emg?.description ? (
+                  <Text style={styles.subtitle}>
+                    {emg?.description}
+                  </Text>
+                ) : null}
+
+                <Text style={styles.phone}>
+                  {emg?.phoneNumber}
+                </Text>
+              </View>
+
+              {/* CALL BUTTON */}
+              <TouchableOpacity
+                onPress={() => openDialPad(emg?.phoneNumber)}
+                style={styles.callButton}
               >
-                <Card.Content>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      padding: metrics.baseMargin,
-                    }}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={[
-                          fontStyle(theme).headingMedium,
-                          { fontSize: 14, fontWeight: '500' },
-                        ]}
-                      >
-                        {emg?.name}
-                      </Text>
-                      <Text
-                        style={[
-                          fontStyle(theme).headingMedium,
-                          {
-                            fontSize: 11,
-                            color: '#616161',
-                            fontWeight: '300',
-                            marginTop: metrics.smallMargin,
-                          },
-                        ]}
-                      >
-                        {emg?.description}
-                      </Text>
-                      <Text
-                        style={[
-                          fontStyle(theme).headingMedium,
-                          {
-                            fontSize: 15,
-                            fontWeight: '400',
-                            marginTop: metrics.smallMargin,
-                          },
-                        ]}
-                      >
-                        {emg?.phoneNumber}
-                      </Text>
-                      {/* <Text
-                        style={[
-                          fontStyle(theme).headingMedium,
-                          {
-                            fontSize: 15,
-                            fontWeight: '400',
-                            marginTop: metrics.smallMargin,
-                          },
-                        ]}
-                      >
-                        {emg?.open_timings
-                          ? emg?.open_timings
-                          : emg?.name.toUpperCase() == 'SAUDI'
-                          ? '24 Hours'
-                          : emg?.name.toUpperCase() == 'ST&T OFFICE'
-                          ? '9.30 am to 6.00 pm'
-                          : emg?.name.toUpperCase() == 'ST&T HOTLINE'
-                          ? '9.30 am to 6.00 pm'
-                          : '9.30 am to 6.00 pm'}
-                      </Text> */}
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => openDialPad(emg?.phoneNumber)}
-                    >
-                      <Image
-                        source={require('../../../assets/images/call_new.png')}
-                        style={{
-                          height: metrics.screenWidth * 0.1,
-                          width: metrics.screenWidth * 0.1,
-                          marginLeft: metrics.baseMargin,
-                        }}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </Card.Content>
-              </Card>
-            );
-          })
+                <Icon
+                  name="call-outline"
+                  size={22}
+                  color="#FFFFFF"
+                />
+              </TouchableOpacity>
+            </View>
+          ))
         ) : (
-          <View
-            style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: metrics.screenHeight * 0.7,
-            }}
-          >
+          <View style={styles.empty}>
             <NoDataFound
-              title={'No Data Found'}
-              description={'Looks like there’s nothing here yet.'}
+              title="No Data Found"
+              description="Looks like there’s nothing here yet."
             />
           </View>
         )}
@@ -170,4 +117,64 @@ const EmergencyHelp = ({ navigation }: any) => {
 
 export default EmergencyHelp;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  cardWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: '#EAFBF2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0B1320',
+  },
+
+  subtitle: {
+    fontSize: 13,
+    color: '#8A94A6',
+    marginTop: 4,
+  },
+
+  phone: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 8,
+  },
+
+  callButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: '#3BA66B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+
+  empty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: metrics.screenHeight * 0.7,
+  },
+});
+

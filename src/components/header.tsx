@@ -60,7 +60,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         style={[
           styles(theme).title,
           titleExtraStyle && titleExtraStyle,
-          { marginEnd: !right ? metrics.doubleMargin * 2.5 : 0 },
+          { marginEnd: right ? metrics.doubleMargin * 2.5 : 0 },
         ]}
       >
         {title}
