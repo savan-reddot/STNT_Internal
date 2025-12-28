@@ -180,30 +180,28 @@ const PreferredMerchants = ({ navigation }: any) => {
                 const isSelected = selectedCategory === category;
                 return (
                   <TouchableOpacity
-                    style={styles(theme).categoryTab}
+                    style={[
+                      styles(theme).pillTab,
+                      isSelected && styles(theme).pillTabActive,
+                    ]}
                     onPress={() => setSelectedCategory(category)}
+                    activeOpacity={0.8}
                   >
                     <Text
                       style={[
-                        fontStyle(theme).headingSmall,
-                        styles(theme).categoryText,
-                        isSelected && styles(theme).categoryTextSelected,
+                        styles(theme).pillText,
+                        isSelected && styles(theme).pillTextActive,
                       ]}
                       numberOfLines={1}
                     >
                       {category}
                     </Text>
-                    <View
-                      style={[
-                        styles(theme).tabIndicator,
-                        isSelected && styles(theme).tabIndicatorActive,
-                      ]}
-                    />
                   </TouchableOpacity>
                 );
               }}
             />
           </View>
+
         )}
 
         <ScreenLoader visible={isLoading} />
@@ -412,9 +410,35 @@ const styles = (theme: MD3Theme) =>
     },
     categoryTabsWrapper: {
       paddingHorizontal: metrics.doubleMargin,
-      marginTop: metrics.baseMargin,
-      borderBottomWidth: 1,
-      borderBottomColor: '#E4E7EC',
+      marginVertical: metrics.baseMargin,
+    },
+    pillTab: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 999,
+      backgroundColor: '#FFFFFF',
+      borderWidth: 1,
+      borderColor: '#EAECF0',
+      marginRight: 12,
+      minWidth: 80,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pillTabActive: {
+      backgroundColor: '#008069',
+      borderColor: '#008069',
+    },
+    pillText: {
+      fontSize: metrics.moderateScale(14),
+      fontFamily: Font_Regular,
+      color: '#98A2B3',
+      textTransform: 'uppercase',
+      fontWeight: "bold"
+    },
+    pillTextActive: {
+      color: '#FFFFFF',
+      fontFamily: Font_Bold,
+      fontWeight: "bold"
     },
     categoryTabs: {
       flexDirection: 'row',
