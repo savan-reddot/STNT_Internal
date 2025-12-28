@@ -1,22 +1,23 @@
-/* eslint-disable react-native/no-inline-styles */
 import {
   Alert,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import React from 'react';
 import AppLayout from '../../components/safeareawrapper';
-import { globalStyle } from '../../utils/globalStyles';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import { metrics } from '../../utils/metrics';
+import DeviceInfo from 'react-native-device-info';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Screens } from '../../common/screens';
 import { useAppSelector } from '../../redux/hooks';
 import { getUser } from '../../redux/reducer';
-import fontStyle from '../../styles/fontStyle';
+import { Font_Bold } from '../../theme/fonts';
 
 const data = [
   {
@@ -64,136 +65,152 @@ const Profile = ({ navigation }: any) => {
     navigation.navigate(Screens.Splash);
   };
 
-  return (
-    <AppLayout title={''}>
-      <View style={[globalStyle(theme).container]}>
-        <View style={styles(theme).profile_parent}>
-          <View style={styles(theme).profile_image}>
-            <Image
-              source={
-                user?.profile_picture
-                  ? { uri: user?.profile_picture }
-                  : require('../../../assets/images/account-circle-line.png')
-              }
-              style={{
-                height: user?.profile_picture
-                  ? metrics.screenWidth * 0.2
-                  : metrics.screenWidth * 0.1,
-                width: user?.profile_picture
-                  ? metrics.screenWidth * 0.2
-                  : metrics.screenWidth * 0.1,
-                borderRadius: metrics.screenWidth * 0.5,
-                borderWidth: user?.profile_picture ? 2 : 0,
-                borderColor: '#fff',
-              }}
-            />
-          </View>
-          <Text
-            style={[fontStyle(theme).headingMedium, styles(theme).user_name]}
-          >{`Hi, ${user?.firstName}`}</Text>
-        </View>
+  const getIconColorAndBg = (title: string) => {
+    switch (title) {
+      case 'Terms & Conditions':
+        return { bg: '#E0F2FE', color: '#0288D1', icon: 'file-document-outline' };
+      case 'Privacy Policy':
+        return { bg: '#F3E5F5', color: '#7B1FA2', icon: 'shield-check-outline' };
+      case 'Change Password':
+        return { bg: '#FFF3E0', color: '#F57C00', icon: 'lock-outline' };
+      default:
+        return { bg: '#F5F5F5', color: '#616161', icon: 'circle-outline' };
+    }
+  };
 
-        <View style={{ padding: metrics.doubleMargin }}>
-          {data.map((section, index) => {
-            return (
-              <View style={{ marginLeft: metrics.baseMargin }} key={index}>
-                {section.title && (
-                  <Text
-                    style={[
-                      fontStyle(theme).headingSmall,
-                      styles(theme).section_title,
-                    ]}
-                  >
-                    {section.title}
+  const handleLogout = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out? If you confirm, you will be signed out from this app.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            doLogout();
+          },
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  const handlePress = (item: any) => {
+    if (item.title === 'Terms & Conditions') {
+      navigation.navigate(Screens.WebView, {
+        url: 'https://claims.stntinternational.com/web/terms-conditions',
+      });
+    } else if (item.title === 'Change Password') {
+      navigation.navigate(Screens.ChangePassword);
+    } else if (item.title === 'Privacy Policy') {
+      navigation.navigate(Screens.WebView, {
+        url: 'https://claims.stntinternational.com/web/privacy-policy',
+      });
+    }
+  };
+
+  return (
+    <AppLayout title={'MY PROFILE'}>
+      <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+        {/* Header Background */}
+        {/* <View style={styles(theme).headerBackground} /> */}
+
+        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+          {/* Profile Card */}
+          <View style={styles(theme).profileCard}>
+            <View style={styles(theme).avatarContainer}>
+              {user?.profile_picture ? (
+                <Image
+                  source={{ uri: user.profile_picture }}
+                  style={styles(theme).avatar}
+                />
+              ) : (
+                <View style={styles(theme).avatarPlaceholder}>
+                  <Text style={styles(theme).avatarText}>
+                    {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
                   </Text>
-                )}
-                <View style={styles(theme).section_child}>
-                  {section.actions.map((item, index) => {
-                    return (
-                      <TouchableOpacity
-                        key={'pi' + index}
-                        onPress={() => {
-                          if (item.title === 'Log out') {
-                            doLogout();
-                          } else if (item.title === 'Terms & Conditions') {
-                            navigation.navigate(Screens.WebView, {
-                              url: 'https://claims.stntinternational.com/web/terms-conditions',
-                            });
-                          } else if (item.title === 'Change Password') {
-                            navigation.navigate(Screens.ChangePassword);
-                          } else if (item.title === 'Privacy Policy') {
-                            navigation.navigate(Screens.WebView, {
-                              url: 'https://claims.stntinternational.com/web/privacy-policy',
-                            });
-                          } else if (item.title === 'Profile Details') {
-                            navigation.navigate(Screens.UserDetails);
-                          } else if (item.title === 'Delete Account') {
-                            Alert.alert(
-                              'Delete Account',
-                              'Are you sure you want to delete ? If you confirm, you will be logged out form this app, and if there is no activity for 14 days your account will be automatically deleted but if you login again your delete request will be cancelled automatically.',
-                              [
-                                {
-                                  text: 'Cancel',
-                                  style: 'cancel',
-                                },
-                                {
-                                  text: 'Delete',
-                                  style: 'destructive',
-                                  onPress: async () => {
-                                    // Perform account deletion logic here
-                                    doLogout();
-                                  },
-                                },
-                              ],
-                              { cancelable: true },
-                            );
-                          }
-                        }}
-                      >
-                        <View style={styles(theme).section_item_image}>
-                          <Image
-                            source={item.icon}
-                            style={[
-                              styles(theme).section_item_image_icon,
-                              {
-                                tintColor:
-                                  item.title === 'Delete Account' ||
-                                  item.title === 'Log out'
-                                    ? 'red'
-                                    : theme.colors.onBackground,
-                              },
-                            ]}
-                          />
-                          <Text
-                            style={[
-                              fontStyle(theme).headingSmall,
-                              styles(theme).item_title,
-                              {
-                                color:
-                                  item.title === 'Log out' ||
-                                  item.title === 'Delete Account'
-                                    ? 'red'
-                                    : theme.colors.onBackground,
-                              },
-                            ]}
+                </View>
+              )}
+              <View style={styles(theme).shieldBadge}>
+                <Icon name="shield-check" size={12} color="#0F8A65" />
+              </View>
+            </View>
+
+            <Text style={styles(theme).userName}>
+              {user?.firstName} {user?.lastName}
+            </Text>
+            <Text style={styles(theme).userDetails}>
+              MEMBER • {user?.id || 'N/A'}
+            </Text>
+
+            <TouchableOpacity
+              style={styles(theme).editButton}
+              onPress={() => navigation.navigate(Screens.UserDetails)}
+            >
+              <Text style={styles(theme).editButtonText}>EDIT DETAILS</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Settings Lists */}
+          <View style={{ marginTop: 20 }}>
+            {data.map((section, index) => {
+              // Filter out items handled elsewhere
+              const filteredActions = section.actions.filter(
+                action =>
+                  action.title !== 'Profile Details' && action.title !== 'Log out',
+              );
+
+              if (filteredActions.length === 0) return null;
+
+              return (
+                <View key={index} style={{ marginBottom: 20 }}>
+                  {section.title ? (
+                    <Text style={styles(theme).sectionTitle}>
+                      {section.title.toUpperCase()}
+                    </Text>
+                  ) : null}
+                  <View style={styles(theme).sectionContainer}>
+                    {filteredActions.map((item, idx) => {
+                      const { bg, color, icon } = getIconColorAndBg(item.title);
+                      return (
+                        <TouchableOpacity
+                          key={idx}
+                          style={styles(theme).listItem}
+                          onPress={() => handlePress(item)}
+                        >
+                          <View
+                            style={[styles(theme).iconBox, { backgroundColor: bg }]}
                           >
+                            <Icon name={icon} size={20} color={color} />
+                          </View>
+                          <Text style={styles(theme).listItemText}>
                             {item.title}
                           </Text>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
+                          <Icon name="chevron-right" size={20} color="#9CA3AF" />
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
-            );
-          })}
-        </View>
+              );
+            })}
+          </View>
+        </ScrollView>
 
-        {/* <UButton
-          title="Logout"
-          onPress={() => doLogout()}
-          style={{ flex: 0 }}
-        /> */}
+        {/* Sign Out Button */}
+        <View style={styles(theme).footer}>
+          <TouchableOpacity style={styles(theme).signOutBtn} onPress={handleLogout}>
+            <Icon name="logout" size={20} color="#EF4444" />
+            <Text style={styles(theme).signOutText}>SIGN OUT</Text>
+          </TouchableOpacity>
+          <Text style={styles(theme).versionText}>
+            V{DeviceInfo.getVersion()} • STNT GLOBAL SYSTEMS
+          </Text>
+        </View>
       </View>
     </AppLayout>
   );
@@ -203,40 +220,153 @@ export default Profile;
 
 const styles = (theme: MD3Theme) =>
   StyleSheet.create({
-    profile_parent: {
-      backgroundColor: theme.colors.primary,
-      height: metrics.screenHeight * 0.15,
+    headerBackground: {
+      backgroundColor: '#004D40', // Dark green matching screenshot
+      height: 120,
+      width: '100%',
+      position: 'absolute',
+      top: 0,
+    },
+    profileCard: {
+      backgroundColor: '#fff',
+      marginHorizontal: metrics.doubleMargin,
+      marginTop: 20,
+      borderRadius: 24,
+      padding: 24,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
+    },
+    avatarContainer: {
+      width: 80,
+      height: 80,
+      marginBottom: 16,
+    },
+    avatar: {
+      width: 80,
+      height: 80,
+      borderRadius: 24,
+    },
+    avatarPlaceholder: {
+      width: 80,
+      height: 80,
+      borderRadius: 24,
+      backgroundColor: '#0F8A65',
       alignItems: 'center',
       justifyContent: 'center',
     },
-    profile_image: {
-      width: metrics.screenWidth * 0.2,
-      height: metrics.screenWidth * 0.2,
-      borderRadius: metrics.screenWidth * 0.5,
-      backgroundColor: '#8C8C8C',
+    avatarText: {
+      fontSize: 32,
+      color: '#fff',
+      fontFamily: Font_Bold,
+    },
+    shieldBadge: {
+      position: 'absolute',
+      bottom: -4,
+      right: -4,
+      backgroundColor: '#fff',
+      borderRadius: 12,
+      padding: 4,
+      elevation: 2,
+    },
+    userName: {
+      fontSize: 20,
+      fontFamily: Font_Bold,
+      color: '#111827',
+      marginBottom: 4,
+    },
+    userDetails: {
+      fontSize: 12,
+      fontFamily: Font_Bold,
+      color: '#9CA3AF',
+      marginBottom: 20,
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+    },
+    editButton: {
+      backgroundColor: '#F9FAFB',
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      borderRadius: 12,
+      width: '100%',
       alignItems: 'center',
-      justifyContent: 'center',
     },
-    user_name: { marginVertical: metrics.doubleMargin, color: '#fff' },
-    section_title: { fontSize: 14, fontWeight: '700' },
-    section_child: {
-      margin: metrics.baseMargin,
-      marginLeft: 0,
-      marginTop: 0,
+    editButtonText: {
+      fontSize: 14,
+      fontFamily: Font_Bold,
+      color: '#374151',
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
     },
-    section_item_image: {
+    sectionTitle: {
+      marginHorizontal: metrics.doubleMargin,
+      marginBottom: 8,
+      fontSize: 12,
+      fontFamily: Font_Bold,
+      color: '#9CA3AF',
+      letterSpacing: 1.5,
+      fontWeight: 'bold',
+    },
+    sectionContainer: {
+      backgroundColor: '#fff',
+      marginHorizontal: metrics.doubleMargin,
+      borderRadius: 20,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+    },
+    listItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginTop: metrics.baseMargin,
+      paddingVertical: 12,
+      borderBottomWidth: 0,
     },
-    section_item_image_icon: {
-      height: metrics.screenWidth * 0.06,
-      width: metrics.screenWidth * 0.06,
-      resizeMode: 'contain',
+    iconBox: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 16,
     },
-    item_title: {
-      fontWeight: 'regular',
+    listItemText: {
+      flex: 1,
       fontSize: 16,
-      marginLeft: metrics.doubleMargin,
+      fontFamily: Font_Bold,
+      color: '#1F2937',
+      fontWeight: '600',
+    },
+    footer: {
+      paddingHorizontal: metrics.doubleMargin,
+      paddingVertical: metrics.doubleMargin,
+      alignItems: 'center',
+    },
+    signOutBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#FEF2F2',
+      borderRadius: 20,
+      height: 56,
+      width: '100%',
+      marginBottom: 10,
+      gap: 12,
+    },
+    signOutText: {
+      color: '#EF4444',
+      fontSize: 16,
+      fontFamily: Font_Bold,
+      fontWeight: 'bold',
+      letterSpacing: 1,
+    },
+    versionText: {
+      fontSize: 12,
+      color: '#D1D5DB',
+      fontFamily: Font_Bold,
+      fontWeight: 'bold',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
     },
   });

@@ -11,7 +11,6 @@ import {
 import React, { useEffect, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';
 import { MD3Theme, useTheme } from 'react-native-paper';
-import { globalStyle } from '../../utils/globalStyles';
 import { metrics } from '../../utils/metrics';
 import { Font_Bold, Font_Regular } from '../../theme/fonts';
 import { useLazyTrusted_hospitalsQuery } from '../../redux/services';
@@ -58,7 +57,7 @@ const TrustedHospitals = ({ navigation }: any) => {
   };
 
   return (
-    <AppLayout title="Trusted Hospitals" onBackPress={() => navigation.pop()}>
+    <AppLayout title="Hospitals" onBackPress={() => navigation.pop()}>
       <View style={{ flex: 1 }}>
 
         {/* Tabs */}
@@ -68,7 +67,7 @@ const TrustedHospitals = ({ navigation }: any) => {
             return (
               <TouchableOpacity
                 key={cat}
-                style={styles(theme).tab}
+                style={[styles(theme).tab, active && styles(theme).activeTab]}
                 onPress={() => setSelectedCat(cat)}
               >
                 <Text
@@ -79,7 +78,6 @@ const TrustedHospitals = ({ navigation }: any) => {
                 >
                   {cat}
                 </Text>
-                {active && <View style={styles(theme).tabIndicator} />}
               </TouchableOpacity>
             );
           })}
@@ -178,29 +176,37 @@ const styles = (theme: MD3Theme) =>
   StyleSheet.create({
     tabs: {
       flexDirection: 'row',
-      borderBottomWidth: 1,
-      borderColor: '#E5E7EB',
+      backgroundColor: '#fff',
+      padding: 6,
+      borderRadius: 40,
+      marginHorizontal: metrics.doubleMargin,
+      marginVertical: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     },
     tab: {
       flex: 1,
       alignItems: 'center',
-      paddingVertical: 14,
+      justifyContent: 'center',
+      paddingVertical: 12,
+      borderRadius: 30,
+    },
+    activeTab: {
+      backgroundColor: '#0F8A65',
     },
     tabText: {
-      fontSize: 16,
-      color: '#111827',
-      fontFamily: Font_Regular,
+      fontSize: 14,
+      color: '#9CA3AF',
+      fontFamily: Font_Bold,
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
     },
     tabActiveText: {
-      color: theme.colors.primary,
-      fontWeight: '700',
-    },
-    tabIndicator: {
-      height: 3,
-      width: '100%',
-      backgroundColor: theme.colors.primary,
-      position: 'absolute',
-      bottom: 0,
+      color: '#fff',
+      fontWeight: 'bold',
     },
     card: {
       backgroundColor: '#fff',
@@ -235,6 +241,7 @@ const styles = (theme: MD3Theme) =>
       fontFamily: Font_Bold,
       color: '#111827',
       marginBottom: 4,
+      fontWeight: 'bold',
     },
     addressRow: {
       flexDirection: 'row',
