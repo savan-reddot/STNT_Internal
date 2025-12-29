@@ -181,7 +181,7 @@ I need some help.
   const SERVICES = [
     {
       id: 1, title: 'Policy', icon: 'shield-outline', iconColor: '#3BA66B',
-      bgColor: '#EAFBF2', onPress: () => navigation.navigate(Screens.Policies, { type: 'all' }),
+      bgColor: '#EAFBF2', onPress: () => navigation.navigate(Screens.BuyPolicy),
     },
     {
       id: 2, title: 'Claims', icon: 'document-text-outline', iconColor: '#3D6AF2',
