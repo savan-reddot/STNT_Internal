@@ -5,7 +5,7 @@ export const Screens = {
   Claim: 'Claim',
   ClaimRequest: 'ClaimRequest',
   AddNewClaim: 'AddNewClaim',
-  Certification: 'E-Card',
+  Certification: 'E-Pass',
   Profile: 'Profile',
   Policies: 'Policies',
   EmergencyHelp: 'EmergencyHelp',

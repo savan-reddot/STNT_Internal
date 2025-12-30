@@ -51,7 +51,7 @@ const Home = ({ navigation }: any) => {
   const [policy_data, setPolicy_Data] = useState<POLICY_DATA>(initPolicyData);
   const [updateInfo, setUpdateInfo] = useState({});
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const { top } = useSafeAreaInsets()
+  const { top } = useSafeAreaInsets();
 
   const user = useAppSelector(getUser);
 
@@ -97,7 +97,12 @@ const Home = ({ navigation }: any) => {
           setShowUpdateModal(updateNeeded.isNeeded);
         }, 500);
       } else {
-        console.log('App is up to date. Current:', updateNeeded.currentVersion, 'Latest:', updateNeeded.latestVersion);
+        console.log(
+          'App is up to date. Current:',
+          updateNeeded.currentVersion,
+          'Latest:',
+          updateNeeded.latestVersion,
+        );
         setUpdateInfo({});
         setShowUpdateModal(false);
       }
@@ -143,7 +148,6 @@ const Home = ({ navigation }: any) => {
     }
   };
 
-
   const getGreeting = () => {
     const currentHour = new Date().getHours();
     if (currentHour < 12) return 'Good Morning';
@@ -157,10 +161,12 @@ const Home = ({ navigation }: any) => {
     const maskedPassport =
       passportNumber && passportNumber.length > 4
         ? passportNumber.replace(
-          /^(\w{2})\w*(\w{2})$/,
-          (_match: string, start: string, end: string) =>
-            `${start}${'*'.repeat(Math.max(0, passportNumber.length - 4))}${end}`,
-        )
+            /^(\w{2})\w*(\w{2})$/,
+            (_match: string, start: string, end: string) =>
+              `${start}${'*'.repeat(
+                Math.max(0, passportNumber.length - 4),
+              )}${end}`,
+          )
         : passportNumber;
 
     const message = `Hello ST&T Team,
@@ -171,38 +177,62 @@ Email - ${user?.email}
 I need some help.
 `; // optional preset text
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    Linking.openURL(url)
+    Linking.openURL(url);
   };
 
   const isExpired = policy_data?.policies?.[0]?.isExpired;
-  const currentPlan = `${policy_data?.policies?.[0]?.manifest?.type} ${policy_data?.policies?.[0]?.manifest?.package}`
-
+  const currentPlan = policy_data?.policies?.[0]?.manifest?.type
+    ? `${policy_data?.policies?.[0]?.manifest?.type} ${policy_data?.policies?.[0]?.manifest?.package}`
+    : '';
 
   const SERVICES = [
     {
-      id: 1, title: 'Policy', icon: 'shield-outline', iconColor: '#3BA66B',
-      bgColor: '#EAFBF2', onPress: () => navigation.navigate(Screens.BuyPolicy),
+      id: 1,
+      title: 'Policy',
+      icon: 'shield-outline',
+      iconColor: '#3BA66B',
+      bgColor: '#EAFBF2',
+      onPress: () => navigation.navigate(Screens.BuyPolicy),
     },
     {
-      id: 2, title: 'Claims', icon: 'document-text-outline', iconColor: '#3D6AF2',
-      bgColor: '#EEF3FF', onPress: () => navigation.navigate(Screens.Claim),
+      id: 2,
+      title: 'Claims',
+      icon: 'document-text-outline',
+      iconColor: '#3D6AF2',
+      bgColor: '#EEF3FF',
+      onPress: () => navigation.navigate(Screens.Claim),
     },
     {
-      id: 3, title: 'Emergency', icon: 'call-outline', iconColor: '#E24A3B',
-      bgColor: '#FFF0EE', onPress: () => navigation.navigate(Screens.EmergencyHelp),
+      id: 3,
+      title: 'Emergency',
+      icon: 'call-outline',
+      iconColor: '#E24A3B',
+      bgColor: '#FFF0EE',
+      onPress: () => navigation.navigate(Screens.EmergencyHelp),
     },
     {
-      id: 4, title: 'Hospitals', icon: 'heart-outline', iconColor: '#D84A7A',
-      bgColor: '#FFF1F6', onPress: () => navigation.navigate(Screens.TrustedHospitals),
+      id: 4,
+      title: 'Hospitals',
+      icon: 'heart-outline',
+      iconColor: '#D84A7A',
+      bgColor: '#FFF1F6',
+      onPress: () => navigation.navigate(Screens.TrustedHospitals),
     },
     {
-      id: 5, title: 'Deals', icon: 'pricetag-outline', iconColor: '#D0893C',
-      bgColor: '#FFF8E8', onPress: () => navigation.navigate(Screens.PreferredMerchants),
+      id: 5,
+      title: 'Deals',
+      icon: 'pricetag-outline',
+      iconColor: '#D0893C',
+      bgColor: '#FFF8E8',
+      onPress: () => navigation.navigate(Screens.PreferredMerchants),
     },
-    {
-      id: 6, title: 'Vault', icon: 'lock-closed-outline', iconColor: '#5A67F2',
-      bgColor: '#F1F3FF',
-    },
+    // {
+    //   id: 6,
+    //   title: 'Vault',
+    //   icon: 'lock-closed-outline',
+    //   iconColor: '#5A67F2',
+    //   bgColor: '#F1F3FF',
+    // },
   ];
 
   return (
@@ -213,7 +243,10 @@ I need some help.
         {/* ---------- HEADER ---------- */}
         <View style={styles(theme).header}>
           <View style={styles(theme).headerLeft}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate(Screens.Profile)}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate(Screens.Profile)}
+            >
               <Image
                 source={
                   user?.profile_picture
@@ -232,7 +265,6 @@ I need some help.
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-
             {/* WARNING ICON */}
             <TouchableOpacity
               onPress={() => navigation.navigate(Screens.EmergencyHelp)}
@@ -245,11 +277,7 @@ I need some help.
                 justifyContent: 'center',
               }}
             >
-              <Icon
-                name="warning-outline"
-                size={22}
-                color="#EF4444"
-              />
+              <Icon name="warning-outline" size={22} color="#EF4444" />
             </TouchableOpacity>
 
             {/* NOTIFICATION ICON */}
@@ -266,7 +294,6 @@ I need some help.
             >
               <Icon name="notifications-outline" size={24} color="#0B1320" />
             </TouchableOpacity>
-
           </View>
         </View>
 
@@ -276,41 +303,51 @@ I need some help.
           showsVerticalScrollIndicator={false}
         >
           {/* ---------- PLAN CARD ---------- */}
-          <TouchableOpacity activeOpacity={0.8} style={styles(theme).planCard} onPress={() => navigation.navigate(Screens.Policies, { type: 'all' })}>
-            <View style={styles(theme).planHeader}>
-              <Icon name="shield-checkmark" size={32} color="#6EE7B7" />
+          {currentPlan && (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles(theme).planCard}
+              onPress={() =>
+                navigation.navigate(Screens.Policies, { type: 'all' })
+              }
+            >
+              <View style={styles(theme).planHeader}>
+                <Icon name="shield-checkmark" size={32} color="#6EE7B7" />
 
-              <View style={styles(theme).activeBadge}>
-                <Icon
-                  name="ellipse"
-                  size={10}
-                  color={isExpired ? '#EF4444' : '#6EE7B7'}
-                />
-                <Text
-                  style={[
-                    styles(theme).activeText,
-                    isExpired && styles(theme).expiredText,
-                  ]}
-                >
-                  {isExpired ? 'PROTECTION EXPIRED' : 'ACTIVE PROTECTION'}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles(theme).planLabel}>CURRENT PLAN</Text>
-            <Text style={styles(theme).planName}>{currentPlan}</Text>
-
-            <View style={styles(theme).divider} />
-
-            <View style={styles(theme).coverageRow}>
-              <View>
-                <Text style={styles(theme).coverageLabel}>COVERAGE AMOUNT</Text>
-                <Text style={styles(theme).coverageAmount}>SGD 100,000</Text>
+                <View style={styles(theme).activeBadge}>
+                  <Icon
+                    name="ellipse"
+                    size={10}
+                    color={isExpired ? '#EF4444' : '#6EE7B7'}
+                  />
+                  <Text
+                    style={[
+                      styles(theme).activeText,
+                      isExpired && styles(theme).expiredText,
+                    ]}
+                  >
+                    {isExpired ? 'PROTECTION EXPIRED' : 'ACTIVE PROTECTION'}
+                  </Text>
+                </View>
               </View>
 
-              <Icon name="chevron-forward" size={24} color="#6EE7B7" />
-            </View>
-          </TouchableOpacity>
+              <Text style={styles(theme).planLabel}>CURRENT PLAN</Text>
+              <Text style={styles(theme).planName}>{currentPlan}</Text>
+
+              <View style={styles(theme).divider} />
+
+              <View style={styles(theme).coverageRow}>
+                <View>
+                  <Text style={styles(theme).coverageLabel}>
+                    COVERAGE AMOUNT
+                  </Text>
+                  <Text style={styles(theme).coverageAmount}>SGD 100,000</Text>
+                </View>
+
+                <Icon name="chevron-forward" size={24} color="#6EE7B7" />
+              </View>
+            </TouchableOpacity>
+          )}
 
           {/* ---------- ALERTS ---------- */}
           <ScrollView
@@ -318,17 +355,24 @@ I need some help.
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles(theme).alertContainer}
           >
-            <View style={[styles(theme).alertCard, { backgroundColor: '#FFF6E8' }]}>
+            <View
+              style={[styles(theme).alertCard, { backgroundColor: '#FFF6E8' }]}
+            >
               <Icon name="sunny-outline" size={30} color="#F59E0B" />
               <View style={{ flex: 1 }}>
-                <Text style={styles(theme).alertTitle}>EXTREME HEAT WARNING</Text>
+                <Text style={styles(theme).alertTitle}>
+                  EXTREME HEAT WARNING
+                </Text>
                 <Text style={styles(theme).alertDesc}>
-                  Temperatures reaching 45°C in Mecca. Avoid direct sun between 12 PM - 3 PM.
+                  Temperatures reaching 45°C in Mecca. Avoid direct sun between
+                  12 PM - 3 PM.
                 </Text>
               </View>
             </View>
 
-            <View style={[styles(theme).alertCard, { backgroundColor: '#FFF0F0' }]}>
+            <View
+              style={[styles(theme).alertCard, { backgroundColor: '#FFF0F0' }]}
+            >
               <Icon name="people-outline" size={30} color="#EF4444" />
               <View style={{ flex: 1 }}>
                 <Text style={styles(theme).alertTitle}>HIGH CROWD DENSITY</Text>
@@ -350,27 +394,24 @@ I need some help.
           <FlatList
             data={SERVICES}
             numColumns={3}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={item => item.id.toString()}
             scrollEnabled={false}
             contentContainerStyle={styles(theme).serviceGrid}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles(theme).serviceCard} onPress={item?.onPress}>
+              <TouchableOpacity
+                style={styles(theme).serviceCard}
+                onPress={item?.onPress}
+              >
                 <View
                   style={[
                     styles(theme).iconWrapper,
                     { backgroundColor: item.bgColor },
                   ]}
                 >
-                  <Icon
-                    name={item.icon}
-                    size={28}
-                    color={item.iconColor}
-                  />
+                  <Icon name={item.icon} size={28} color={item.iconColor} />
                 </View>
 
-                <Text style={styles(theme).serviceText}>
-                  {item.title}
-                </Text>
+                <Text style={styles(theme).serviceText}>{item.title}</Text>
               </TouchableOpacity>
             )}
           />
@@ -757,7 +798,7 @@ const styles = (theme: MD3Theme) =>
       fontSize: 26,
       fontWeight: '800',
       marginTop: 6,
-      textTransform: "uppercase"
+      textTransform: 'uppercase',
     },
     divider: {
       height: 1,

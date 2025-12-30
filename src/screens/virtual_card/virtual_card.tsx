@@ -83,7 +83,7 @@ const VirtualCard = () => {
   const details = metaData.policyDetails;
 
   return (
-    <AppLayout title="E-Card">
+    <AppLayout title="E-Pass">
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <TouchableOpacity activeOpacity={0.9} onPress={flipCard}>
           <View style={styles.cardWrapper}>
@@ -135,15 +135,15 @@ const VirtualCard = () => {
                 </View>
 
                 <View style={styles.row}>
+                  <Text style={styles.label}>Date of Birth</Text>
+                  <Text style={styles.value}>{details?.dob}</Text>
+                </View>
+
+                <View style={styles.row}>
                   <Text style={styles.label}>Policy Start Date</Text>
                   <Text style={styles.value}>
                     {details?.policyEffectiveData}
                   </Text>
-                </View>
-
-                <View style={styles.row}>
-                  <Text style={styles.label}>Date of Birth</Text>
-                  <Text style={styles.value}>{details?.dob}</Text>
                 </View>
 
                 <View style={styles.row}>
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
 //   };
 
 //   return (
-//     <AppLayout title={'E-Card'}>
+//     <AppLayout title={'E-Pass'}>
 //       <ScreenLoader visible={isLoading} />
 //       {metaData?.virtualCard?.isExpired === false && !isLoading ? (
 //         <ScrollView style={{ padding: 15 }} contentContainerStyle={{ paddingBottom: metrics.doubleMargin }}>
