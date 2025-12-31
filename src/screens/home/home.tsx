@@ -60,7 +60,7 @@ const Home = ({ navigation }: any) => {
       id: 1,
       title: 'Buy Policy',
       icon: require('../../../assets/images/buy_policy.png'),
-      onPress: () => navigation.navigate(Screens.BuyPolicy),
+      onPress: () => navigation.navigate(Screens.PlanSelection),
     },
     {
       id: 2,
@@ -192,7 +192,7 @@ I need some help.
       icon: 'shield-outline',
       iconColor: '#3BA66B',
       bgColor: '#EAFBF2',
-      onPress: () => navigation.navigate(Screens.BuyPolicy),
+      onPress: () => navigation.navigate(Screens.PlanSelection),
     },
     {
       id: 2,
@@ -386,9 +386,9 @@ I need some help.
           {/* ---------- SERVICES ---------- */}
           <View style={styles(theme).serviceHeader}>
             <Text style={styles(theme).serviceTitle}>SERVICES</Text>
-            <TouchableOpacity>
+            {/* <TouchableOpacity>
               <Text style={styles(theme).viewAll}>VIEW ALL</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           <FlatList

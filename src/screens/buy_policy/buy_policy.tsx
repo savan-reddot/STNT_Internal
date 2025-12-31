@@ -1,9 +1,4 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import React, { useState } from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import { useForm } from 'react-hook-form';
@@ -74,18 +69,32 @@ const convertDateToISO = (value?: string) => {
   return isNaN(fallback.getTime()) ? '' : fallback.toISOString();
 };
 
-const BuyPolicy = ({ navigation }: any) => {
+const BuyPolicy = ({ navigation, route }: any) => {
   const theme = useTheme();
   const user = useAppSelector(getUser);
   const [currentStep, setCurrentStep] = useState(0);
-  const [datePickerVisible, setDatePickerVisible] = useState<string | null>(null);
+  const [datePickerVisible, setDatePickerVisible] = useState<string | null>(
+    null,
+  );
   const [selectedDateField, setSelectedDateField] = useState<string>('');
-  const [selectedCustomerIndex, setSelectedCustomerIndex] = useState<number | null>(null);
-  const [selectedFlightIndex, setSelectedFlightIndex] = useState<number | 'new' | null>(null);
+  const [selectedCustomerIndex, setSelectedCustomerIndex] = useState<
+    number | null
+  >(null);
+  const [selectedFlightIndex, setSelectedFlightIndex] = useState<
+    number | 'new' | null
+  >(null);
   const [newFlightDate, setNewFlightDate] = useState<string>('');
-  const [currentFlightModalDate, setCurrentFlightModalDate] = useState<string>('');
-  const [paymentMeta, setPaymentMeta] = useState<PaymentCompletionData | null>(null);
-  const [policy_purchase_form, { isLoading: isPurchasingPolicy }] = usePolicy_purchase_formMutation();
+  const [currentFlightModalDate, setCurrentFlightModalDate] =
+    useState<string>('');
+  const [paymentMeta, setPaymentMeta] = useState<PaymentCompletionData | null>(
+    null,
+  );
+  const [policy_purchase_form, { isLoading: isPurchasingPolicy }] =
+    usePolicy_purchase_formMutation();
+
+  const preSelectedPlan = route?.params?.selectedPlan;
+  const preSelectedPricing = route?.params?.pricingData;
+  const preSelectedDestination = route?.params?.destination;
 
   const {
     control,
@@ -101,7 +110,10 @@ const BuyPolicy = ({ navigation }: any) => {
     defaultValues: {
       travellingSaudiWith: __DEV__ ? 'individual' : '',
       travelAgencyName: '',
-      name: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '',
+      name:
+        user?.firstName && user?.lastName
+          ? `${user.firstName} ${user.lastName}`
+          : '',
       phone_code: '+65',
       phone: __DEV__ ? '7698533947' : '',
       email: user?.email || '',
@@ -111,23 +123,31 @@ const BuyPolicy = ({ navigation }: any) => {
       nextOfKinEmail: __DEV__ ? 'savan@gmail.com' : '',
       departureDate: __DEV__ ? '25/11/2025' : '',
       arrivalDate: __DEV__ ? '26/11/2025' : '',
-      numberOfDays: __DEV__ ? "2" : '',
-      destination: __DEV__ ? 'Saudi Arabia' : '',
-      umrahCoveragePlan: '',
+      numberOfDays: __DEV__ ? '2' : '',
+      destination: preSelectedDestination || (__DEV__ ? 'Saudi Arabia' : ''),
+      umrahCoveragePlan: preSelectedPlan ? preSelectedPlan.value : '',
       countryOfTravel: '',
-      selectedPlanDisplayName: '',
-      selectedPlanCode: '',
-      coveragePlanDetailsText: '',
-      selectedPlanDetails: null,
-      planAdultPricing: null,
-      planChildPricing: null,
+      selectedPlanDisplayName: preSelectedPlan ? preSelectedPlan.label : '',
+      selectedPlanCode: preSelectedPlan ? preSelectedPlan.plan_code : '',
+      coveragePlanDetailsText: preSelectedPricing
+        ? preSelectedPricing.pricingString
+        : '',
+      selectedPlanDetails: preSelectedPlan ? preSelectedPlan.rawPlan : null,
+      planAdultPricing: preSelectedPricing
+        ? preSelectedPricing.adultPricingRaw
+        : null,
+      planChildPricing: preSelectedPricing
+        ? preSelectedPricing.childPricingRaw
+        : null,
       adults: __DEV__ ? 1 : 0,
       children: 0,
       flightNumberDeparture: __DEV__ ? '111' : '',
       flightDepartureDateDeparture: __DEV__ ? '25/11/2025' : '',
       flightNumberArrival: __DEV__ ? '222' : '',
       flightDepartureDateArrival: __DEV__ ? '26/11/2025' : '',
-      additionalFlights: __DEV__ ? [{ flight_number: '123', departure_date: '25/11/2025' }] : [],
+      additionalFlights: __DEV__
+        ? [{ flight_number: '123', departure_date: '25/11/2025' }]
+        : [],
       customers: [],
       pdpaConsent: __DEV__ ? true : false,
       notDischargedWithin30Days: __DEV__ ? true : false,
@@ -158,7 +178,10 @@ const BuyPolicy = ({ navigation }: any) => {
         const contactFields: (keyof PolicyFormData)[] = ['travellingSaudiWith'];
 
         // Only validate other fields based on selection
-        if (travellingSaudiWith === 'individual' || travellingSaudiWith === 'non_partnered_travel_agency') {
+        if (
+          travellingSaudiWith === 'individual' ||
+          travellingSaudiWith === 'non_partnered_travel_agency'
+        ) {
           contactFields.push(
             'name',
             'phone',
@@ -193,7 +216,10 @@ const BuyPolicy = ({ navigation }: any) => {
         const travelAdults = watch('adults') || 0;
         const travelChildren = watch('children') || 0;
         if (travelAdults === 0 && travelChildren === 0) {
-          Alert.alert('Selection required', 'Please select at least one Adult or Child to proceed.');
+          Alert.alert(
+            'Selection required',
+            'Please select at least one Adult or Child to proceed.',
+          );
           return false;
         }
         return true;
@@ -231,7 +257,8 @@ const BuyPolicy = ({ navigation }: any) => {
             });
             hasInvalidPassport = true;
           } else {
-            clearErrors && clearErrors(`customers.${index}.passportNumber` as any);
+            clearErrors &&
+              clearErrors(`customers.${index}.passportNumber` as any);
           }
         });
         if (hasInvalidPassport) {
@@ -251,7 +278,10 @@ const BuyPolicy = ({ navigation }: any) => {
         return true;
       case 5: // Payment
         if (!paymentMeta) {
-          Alert.alert('Payment required', 'Please complete your payment before proceeding.');
+          Alert.alert(
+            'Payment required',
+            'Please complete your payment before proceeding.',
+          );
           return false;
         }
         return true;
@@ -301,16 +331,25 @@ const BuyPolicy = ({ navigation }: any) => {
         currentHours,
         currentMinutes,
         currentSeconds,
-        currentMilliseconds
+        currentMilliseconds,
       );
       const combinedDate = new Date(combinedTimestamp);
       const fullTimestampISO = combinedDate.toISOString();
       const formattedDate = fullTimestampISO;
 
       // Handle customer details date fields
-      if (selectedCustomerIndex !== null && selectedDateField === 'dateOfBirth') {
-        setValue(`customers.${selectedCustomerIndex}.${selectedDateField}` as any, formattedDate);
-      } else if (selectedFlightIndex !== null && selectedDateField.startsWith('additionalFlightDate')) {
+      if (
+        selectedCustomerIndex !== null &&
+        selectedDateField === 'dateOfBirth'
+      ) {
+        setValue(
+          `customers.${selectedCustomerIndex}.${selectedDateField}` as any,
+          formattedDate,
+        );
+      } else if (
+        selectedFlightIndex !== null &&
+        selectedDateField.startsWith('additionalFlightDate')
+      ) {
         // Handle additional flight date - update the flight in the array
         if (selectedFlightIndex === 'new') {
           // For new flights, store the date in state to be picked up by travelDetails
@@ -333,13 +372,18 @@ const BuyPolicy = ({ navigation }: any) => {
         setValue(selectedDateField as any, formattedDate);
 
         // Calculate numberOfDays when both dates are selected
-        if (selectedDateField === 'departureDate' || selectedDateField === 'arrivalDate') {
-          const departureDate = selectedDateField === 'departureDate'
-            ? formattedDate
-            : watch('departureDate');
-          const arrivalDate = selectedDateField === 'arrivalDate'
-            ? formattedDate
-            : watch('arrivalDate');
+        if (
+          selectedDateField === 'departureDate' ||
+          selectedDateField === 'arrivalDate'
+        ) {
+          const departureDate =
+            selectedDateField === 'departureDate'
+              ? formattedDate
+              : watch('departureDate');
+          const arrivalDate =
+            selectedDateField === 'arrivalDate'
+              ? formattedDate
+              : watch('arrivalDate');
 
           if (departureDate && arrivalDate) {
             // Parse the ISO timestamps and extract just the date part (UTC)
@@ -350,12 +394,12 @@ const BuyPolicy = ({ navigation }: any) => {
             const depUTC = Date.UTC(
               depDate.getUTCFullYear(),
               depDate.getUTCMonth(),
-              depDate.getUTCDate()
+              depDate.getUTCDate(),
             );
             const arrUTC = Date.UTC(
               arrDate.getUTCFullYear(),
               arrDate.getUTCMonth(),
-              arrDate.getUTCDate()
+              arrDate.getUTCDate(),
             );
 
             const diff = arrUTC - depUTC;
@@ -373,7 +417,12 @@ const BuyPolicy = ({ navigation }: any) => {
     setCurrentFlightModalDate('');
   };
 
-  const openDatePicker = (fieldName: string, index?: number, flightIndex?: number | 'new', currentDate?: string) => {
+  const openDatePicker = (
+    fieldName: string,
+    index?: number,
+    flightIndex?: number | 'new',
+    currentDate?: string,
+  ) => {
     setSelectedDateField(fieldName);
     setSelectedCustomerIndex(index !== undefined ? index : null);
     setSelectedFlightIndex(flightIndex !== undefined ? flightIndex : null);
@@ -396,7 +445,10 @@ const BuyPolicy = ({ navigation }: any) => {
     }
 
     // Handle additional flight date fields
-    if (selectedFlightIndex !== null && fieldName.startsWith('additionalFlightDate')) {
+    if (
+      selectedFlightIndex !== null &&
+      fieldName.startsWith('additionalFlightDate')
+    ) {
       if (selectedFlightIndex === 'new') {
         // For new flights, use newFlightDate if available, otherwise use currentFlightModalDate
         if (newFlightDate) {
@@ -487,11 +539,18 @@ const BuyPolicy = ({ navigation }: any) => {
       showErrorToast('Complete your payment before submitting', 'Error !!');
       return;
     }
-    handleSubmit((formData) => onSubmit(formData, finalPaymentData))();
+    handleSubmit(formData => onSubmit(formData, finalPaymentData))();
   };
 
-  const onSubmit = async (data: PolicyFormData, paymentData: PaymentCompletionData) => {
-    if (!paymentData?.razorpayPaymentId || !paymentData?.orderCreationId || !paymentData?.razorpayOrderId) {
+  const onSubmit = async (
+    data: PolicyFormData,
+    paymentData: PaymentCompletionData,
+  ) => {
+    if (
+      !paymentData?.razorpayPaymentId ||
+      !paymentData?.orderCreationId ||
+      !paymentData?.razorpayOrderId
+    ) {
       showErrorToast('Complete your payment before submitting', 'Error !!');
       return;
     }
@@ -508,16 +567,25 @@ const BuyPolicy = ({ navigation }: any) => {
     const planChildPricing = data.planChildPricing;
     const selectedPlanDetails = data.selectedPlanDetails;
 
-    if (!planDisplayName || !planAdultPricing || !planChildPricing || !selectedPlanDetails) {
-      showErrorToast('Plan details are missing. Please revisit Travel Details step.', 'Error !!');
+    if (
+      !planDisplayName ||
+      !planAdultPricing ||
+      !planChildPricing ||
+      !selectedPlanDetails
+    ) {
+      showErrorToast(
+        'Plan details are missing. Please revisit Travel Details step.',
+        'Error !!',
+      );
       goToStep(1);
       return;
     }
 
-    const customerInformation = (data.customers || []).map((customer) => {
+    const customerInformation = (data.customers || []).map(customer => {
       const dobISO = convertDateToISO(customer.dateOfBirth);
       const genderCapitalized = customer.gender
-        ? customer.gender.charAt(0).toUpperCase() + customer.gender.slice(1).toLowerCase()
+        ? customer.gender.charAt(0).toUpperCase() +
+          customer.gender.slice(1).toLowerCase()
         : '';
 
       return {
@@ -532,19 +600,26 @@ const BuyPolicy = ({ navigation }: any) => {
     });
 
     // Format additional flights for backend
-    const additionalFlightDetails = (data.additionalFlights || []).map((flight) => ({
-      flight_number: flight.flight_number,
-      departure_date: convertDateToISO(flight.departure_date),
-    }));
+    const additionalFlightDetails = (data.additionalFlights || []).map(
+      flight => ({
+        flight_number: flight.flight_number,
+        departure_date: convertDateToISO(flight.departure_date),
+      }),
+    );
 
     const policyPayload = {
       travel_type:
-        data.travellingSaudiWith && data.travellingSaudiWith.toLowerCase() !== 'individual' ? 'group' : 'individual',
+        data.travellingSaudiWith &&
+        data.travellingSaudiWith.toLowerCase() !== 'individual'
+          ? 'group'
+          : 'individual',
       name: data.name,
       phone: data.phone,
       phone_code: data.phone_code || '+65',
       email: data.email,
-      ...(data.travelAgencyName && { travel_agency_name: data.travelAgencyName }),
+      ...(data.travelAgencyName && {
+        travel_agency_name: data.travelAgencyName,
+      }),
       name_nok: data.nextOfKinName,
       phone_nok: data.nextOfKinPhone,
       phone_code_nok: data.phone_code_nok || '+65',
@@ -558,10 +633,15 @@ const BuyPolicy = ({ navigation }: any) => {
       number_of_adults: data.adults || 0,
       number_of_children: data.children || 0,
       departure_flight_number: data.flightNumberDeparture || null,
-      departure_flight_date: data.flightDepartureDateDeparture ? convertDateToISO(data.flightDepartureDateDeparture) : null,
+      departure_flight_date: data.flightDepartureDateDeparture
+        ? convertDateToISO(data.flightDepartureDateDeparture)
+        : null,
       arrival_flight_number: data.flightNumberArrival || null,
-      arrival_flight_date: data.flightDepartureDateArrival ? convertDateToISO(data.flightDepartureDateArrival) : null,
-      additional_flight_details: additionalFlightDetails.length > 0 ? additionalFlightDetails : null,
+      arrival_flight_date: data.flightDepartureDateArrival
+        ? convertDateToISO(data.flightDepartureDateArrival)
+        : null,
+      additional_flight_details:
+        additionalFlightDetails.length > 0 ? additionalFlightDetails : null,
       customer_information: customerInformation,
       is_info_correct: data.confirmInformationAccurate,
       is_not_discharged_from_hospital: data.notDischargedWithin30Days,
@@ -594,7 +674,10 @@ const BuyPolicy = ({ navigation }: any) => {
       }
     } catch (error: any) {
       console.error('Policy purchase error:', error);
-      const errorMessage = error?.data?.errorMessage || error?.message || 'Failed to purchase policy';
+      const errorMessage =
+        error?.data?.errorMessage ||
+        error?.message ||
+        'Failed to purchase policy';
       showErrorToast(errorMessage, 'Error !!');
     }
   };
@@ -602,7 +685,9 @@ const BuyPolicy = ({ navigation }: any) => {
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return <ContactDetails control={control} errors={errors} watch={watch} />;
+        return (
+          <ContactDetails control={control} errors={errors} watch={watch} />
+        );
       case 1:
         return (
           <TravelDetails
@@ -613,6 +698,8 @@ const BuyPolicy = ({ navigation }: any) => {
             setValue={setValue}
             newFlightDate={newFlightDate}
             onNewFlightDateUsed={() => setNewFlightDate('')}
+            preSelectedPlan={preSelectedPlan}
+            preSelectedPricing={preSelectedPricing}
           />
         );
       case 2:
@@ -628,15 +715,10 @@ const BuyPolicy = ({ navigation }: any) => {
       case 3:
         return <NoticeDeclaration control={control} errors={errors} />;
       case 4:
-        return (
-          <PaymentDetailsSummary watch={watch} />
-        );
+        return <PaymentDetailsSummary watch={watch} />;
       case 5:
         return (
-          <Payment
-            watch={watch}
-            onPaymentVerified={handlePaymentVerified}
-          />
+          <Payment watch={watch} onPaymentVerified={handlePaymentVerified} />
         );
       default:
         return null;
@@ -676,31 +758,44 @@ const BuyPolicy = ({ navigation }: any) => {
           </View>
         </View>
 
-        <View style={{ flex: 1 }}>
-          {renderStep()}
-        </View>
+        <View style={{ flex: 1 }}>{renderStep()}</View>
 
-        <View style={[styles(theme).buttonRow, { padding: metrics.doubleMargin, paddingTop: metrics.baseMargin }]}>
+        <View
+          style={[
+            styles(theme).buttonRow,
+            { padding: metrics.doubleMargin, paddingTop: metrics.baseMargin },
+          ]}
+        >
           {currentStep === steps.length - 1 && (
-            <Text style={[fontStyle(theme).bodySmall, { textAlign: 'center', marginBottom: metrics.smallMargin }]}>
+            <Text
+              style={[
+                fontStyle(theme).bodySmall,
+                { textAlign: 'center', marginBottom: metrics.smallMargin },
+              ]}
+            >
               Review the details above and tap submit to purchase the policy.
             </Text>
           )}
           {isPurchasingPolicy && currentStep === steps.length - 1 && (
-            <Text style={[fontStyle(theme).bodySmall, { textAlign: 'center', marginBottom: metrics.smallMargin }]}>
+            <Text
+              style={[
+                fontStyle(theme).bodySmall,
+                { textAlign: 'center', marginBottom: metrics.smallMargin },
+              ]}
+            >
               Processing payment, please wait...
             </Text>
           )}
           <UButton
             title={
               currentStep === steps.length - 1
-                ? (isPurchasingPolicy ? 'Submitting...' : 'Submit')
+                ? isPurchasingPolicy
+                  ? 'Submitting...'
+                  : 'Submit'
                 : 'Next'
             }
             onPress={
-              currentStep === steps.length - 1
-                ? handleFinalSubmit
-                : handleNext
+              currentStep === steps.length - 1 ? handleFinalSubmit : handleNext
             }
             style={styles(theme).buttonFull}
           />
@@ -747,4 +842,3 @@ const styles = (theme: MD3Theme) =>
       width: '100%',
     },
   });
-
