@@ -1,24 +1,9 @@
-import React, {
-  forwardRef,
-  use,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Dropdown } from 'react-native-element-dropdown';
 import Modal from 'react-native-modal';
 import { TextInput, useTheme } from 'react-native-paper';
 import { metrics } from '../utils/metrics';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import {
-  useForgot_passwordMutation,
-  useLazyVerificationUserQuery,
-} from '../redux/services';
-import { getUser, setWebToken } from '../redux/reducer';
+import { useForgot_passwordMutation } from '../redux/services';
 import { showErrorToast } from '../utils/toastUtils';
 import fontStyle from '../styles/fontStyle';
 import UButton from './custombutton';
@@ -89,21 +74,42 @@ const ForgotPassword = ({
             </Text>
             <TouchableOpacity onPress={() => onDismiss()}>
               <Text
-                style={[styles(theme).title, { color: 'red', fontSize: 16 }]}
+                style={[
+                  styles(theme).title,
+                  { color: theme.colors.error, fontSize: 16 },
+                ]}
               >
                 Cancel
               </Text>
             </TouchableOpacity>
           </View>
           <View style={styles(theme).child_view}>
-            <Text style={fontStyle(theme).headingSmall}>
-              Email<Text style={{ color: 'red' }}>*</Text>
+            <Text
+              style={[
+                fontStyle(theme).headingSmall,
+                { color: theme.colors.onSurface },
+              ]}
+            >
+              Email<Text style={{ color: theme.colors.error }}>*</Text>
             </Text>
             <TextInput
               mode="outlined"
               placeholder="Enter Email"
               outlineStyle={{ borderRadius: metrics.baseRadius }}
-              style={{ height: metrics.screenWidth * 0.13 }}
+              placeholderTextColor={(theme.colors as any).placeholder || '#999'}
+              style={{
+                height: metrics.screenWidth * 0.13,
+                backgroundColor: theme.colors.surface,
+              }}
+              theme={{
+                colors: {
+                  primary: theme.colors.primary,
+                  onSurface: theme.colors.onSurface,
+                  text: theme.colors.onSurface,
+                  placeholder: (theme.colors as any).placeholder,
+                },
+              }}
+              textColor={theme.colors.onSurface}
               onChangeText={setEmail}
               value={email}
             />
@@ -131,14 +137,12 @@ const styles = (theme: MD3Theme) =>
     },
     modal: {
       justifyContent: 'flex-end',
-
       marginBottom: -metrics.doubleMargin,
       paddingBottom: metrics.doubleMargin,
       marginHorizontal: 0,
       borderTopEndRadius: metrics.baseRadius,
       borderTopLeftRadius: metrics.baseRadius,
       overflow: 'hidden',
-      height: '35%',
     },
     child_view: {
       marginTop: metrics.baseMargin,
@@ -147,11 +151,12 @@ const styles = (theme: MD3Theme) =>
       fontSize: 16,
       fontWeight: 'bold',
       marginBottom: metrics.baseMargin * 1.5,
+      color: theme.colors.onSurface,
     },
     contentContainer: {
       padding: metrics.doubleMargin * 2,
       paddingHorizontal: metrics.doubleMargin,
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       borderRadius: metrics.baseRadius,
     },
 

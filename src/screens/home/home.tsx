@@ -237,7 +237,9 @@ I need some help.
 
   return (
     <>
-      <View style={{ paddingTop: top, backgroundColor: '#fff' }}>
+      <View
+        style={{ paddingTop: top, backgroundColor: theme.colors.background }}
+      >
         <ScreenLoader visible={isLoading} />
 
         {/* ---------- HEADER ---------- */}
@@ -272,7 +274,7 @@ I need some help.
                 width: 40,
                 height: 40,
                 borderRadius: 20,
-                backgroundColor: '#FDECEC',
+                backgroundColor: theme.dark ? '#3B1E1E' : '#FDECEC',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -287,18 +289,22 @@ I need some help.
                 width: 40,
                 height: 40,
                 borderRadius: 20,
-                backgroundColor: '#F5F6FA',
+                backgroundColor: theme.dark ? '#1F2937' : '#F5F6FA',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Icon name="notifications-outline" size={24} color="#0B1320" />
+              <Icon
+                name="notifications-outline"
+                size={24}
+                color={theme.colors.onSurface}
+              />
             </TouchableOpacity>
           </View>
         </View>
 
         <ScrollView
-          style={{ flexGrow: 1, backgroundColor: '#fff' }}
+          style={{ flexGrow: 1, backgroundColor: theme.colors.background }}
           contentContainerStyle={{ paddingBottom: 150 }}
           showsVerticalScrollIndicator={false}
         >
@@ -306,7 +312,10 @@ I need some help.
           {currentPlan && (
             <TouchableOpacity
               activeOpacity={0.8}
-              style={styles(theme).planCard}
+              style={[
+                styles(theme).planCard,
+                { backgroundColor: theme.dark ? '#1F2937' : '#0B1320' },
+              ]}
               onPress={() =>
                 navigation.navigate(Screens.Policies, { type: 'all' })
               }
@@ -356,7 +365,10 @@ I need some help.
             contentContainerStyle={styles(theme).alertContainer}
           >
             <View
-              style={[styles(theme).alertCard, { backgroundColor: '#FFF6E8' }]}
+              style={[
+                styles(theme).alertCard,
+                { backgroundColor: theme.dark ? '#3A2E1E' : '#FFF6E8' },
+              ]}
             >
               <Icon name="sunny-outline" size={30} color="#F59E0B" />
               <View style={{ flex: 1 }}>
@@ -371,7 +383,10 @@ I need some help.
             </View>
 
             <View
-              style={[styles(theme).alertCard, { backgroundColor: '#FFF0F0' }]}
+              style={[
+                styles(theme).alertCard,
+                { backgroundColor: theme.dark ? '#3B1E1E' : '#FFF0F0' },
+              ]}
             >
               <Icon name="people-outline" size={30} color="#EF4444" />
               <View style={{ flex: 1 }}>
@@ -405,7 +420,7 @@ I need some help.
                 <View
                   style={[
                     styles(theme).iconWrapper,
-                    { backgroundColor: item.bgColor },
+                    { backgroundColor: theme.dark ? '#1F2937' : item.bgColor },
                   ]}
                 >
                   <Icon name={item.icon} size={28} color={item.iconColor} />
@@ -720,13 +735,13 @@ const styles = (theme: MD3Theme) =>
     },
     welcome: {
       fontSize: 12,
-      color: '#8A94A6',
+      color: theme.dark ? '#9CA3AF' : '#8A94A6',
       fontWeight: '600',
     },
     username: {
       fontSize: 22,
       fontWeight: '800',
-      color: '#0B1320',
+      color: theme.colors.onBackground,
     },
     bell: {
       position: 'relative',
@@ -749,7 +764,6 @@ const styles = (theme: MD3Theme) =>
       fontWeight: '700',
     },
     planCard: {
-      backgroundColor: '#0B1320',
       borderRadius: 24,
       marginHorizontal: 20,
       padding: 20,
@@ -843,11 +857,11 @@ const styles = (theme: MD3Theme) =>
     alertTitle: {
       fontWeight: '800',
       fontSize: 14,
-      color: '#111827',
+      color: theme.colors.onSurface,
     },
     alertDesc: {
       fontSize: 13,
-      color: '#6B7280',
+      color: theme.dark ? '#D1D5DB' : '#6B7280',
       marginTop: 4,
     },
     serviceHeader: {
@@ -859,6 +873,7 @@ const styles = (theme: MD3Theme) =>
     serviceTitle: {
       fontSize: 22,
       fontWeight: '800',
+      color: theme.colors.onBackground,
     },
     viewAll: {
       color: '#4CAF50',
@@ -870,11 +885,19 @@ const styles = (theme: MD3Theme) =>
     },
     serviceCard: {
       flex: 1,
-      backgroundColor: '#F9FAFB',
+      backgroundColor: theme.colors.surface,
       borderRadius: 24,
       alignItems: 'center',
       paddingVertical: 24,
       margin: 8,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
     },
     iconWrapper: {
       width: 64,
@@ -887,6 +910,6 @@ const styles = (theme: MD3Theme) =>
     serviceText: {
       fontSize: 14,
       fontWeight: '600',
-      color: '#374151',
+      color: theme.colors.onSurface,
     },
   });

@@ -28,14 +28,14 @@ export const onboardingData = [
     image: require('../../assets/images/onboard_2.png'),
     title: 'Digital E-Visa',
     description:
-      'Seamless entry with your digital pass. Keep your visa and insurance details secure in one place.'
+      'Seamless entry with your digital pass. Keep your visa and insurance details secure in one place.',
   },
   {
     id: '3',
     image: require('../../assets/images/onboard_3.png'),
     title: 'Pilgrim Support',
     description:
-      '24/7 Concierge and Mutawwif assistance to guide you through every step of your pilgrimage.'
+      '24/7 Concierge and Mutawwif assistance to guide you through every step of your pilgrimage.',
   },
 ];
 
@@ -118,14 +118,15 @@ const Onboard = ({ navigation }: any) => {
         <Icon
           name="arrow-forward-outline"
           size={metrics.moderateScale(16)}
-          color={theme.colors.background}
+          color={theme.colors.onPrimary}
         />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles(theme).skipButton} onPress={() => navigation.navigate(Screens.Login)}>
-        <Text style={styles(theme).skipButtonText}>
-          Skip to Login
-        </Text>
+      <TouchableOpacity
+        style={styles(theme).skipButton}
+        onPress={() => navigation.navigate(Screens.Login)}
+      >
+        <Text style={styles(theme).skipButtonText}>Skip to Login</Text>
       </TouchableOpacity>
     </View>
   );
@@ -154,7 +155,7 @@ const styles = (theme: MD3Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: metrics.doubleMargin,
-      backgroundColor: '#fff',
+      backgroundColor: theme.colors.surface,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.25,
@@ -164,7 +165,6 @@ const styles = (theme: MD3Theme) =>
       paddingHorizontal: metrics.smallMargin,
       paddingVertical: 25,
       transform: [{ rotate: '03deg' }],
-
     },
     image: {
       width: metrics.screenWidth * 0.6,
@@ -204,7 +204,7 @@ const styles = (theme: MD3Theme) =>
       marginHorizontal: 4,
     },
     button: {
-      backgroundColor: "#022c22",
+      backgroundColor: theme.colors.primary,
       borderRadius: 24,
       paddingVertical: metrics.doubleMargin,
       paddingHorizontal: metrics.baseMargin,
@@ -216,7 +216,7 @@ const styles = (theme: MD3Theme) =>
       alignSelf: 'center',
     },
     buttonText: {
-      color: theme.colors.background,
+      color: theme.colors.onPrimary,
       fontSize: 16,
       fontWeight: 'bold',
       textAlign: 'center',
@@ -228,7 +228,7 @@ const styles = (theme: MD3Theme) =>
       width: '90%',
     },
     skipButtonText: {
-      color: "#A1A1AA",
+      color: '#A1A1AA',
       fontSize: 14,
       fontWeight: 'bold',
       textTransform: 'uppercase',

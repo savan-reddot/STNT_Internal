@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
+import { useTheme } from 'react-native-paper';
 
 interface NoDataFoundProps {
   title: string;
@@ -7,6 +8,7 @@ interface NoDataFoundProps {
 }
 
 const NoDataFound = ({ title, description }) => {
+  const theme = useTheme();
   return (
     <View style={styles.container}>
       <Image
@@ -14,7 +16,9 @@ const NoDataFound = ({ title, description }) => {
         style={styles.image}
         resizeMode="contain"
       />
-      <Text style={styles.title}>{title}</Text>
+      <Text style={[styles.title, { color: theme.colors.onBackground }]}>
+        {title}
+      </Text>
       {description ? (
         <Text style={styles.description}>{description}</Text>
       ) : null}
@@ -39,7 +43,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#333',
     marginBottom: 8,
     textAlign: 'center',
   },

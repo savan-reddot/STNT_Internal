@@ -27,7 +27,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   onBackPress,
   right,
   style,
-  titleExtraStyle
+  titleExtraStyle,
 }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -50,7 +50,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           <Icon
             name="chevron-back-outline"
             size={metrics.moderateScale(30)}
-            color={theme.colors.background}
+            color="#fff"
           />
         </TouchableOpacity>
       ) : (
@@ -85,7 +85,7 @@ const styles = (theme: MD3Theme) =>
     title: {
       fontSize: 16,
       fontWeight: '700',
-      color: theme.colors.background,
+      color: '#fff',
       fontFamily: Font_Bold,
       marginTop: metrics.baseMargin,
       flex: 1,

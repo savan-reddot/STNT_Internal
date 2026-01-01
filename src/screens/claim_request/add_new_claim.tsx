@@ -660,10 +660,17 @@ const AddNewClaim = ({ navigation }: any) => {
             </Text>
             <Dropdown
               style={globalStyle(theme).dropdown}
+              containerStyle={{ backgroundColor: theme.colors.surface }}
+              itemTextStyle={{ color: theme.colors.onSurface }}
+              activeColor={theme.dark ? '#374151' : '#E6EBF1'}
               data={list}
               labelField="label"
               valueField="value"
               placeholder="Select"
+              placeholderStyle={{
+                color: (theme.colors as any).onSurfaceVariant,
+              }}
+              selectedTextStyle={{ color: theme.colors.onSurface }}
               value={claim_skeleton.selectedCountry}
               onChange={item => {
                 setClaim_Skeleton({
@@ -678,10 +685,17 @@ const AddNewClaim = ({ navigation }: any) => {
             </Text>
             <Dropdown
               style={globalStyle(theme).dropdown}
+              containerStyle={{ backgroundColor: theme.colors.surface }}
+              itemTextStyle={{ color: theme.colors.onSurface }}
+              activeColor={theme.dark ? '#374151' : '#E6EBF1'}
               data={list_category}
               labelField="label"
               valueField="value"
               placeholder="Select"
+              placeholderStyle={{
+                color: (theme.colors as any).onSurfaceVariant,
+              }}
+              selectedTextStyle={{ color: theme.colors.onSurface }}
               value={claim_skeleton.selectedCategory}
               onChange={item => {
                 setClaim_Skeleton({
@@ -885,8 +899,8 @@ const AddNewClaim = ({ navigation }: any) => {
                                   uri: file?.path
                                     ? file?.path
                                     : file?.uri
-                                      ? file?.uri
-                                      : '',
+                                    ? file?.uri
+                                    : '',
                                 }}
                                 style={{
                                   height: metrics.screenWidth * 0.11,
@@ -909,8 +923,8 @@ const AddNewClaim = ({ navigation }: any) => {
                                 {file?.originalname
                                   ? file?.originalname
                                   : file?.name
-                                    ? file?.name
-                                    : '-'}
+                                  ? file?.name
+                                  : '-'}
                               </Text>
                               <TouchableOpacity
                                 onPress={() => delete_document(file)}

@@ -21,8 +21,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const TrustedHospitals = ({ navigation }: any) => {
   const theme = useTheme();
-  const [trusted_hospitals, { isLoading }] =
-    useLazyTrusted_hospitalsQuery();
+  const [trusted_hospitals, { isLoading }] = useLazyTrusted_hospitalsQuery();
 
   const [hospitals, setHospitals] = useState<any[]>([]);
   const [selectedCat, setSelectedCat] = useState('Makkah');
@@ -59,7 +58,6 @@ const TrustedHospitals = ({ navigation }: any) => {
   return (
     <AppLayout title="Hospitals" onBackPress={() => navigation.pop()}>
       <View style={{ flex: 1 }}>
-
         {/* Tabs */}
         <View style={styles(theme).tabs}>
           {categories.map(cat => {
@@ -92,7 +90,6 @@ const TrustedHospitals = ({ navigation }: any) => {
           {hospitals.length > 0 ? (
             hospitals.map((item, index) => (
               <View key={index} style={styles(theme).card}>
-
                 {/* Hospital Image */}
                 <Image
                   source={
@@ -107,11 +104,7 @@ const TrustedHospitals = ({ navigation }: any) => {
                 {/* Header */}
                 <View style={styles(theme).row}>
                   <View style={styles(theme).iconWrap}>
-                    <Icon
-                      name="hospital-building"
-                      size={26}
-                      color="#D14343"
-                    />
+                    <Icon name="hospital-building" size={26} color="#D14343" />
                   </View>
 
                   <View style={{ flex: 1 }}>
@@ -119,9 +112,7 @@ const TrustedHospitals = ({ navigation }: any) => {
 
                     <View style={styles(theme).addressRow}>
                       <Icon name="map-marker" size={16} color="#9CA3AF" />
-                      <Text style={styles(theme).address}>
-                        {item?.address}
-                      </Text>
+                      <Text style={styles(theme).address}>{item?.address}</Text>
                     </View>
                   </View>
                 </View>
@@ -176,7 +167,7 @@ const styles = (theme: MD3Theme) =>
   StyleSheet.create({
     tabs: {
       flexDirection: 'row',
-      backgroundColor: '#fff',
+      backgroundColor: theme.dark ? '#1F2937' : '#fff',
       padding: 6,
       borderRadius: 40,
       marginHorizontal: metrics.doubleMargin,
@@ -199,17 +190,17 @@ const styles = (theme: MD3Theme) =>
     },
     tabText: {
       fontSize: 14,
-      color: '#9CA3AF',
+      color: (theme.colors as any).onSurfaceVariant || '#9CA3AF',
       fontFamily: Font_Bold,
       fontWeight: 'bold',
       textTransform: 'uppercase',
     },
     tabActiveText: {
-      color: '#fff',
+      color: theme.colors.onPrimary,
       fontWeight: 'bold',
     },
     card: {
-      backgroundColor: '#fff',
+      backgroundColor: theme.colors.surface,
       borderRadius: 24,
       marginBottom: 20,
       overflow: 'hidden',
@@ -232,14 +223,14 @@ const styles = (theme: MD3Theme) =>
       width: 56,
       height: 56,
       borderRadius: 28,
-      backgroundColor: '#FDECEC',
+      backgroundColor: theme.dark ? '#3B1E1E' : '#FDECEC',
       alignItems: 'center',
       justifyContent: 'center',
     },
     title: {
       fontSize: 18,
       fontFamily: Font_Bold,
-      color: '#111827',
+      color: theme.colors.onSurface,
       marginBottom: 4,
       fontWeight: 'bold',
     },
@@ -264,7 +255,7 @@ const styles = (theme: MD3Theme) =>
       height: 52,
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: '#E5E7EB',
+      borderColor: theme.dark ? '#374151' : '#E5E7EB',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
@@ -273,7 +264,7 @@ const styles = (theme: MD3Theme) =>
     callText: {
       fontSize: 15,
       fontWeight: '600',
-      color: '#4B5563',
+      color: theme.colors.onSurface,
     },
     routeBtn: {
       flex: 1,

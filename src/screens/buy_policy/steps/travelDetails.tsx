@@ -913,6 +913,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                 onChange={item => onChange(item.value)}
                 containerStyle={styles(theme).dropdownContainer}
                 itemTextStyle={styles(theme).dropdownItemText}
+                activeColor={theme.dark ? '#374151' : '#E6EBF1'}
                 disable={false}
               />
               {errors.destination && (
@@ -954,6 +955,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                 }}
                 containerStyle={styles(theme).dropdownContainer}
                 itemTextStyle={styles(theme).dropdownItemText}
+                activeColor={theme.dark ? '#374151' : '#E6EBF1'}
                 disable={!selectedDestination}
               />
               {errors.umrahCoveragePlan && (
@@ -1212,7 +1214,7 @@ const styles = (theme: MD3Theme) =>
     },
     placeholderStyle: {
       fontSize: 14,
-      color: '#999',
+      color: theme.colors.onSurfaceVariant || '#999',
     },
     selectedTextStyle: {
       fontSize: 14,
@@ -1220,8 +1222,9 @@ const styles = (theme: MD3Theme) =>
     },
     dropdownContainer: {
       borderRadius: metrics.baseRadius,
-      borderColor: '#E6EBF1',
+      borderColor: theme.dark ? '#444' : '#E6EBF1',
       borderWidth: 1,
+      backgroundColor: theme.colors.surface,
     },
     dropdownItemText: {
       fontSize: 16,
@@ -1270,7 +1273,7 @@ const styles = (theme: MD3Theme) =>
       marginTop: 2,
     },
     pricingContainer: {
-      backgroundColor: '#f9f9f9',
+      backgroundColor: theme.dark ? '#1F2937' : '#f9f9f9',
       padding: metrics.baseMargin * 2,
       borderRadius: metrics.baseRadius,
       marginTop: metrics.baseMargin,
@@ -1305,7 +1308,7 @@ const styles = (theme: MD3Theme) =>
       marginBottom: metrics.smallMargin,
     },
     priceSummary: {
-      backgroundColor: '#F5F5DC',
+      backgroundColor: theme.dark ? '#3E3221' : '#F5F5DC', // Darker beige/gold for dark mode
       borderRadius: metrics.baseRadius,
       padding: metrics.doubleMargin,
       marginTop: metrics.baseMargin * 2,
@@ -1328,16 +1331,16 @@ const styles = (theme: MD3Theme) =>
     },
     flightsTable: {
       borderWidth: 1,
-      borderColor: '#E6EBF1',
+      borderColor: theme.dark ? '#444' : '#E6EBF1',
       borderRadius: metrics.baseRadius,
       marginBottom: metrics.baseMargin,
     },
     flightsTableHeader: {
       flexDirection: 'row',
-      backgroundColor: '#F5F5F5',
+      backgroundColor: theme.dark ? '#1F2937' : '#F5F5F5',
       padding: metrics.baseMargin,
       borderBottomWidth: 1,
-      borderBottomColor: '#E6EBF1',
+      borderBottomColor: theme.dark ? '#444' : '#E6EBF1',
     },
     flightsTableHeaderText: {
       fontSize: 14,
@@ -1349,7 +1352,7 @@ const styles = (theme: MD3Theme) =>
       flexDirection: 'row',
       padding: metrics.baseMargin,
       borderBottomWidth: 1,
-      borderBottomColor: '#E6EBF1',
+      borderBottomColor: theme.dark ? '#444' : '#E6EBF1',
       alignItems: 'center',
     },
     flightsTableRowLast: {
@@ -1418,10 +1421,10 @@ const styles = (theme: MD3Theme) =>
       flex: 1,
       paddingVertical: metrics.baseMargin,
       borderWidth: 1,
-      borderColor: '#E6EBF1',
+      borderColor: theme.dark ? '#444' : '#E6EBF1',
       borderRadius: metrics.baseRadius,
       alignItems: 'center',
-      backgroundColor: 'white',
+      backgroundColor: theme.colors.surface,
     },
     cancelButtonText: {
       fontSize: 14,

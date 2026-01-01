@@ -30,13 +30,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onBackPress,
   headerStyle = {},
   keyboardOffset = 64,
-  titleExtraStyle
+  titleExtraStyle,
 }) => {
   const theme = useTheme();
   return (
     <>
       <StatusBar
-        barStyle="dark-content"
+        barStyle={theme.dark ? 'light-content' : 'dark-content'}
         backgroundColor={theme.colors.primary}
       />
       {showHeader && (
@@ -49,7 +49,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         />
       )}
       <KeyboardAvoidingView
-        style={styles(theme).container}
+        style={[
+          styles(theme).container,
+          { backgroundColor: theme.colors.background },
+        ]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {children}

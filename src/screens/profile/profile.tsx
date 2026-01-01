@@ -10,13 +10,13 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import React from 'react';
 import AppLayout from '../../components/safeareawrapper';
-import { MD3Theme, useTheme } from 'react-native-paper';
+import { MD3Theme, useTheme, Switch } from 'react-native-paper';
 import { metrics } from '../../utils/metrics';
 import DeviceInfo from 'react-native-device-info';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Screens } from '../../common/screens';
-import { useAppSelector } from '../../redux/hooks';
-import { getUser } from '../../redux/reducer';
+import { useAppSelector, useAppDispatch } from '../../redux/hooks';
+import { getUser, setTheme } from '../../redux/reducer';
 import { Font_Bold } from '../../theme/fonts';
 
 const data = [
@@ -60,6 +60,12 @@ const data = [
 const Profile = ({ navigation }: any) => {
   const theme = useTheme();
   const user = useAppSelector(getUser);
+  const dispatch = useAppDispatch();
+
+  const toggleTheme = (value: boolean) => {
+    dispatch(setTheme(value ? 'dark' : 'light'));
+  };
+
   const doLogout = async () => {
     await AsyncStorage.clear();
     navigation.navigate(Screens.Splash);
@@ -68,9 +74,17 @@ const Profile = ({ navigation }: any) => {
   const getIconColorAndBg = (title: string) => {
     switch (title) {
       case 'Terms & Conditions':
-        return { bg: '#E0F2FE', color: '#0288D1', icon: 'file-document-outline' };
+        return {
+          bg: '#E0F2FE',
+          color: '#0288D1',
+          icon: 'file-document-outline',
+        };
       case 'Privacy Policy':
-        return { bg: '#F3E5F5', color: '#7B1FA2', icon: 'shield-check-outline' };
+        return {
+          bg: '#F3E5F5',
+          color: '#7B1FA2',
+          icon: 'shield-check-outline',
+        };
       case 'Change Password':
         return { bg: '#FFF3E0', color: '#F57C00', icon: 'lock-outline' };
       default:
@@ -115,7 +129,7 @@ const Profile = ({ navigation }: any) => {
 
   return (
     <AppLayout title={'MY PROFILE'}>
-      <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         {/* Header Background */}
         {/* <View style={styles(theme).headerBackground} /> */}
 
@@ -131,7 +145,9 @@ const Profile = ({ navigation }: any) => {
               ) : (
                 <View style={styles(theme).avatarPlaceholder}>
                   <Text style={styles(theme).avatarText}>
-                    {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
+                    {user?.firstName
+                      ? user.firstName.charAt(0).toUpperCase()
+                      : 'U'}
                   </Text>
                 </View>
               )}
@@ -155,13 +171,50 @@ const Profile = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
+          {/* Dark Mode Toggle */}
+          <View style={{ marginTop: 20 }}>
+            <Text style={styles(theme).sectionTitle}>PREFERENCES</Text>
+            <View style={styles(theme).sectionContainer}>
+              <View style={[styles(theme).listItem, { borderBottomWidth: 0 }]}>
+                <View
+                  style={[
+                    styles(theme).iconBox,
+                    { backgroundColor: theme.dark ? '#1E1B4B' : '#E0E7FF' },
+                  ]}
+                >
+                  <Icon name="weather-sunny" size={20} color="#4F46E5" />
+                </View>
+                <View style={{ flex: 1, marginRight: 10 }}>
+                  <Text style={styles(theme).listItemText}>DARK MODE</Text>
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      color: '#9CA3AF',
+                      fontFamily: Font_Bold,
+                      letterSpacing: 1,
+                      marginTop: 2,
+                    }}
+                  >
+                    {theme.dark ? 'ENABLED' : 'DISABLED'}
+                  </Text>
+                </View>
+                <Switch
+                  value={theme.dark}
+                  onValueChange={toggleTheme}
+                  color="#4F46E5"
+                />
+              </View>
+            </View>
+          </View>
+
           {/* Settings Lists */}
           <View style={{ marginTop: 20 }}>
             {data.map((section, index) => {
               // Filter out items handled elsewhere
               const filteredActions = section.actions.filter(
                 action =>
-                  action.title !== 'Profile Details' && action.title !== 'Log out',
+                  action.title !== 'Profile Details' &&
+                  action.title !== 'Log out',
               );
 
               if (filteredActions.length === 0) return null;
@@ -183,14 +236,21 @@ const Profile = ({ navigation }: any) => {
                           onPress={() => handlePress(item)}
                         >
                           <View
-                            style={[styles(theme).iconBox, { backgroundColor: bg }]}
+                            style={[
+                              styles(theme).iconBox,
+                              { backgroundColor: bg },
+                            ]}
                           >
                             <Icon name={icon} size={20} color={color} />
                           </View>
                           <Text style={styles(theme).listItemText}>
                             {item.title}
                           </Text>
-                          <Icon name="chevron-right" size={20} color="#9CA3AF" />
+                          <Icon
+                            name="chevron-right"
+                            size={20}
+                            color="#9CA3AF"
+                          />
                         </TouchableOpacity>
                       );
                     })}
@@ -203,7 +263,10 @@ const Profile = ({ navigation }: any) => {
 
         {/* Sign Out Button */}
         <View style={styles(theme).footer}>
-          <TouchableOpacity style={styles(theme).signOutBtn} onPress={handleLogout}>
+          <TouchableOpacity
+            style={styles(theme).signOutBtn}
+            onPress={handleLogout}
+          >
             <Icon name="logout" size={20} color="#EF4444" />
             <Text style={styles(theme).signOutText}>SIGN OUT</Text>
           </TouchableOpacity>
@@ -228,7 +291,7 @@ const styles = (theme: MD3Theme) =>
       top: 0,
     },
     profileCard: {
-      backgroundColor: '#fff',
+      backgroundColor: theme.colors.surface,
       marginHorizontal: metrics.doubleMargin,
       marginTop: 20,
       borderRadius: 24,
@@ -275,7 +338,7 @@ const styles = (theme: MD3Theme) =>
     userName: {
       fontSize: 20,
       fontFamily: Font_Bold,
-      color: '#111827',
+      color: theme.colors.onSurface,
       marginBottom: 4,
     },
     userDetails: {
@@ -287,7 +350,7 @@ const styles = (theme: MD3Theme) =>
       textTransform: 'uppercase',
     },
     editButton: {
-      backgroundColor: '#F9FAFB',
+      backgroundColor: theme.dark ? '#374151' : '#F9FAFB',
       paddingVertical: 12,
       paddingHorizontal: 24,
       borderRadius: 12,
@@ -297,7 +360,7 @@ const styles = (theme: MD3Theme) =>
     editButtonText: {
       fontSize: 14,
       fontFamily: Font_Bold,
-      color: '#374151',
+      color: theme.colors.onSurface,
       fontWeight: 'bold',
       letterSpacing: 0.5,
     },
@@ -311,11 +374,16 @@ const styles = (theme: MD3Theme) =>
       fontWeight: 'bold',
     },
     sectionContainer: {
-      backgroundColor: '#fff',
+      backgroundColor: theme.colors.surface,
       marginHorizontal: metrics.doubleMargin,
       borderRadius: 20,
       paddingVertical: 8,
       paddingHorizontal: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
     },
     listItem: {
       flexDirection: 'row',
@@ -335,7 +403,7 @@ const styles = (theme: MD3Theme) =>
       flex: 1,
       fontSize: 16,
       fontFamily: Font_Bold,
-      color: '#1F2937',
+      color: theme.colors.onSurface,
       fontWeight: '600',
     },
     footer: {
@@ -347,7 +415,7 @@ const styles = (theme: MD3Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#FEF2F2',
+      backgroundColor: theme.dark ? '#3B1E1E' : '#FEF2F2',
       borderRadius: 20,
       height: 56,
       width: '100%',

@@ -1,17 +1,10 @@
-import React, {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
-} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
   StyleSheet,
-  Platform,
   Image,
   Alert,
 } from 'react-native';
@@ -19,12 +12,8 @@ import { pick, types, keepLocalCopy } from '@react-native-documents/picker';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MD3Theme, useTheme } from 'react-native-paper';
-import {
-  requestAppPermission,
-} from '../../utils/permissions';
+import { requestAppPermission } from '../../utils/permissions';
 import { metrics } from '../../utils/metrics';
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Modal from 'react-native-modal';
 import fontStyle from '../../styles/fontStyle';
 import { Font_Medium } from '../../theme/fonts';
@@ -64,7 +53,7 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
         Alert.alert(
           'Permission Required',
           'Please grant camera permission to take pictures.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
         return;
       }
@@ -116,7 +105,7 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
         Alert.alert(
           'Permission Required',
           'Please grant gallery permission to select images.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
         return;
       }
@@ -174,7 +163,7 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
         Alert.alert(
           'Permission Required',
           'Please grant file access permission to upload documents.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
         return;
       }
@@ -192,7 +181,10 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
       const [file] = files; // destructure single file
 
       if (!file || !file.uri) {
-        Alert.alert('Error', 'Failed to get file information. Please try again.');
+        Alert.alert(
+          'Error',
+          'Failed to get file information. Please try again.',
+        );
         return;
       }
 
@@ -202,7 +194,7 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
         Alert.alert(
           'File Too Large',
           'The selected file is larger than 4.5 MB. Please choose a smaller file.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
         return;
       }
@@ -221,7 +213,10 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
           localUri = local.sourceUri;
         }
       } catch (copyError) {
-        console.warn('Failed to copy file locally, using original URI:', copyError);
+        console.warn(
+          'Failed to copy file locally, using original URI:',
+          copyError,
+        );
         // Continue with original URI if local copy fails
       }
 
@@ -253,9 +248,9 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
   const renderItem = ({ item }: any) => (
     <View style={styles(theme).docItem}>
       {item &&
-        item?.uri &&
-        item?.type &&
-        item?.type.toLowerCase() !== 'application/pdf' ? (
+      item?.uri &&
+      item?.type &&
+      item?.type.toLowerCase() !== 'application/pdf' ? (
         <Image
           source={{ uri: item?.uri }}
           style={{
@@ -328,12 +323,17 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
           style={{
             flexDirection: 'row',
             borderBottomWidth: 0.7,
-            borderColor: '#ccc',
+            borderColor: theme.dark ? '#444' : '#ccc',
             padding: metrics.doubleMargin,
             paddingBottom: 0,
           }}
         >
-          <Icon onPress={onDismiss} name="close" size={24} color={'grey'} />
+          <Icon
+            onPress={onDismiss}
+            name="close"
+            size={24}
+            color={theme.colors.onSurfaceVariant}
+          />
           <Text
             style={[
               styles(theme).title,
@@ -491,7 +491,7 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
               style={[
                 styles(theme).innerModal,
                 {
-                  backgroundColor: 'rgba(255, 255, 255, 1)',
+                  backgroundColor: theme.colors.surface,
                   borderRadius: metrics.baseRadius,
                   padding: metrics.baseMargin * 1.5,
                   marginTop: 0,
@@ -500,7 +500,12 @@ const UploadDocuments = ({ onSave, isVisible, details, onDismiss }: type) => {
               ]}
               onPress={() => setIsSelectionVisible(false)}
             >
-              <Text style={[styles(theme).optionText, { fontWeight: '500' }]}>
+              <Text
+                style={[
+                  styles(theme).optionText,
+                  { fontWeight: '500', color: theme.colors.primary },
+                ]}
+              >
                 Close
               </Text>
             </TouchableOpacity>
@@ -532,23 +537,24 @@ const styles = (theme: MD3Theme) =>
       fontSize: 18,
       fontWeight: 'bold',
       marginBottom: metrics.baseMargin * 1.5,
+      color: theme.colors.onSurface,
     },
     uploadBox: {
       margin: metrics.baseMargin * 1.5,
       padding: metrics.baseMargin * 1.5,
       borderWidth: 1,
-      borderColor: '#ccc',
-      backgroundColor: '#F5F5F5',
+      borderColor: theme.dark ? '#444' : '#ccc',
+      backgroundColor: theme.colors.surface,
       borderStyle: 'dashed',
       borderRadius: metrics.baseRadius,
       alignItems: 'center',
       marginBottom: metrics.baseMargin * 1.5,
       width: '100%',
     },
-    uploadText: { color: '#007aff', fontWeight: 'bold' },
+    uploadText: { color: theme.colors.primary, fontWeight: 'bold' },
     supportText: {
       fontSize: 12,
-      color: '#717171',
+      color: (theme.colors as any).onSurfaceVariant || '#717171',
     },
     docItem: {
       flexDirection: 'row',
@@ -557,13 +563,13 @@ const styles = (theme: MD3Theme) =>
       margin: metrics.baseMargin,
       borderRadius: metrics.baseRadius,
       borderWidth: 1,
-      borderColor: '#ccc',
-      backgroundColor: '#F5F5F5',
+      borderColor: theme.dark ? '#444' : '#ccc',
+      backgroundColor: theme.colors.surface,
     },
-    docName: { fontWeight: '600' },
+    docName: { fontWeight: '600', color: theme.colors.onSurface },
     docDate: {
       fontSize: metrics.moderateScale(12),
-      color: '#777',
+      color: (theme.colors as any).onSurfaceVariant || '#777',
       lineHeight: metrics.moderateScale(16),
     },
     buttonRow: {
@@ -579,7 +585,7 @@ const styles = (theme: MD3Theme) =>
       borderRadius: metrics.baseRadius,
     },
     buttonText: {
-      color: theme.colors.background,
+      color: theme.colors.onPrimary,
       marginLeft: metrics.baseMargin / 2,
     },
     saveButton: {
@@ -589,9 +595,9 @@ const styles = (theme: MD3Theme) =>
       alignItems: 'center',
       marginTop: metrics.baseMargin * 2,
     },
-    saveText: { color: theme.colors.background, fontWeight: 'bold' },
+    saveText: { color: theme.colors.onPrimary, fontWeight: 'bold' },
     innerModal: {
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      backgroundColor: theme.colors.surface,
       borderRadius: metrics.baseRadius,
       margin: metrics.baseMargin,
     },
@@ -603,11 +609,12 @@ const styles = (theme: MD3Theme) =>
       fontSize: metrics.moderateScale(16),
       fontFamily: Font_Medium,
       marginHorizontal: metrics.baseMargin,
+      color: theme.colors.primary,
     },
     seprator: {
       width: '100%',
       height: 0.7,
-      backgroundColor: 'rgb(190,190,190)',
+      backgroundColor: theme.dark ? '#444' : 'rgb(190,190,190)',
       marginTop: metrics.baseMargin,
     },
   });

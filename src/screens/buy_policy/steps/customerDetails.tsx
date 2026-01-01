@@ -1,7 +1,13 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import React, { useEffect } from 'react';
 import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
-import { Control, Controller, FieldErrors, UseFormWatch, useFieldArray } from 'react-hook-form';
+import {
+  Control,
+  Controller,
+  FieldErrors,
+  UseFormWatch,
+  useFieldArray,
+} from 'react-hook-form';
 import { Dropdown } from 'react-native-element-dropdown';
 import fontStyle from '../../../styles/fontStyle';
 import { metrics } from '../../../utils/metrics';
@@ -25,7 +31,10 @@ const formatDateForDisplay = (dateString: string): string => {
   if (!dateString) return '';
   try {
     // Handle ISO string (full timestamp) format
-    if (dateString.includes('T') && (dateString.includes('Z') || dateString.includes('+'))) {
+    if (
+      dateString.includes('T') &&
+      (dateString.includes('Z') || dateString.includes('+'))
+    ) {
       const date = new Date(dateString);
       if (!isNaN(date.getTime())) {
         return format(date, 'dd/MM/yyyy');
@@ -109,7 +118,12 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
 
     return (
       <View key={index} style={styles(theme).customerSection}>
-        <Text style={[fontStyle(theme).headingMedium, { marginBottom: metrics.baseMargin * 2 }]}>
+        <Text
+          style={[
+            fontStyle(theme).headingMedium,
+            { marginBottom: metrics.baseMargin * 2 },
+          ]}
+        >
           {customerType} {customerNumber} Details
         </Text>
 
@@ -185,9 +199,10 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
                 valueField="value"
                 placeholder="Select"
                 value={value}
-                onChange={(item) => onChange(item.value)}
+                onChange={item => onChange(item.value)}
                 containerStyle={styles(theme).dropdownContainer}
                 itemTextStyle={styles(theme).dropdownItemText}
+                activeColor={theme.dark ? '#374151' : '#E6EBF1'}
               />
               {errors.customers?.[index]?.nationality && (
                 <Text style={styles(theme).errorText}>
@@ -216,9 +231,10 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
                 valueField="value"
                 placeholder="Select"
                 value={value}
-                onChange={(item) => onChange(item.value)}
+                onChange={item => onChange(item.value)}
                 containerStyle={styles(theme).dropdownContainer}
                 itemTextStyle={styles(theme).dropdownItemText}
+                activeColor={theme.dark ? '#374151' : '#E6EBF1'}
               />
               {errors.customers?.[index]?.gender && (
                 <Text style={styles(theme).errorText}>
@@ -274,14 +290,20 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
   return (
     <KeyboardAwareContainer>
       <View>
-        <Text style={[fontStyle(theme).headingMedium, { marginBottom: metrics.doubleMargin }]}>
+        <Text
+          style={[
+            fontStyle(theme).headingMedium,
+            { marginBottom: metrics.doubleMargin },
+          ]}
+        >
           Customer Details
         </Text>
 
         {totalCustomers === 0 ? (
           <View style={styles(theme).emptyState}>
             <Text style={styles(theme).emptyStateText}>
-              Please go back and select the number of adults and children in Travel Details.
+              Please go back and select the number of adults and children in
+              Travel Details.
             </Text>
           </View>
         ) : (
@@ -308,16 +330,17 @@ const styles = (theme: MD3Theme) =>
     },
     placeholderStyle: {
       fontSize: 14,
-      color: '#999',
+      color: theme.colors.onSurfaceVariant || '#999',
     },
     selectedTextStyle: {
       fontSize: 14,
-      color: theme.colors.onBackground,
+      color: theme.colors.onSurface,
     },
     dropdownContainer: {
       borderRadius: metrics.baseRadius,
-      borderColor: '#E6EBF1',
+      borderColor: theme.dark ? '#444' : '#E6EBF1',
       borderWidth: 1,
+      backgroundColor: theme.colors.surface,
     },
     dropdownItemText: {
       fontSize: 16,
@@ -327,7 +350,7 @@ const styles = (theme: MD3Theme) =>
       marginBottom: metrics.doubleMargin * 2,
       paddingBottom: metrics.doubleMargin,
       borderBottomWidth: 1,
-      borderBottomColor: '#E0E0E0',
+      borderBottomColor: theme.dark ? '#444' : '#E0E0E0',
     },
     emptyState: {
       padding: metrics.doubleMargin,
@@ -342,4 +365,3 @@ const styles = (theme: MD3Theme) =>
   });
 
 export default CustomerDetails;
-

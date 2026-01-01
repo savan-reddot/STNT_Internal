@@ -220,9 +220,20 @@ const PlanSelection = ({ navigation }: any) => {
             const badgeColor = isDeluxe ? '#F59E0B' : '#3B82F6';
 
             return (
-              <View key={plan.id} style={[styles(theme).card, cardStyle]}>
+              <View
+                key={plan.id}
+                style={[
+                  styles(theme).card,
+                  theme.dark ? { backgroundColor: '#1F2937' } : cardStyle,
+                ]}
+              >
                 <View style={styles(theme).headerRow}>
-                  <Text style={[styles(theme).planName, textStyle]}>
+                  <Text
+                    style={[
+                      styles(theme).planName,
+                      theme.dark ? { color: '#fff' } : textStyle,
+                    ]}
+                  >
                     {plan.label}
                   </Text>
                   <View
@@ -256,10 +267,20 @@ const PlanSelection = ({ navigation }: any) => {
                 </View>
 
                 <View style={styles(theme).priceContainer}>
-                  <Text style={[styles(theme).priceValue, textStyle]}>
+                  <Text
+                    style={[
+                      styles(theme).priceValue,
+                      theme.dark ? { color: '#fff' } : textStyle,
+                    ]}
+                  >
                     SGD {pricing?.adultPrice || '--'}
                   </Text>
-                  <Text style={[styles(theme).priceUnit, textStyle]}>
+                  <Text
+                    style={[
+                      styles(theme).priceUnit,
+                      theme.dark ? { color: '#fff' } : textStyle,
+                    ]}
+                  >
                     {' '}
                     / PERSON
                   </Text>
@@ -271,7 +292,7 @@ const PlanSelection = ({ navigation }: any) => {
                     `$${pricing?.childPrice?.toFixed(
                       0,
                     )} (Below ${minAge} years old)`,
-                    textStyle,
+                    theme.dark ? { color: '#fff' } : textStyle,
                     badgeColor,
                     buttonText,
                   )}
@@ -279,13 +300,13 @@ const PlanSelection = ({ navigation }: any) => {
                     `$${pricing?.adultPrice?.toFixed(
                       0,
                     )} (Above ${minAge} years old)`,
-                    textStyle,
+                    theme.dark ? { color: '#fff' } : textStyle,
                     badgeColor,
                     buttonText,
                   )}
                   {renderFeatureItem(
                     `Up to ${pricing?.maxDays} days`,
-                    textStyle,
+                    theme.dark ? { color: '#fff' } : textStyle,
                     badgeColor,
                     buttonText,
                   )}
@@ -293,13 +314,13 @@ const PlanSelection = ({ navigation }: any) => {
                     `$${pricing?.extraPerDay?.toFixed(
                       0,
                     )} for each additional day`,
-                    textStyle,
+                    theme.dark ? { color: '#fff' } : textStyle,
                     badgeColor,
                     buttonText,
                   )}
                   {renderFeatureItem(
                     `${destination} Coverage`,
-                    textStyle,
+                    theme.dark ? { color: '#fff' } : textStyle,
                     badgeColor,
                     buttonText,
                   )}
@@ -321,7 +342,11 @@ const PlanSelection = ({ navigation }: any) => {
                   >
                     <Text
                       style={{
-                        color: isDeluxe ? '#fff' : '#374151',
+                        color: theme.dark
+                          ? '#fff'
+                          : isDeluxe
+                          ? '#fff'
+                          : '#374151',
                         fontWeight: '600',
                         fontSize: 13,
                       }}
@@ -358,7 +383,7 @@ const styles = (theme: MD3Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#F9FAFB',
+      backgroundColor: theme.colors.background,
     },
     scrollContent: {
       padding: metrics.doubleMargin,

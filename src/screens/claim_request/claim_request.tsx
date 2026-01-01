@@ -312,11 +312,15 @@ const ClaimRequest = ({ navigation, route }: any) => {
     const [banks, setBanks] = useState<any[]>([]);
     const [selected_bank, setSelected_Bank] = useState<string>('');
     const [bank_account, setBank_Account] = useState<string>('');
-    const [specified_relationship, setSpecified_Relationship] = useState<string>('');
+    const [specified_relationship, setSpecified_Relationship] =
+      useState<string>('');
     const [paynow_user_name, setPaynow_User_Name] = useState<string>('');
     const [paynow_nric, setPaynow_NRIC] = useState<string>('');
-    const [showPaynowSignatureModal, setShowPaynowSignatureModal] = useState(false);
-    const [paynow_signature, setPaynow_Signature] = useState<string | null>(null);
+    const [showPaynowSignatureModal, setShowPaynowSignatureModal] =
+      useState(false);
+    const [paynow_signature, setPaynow_Signature] = useState<string | null>(
+      null,
+    );
 
     useEffect(() => {
       const init = async () => {
@@ -331,13 +335,26 @@ const ClaimRequest = ({ navigation, route }: any) => {
             );
 
             if (route.params?.isPaymentEdit && user_review) {
-              const paymentOption = user_review?.paymentDetails?.paymentOption || user_review?.paymentDetails?.paymentOptions || 'Bank';
-              setPayment_Option(paymentOption == 'Paynow Linked Account' ? 'PayNow' : paymentOption);
+              const paymentOption =
+                user_review?.paymentDetails?.paymentOption ||
+                user_review?.paymentDetails?.paymentOptions ||
+                'Bank';
+              setPayment_Option(
+                paymentOption == 'Paynow Linked Account'
+                  ? 'PayNow'
+                  : paymentOption,
+              );
 
               if (paymentOption == 'Paynow Linked Account') {
-                setPaynow_User_Name(user_review?.paymentDetails?.payNowUsername ?? user_review?.paymentDetails?.payNowUserName ?? '');
+                setPaynow_User_Name(
+                  user_review?.paymentDetails?.payNowUsername ??
+                    user_review?.paymentDetails?.payNowUserName ??
+                    '',
+                );
                 setPaynow_NRIC(user_review?.paymentDetails?.payNow ?? '');
-                setPaynow_Signature(user_review?.paymentDetails?.payNowSignature);
+                setPaynow_Signature(
+                  user_review?.paymentDetails?.payNowSignature,
+                );
                 // Clear bank fields
                 setPayee_Name('');
                 setPayee_Relationship('');
@@ -417,7 +434,10 @@ const ClaimRequest = ({ navigation, route }: any) => {
       // For PayNow, upload signature first to get URL
       let paynowSignatureUrl = null;
       if (payment_option == 'PayNow' && paynow_signature) {
-        const base64Data = paynow_signature.replace(/^data:image\/png;base64,/, '');
+        const base64Data = paynow_signature.replace(
+          /^data:image\/png;base64,/,
+          '',
+        );
         const path = `${RNFS.DocumentDirectoryPath}/paynow_signature.png`;
         await RNFS.writeFile(path, base64Data, 'base64');
 
@@ -448,7 +468,8 @@ const ClaimRequest = ({ navigation, route }: any) => {
         payeeNric: payment_option == 'Bank' ? null : null,
         bankName: payment_option == 'Bank' ? selected_bank : null,
         bankAccountNumber: payment_option == 'Bank' ? bank_account : null,
-        paymentOption: payment_option == 'PayNow' ? 'Paynow Linked Account' : payment_option,
+        paymentOption:
+          payment_option == 'PayNow' ? 'Paynow Linked Account' : payment_option,
         payNow: payment_option == 'PayNow' ? paynow_nric : null,
         payNowSignature: payment_option == 'PayNow' ? paynowSignatureUrl : null,
         payNowUsername: payment_option == 'PayNow' ? paynow_user_name : null,
@@ -463,7 +484,7 @@ const ClaimRequest = ({ navigation, route }: any) => {
       //   if (resp && resp?.data && resp?.data?.status) {
       //     navigation.pop(2);
       //   }
-      // } else 
+      // } else
       if (route.params?.isDraft && route.params?.isPaymentEdit) {
         const resp = await submit_payment_details_edit({
           request,
@@ -511,24 +532,21 @@ const ClaimRequest = ({ navigation, route }: any) => {
       (val: string) => setSpecified_Relationship(val),
       [],
     );
-    const handlePaymentOption = useCallback(
-      (item: any) => {
-        setPayment_Option(item.value);
-        // Reset fields when switching payment options
-        if (item.value == 'PayNow') {
-          setPayee_Name('');
-          setPayee_Relationship('');
-          setSelected_Bank('');
-          setBank_Account('');
-          setSpecified_Relationship('');
-        } else {
-          setPaynow_User_Name('');
-          setPaynow_NRIC('');
-          setPaynow_Signature(null);
-        }
-      },
-      [],
-    );
+    const handlePaymentOption = useCallback((item: any) => {
+      setPayment_Option(item.value);
+      // Reset fields when switching payment options
+      if (item.value == 'PayNow') {
+        setPayee_Name('');
+        setPayee_Relationship('');
+        setSelected_Bank('');
+        setBank_Account('');
+        setSpecified_Relationship('');
+      } else {
+        setPaynow_User_Name('');
+        setPaynow_NRIC('');
+        setPaynow_Signature(null);
+      }
+    }, []);
     const handlePaynowUserName = useCallback(
       (val: string) => setPaynow_User_Name(val),
       [],
@@ -568,10 +586,17 @@ const ClaimRequest = ({ navigation, route }: any) => {
               </Text>
               <Dropdown
                 style={globalStyle(theme).dropdown}
+                containerStyle={{ backgroundColor: theme.colors.surface }}
+                itemTextStyle={{ color: theme.colors.onSurface }}
+                activeColor={theme.dark ? '#374151' : '#E6EBF1'}
                 data={PaymentOptions}
                 labelField="label"
                 valueField="value"
                 placeholder="Select Payment Option"
+                placeholderStyle={{
+                  color: (theme.colors as any).onSurfaceVariant,
+                }}
+                selectedTextStyle={{ color: theme.colors.onSurface }}
                 value={payment_option}
                 onChange={handlePaymentOption}
               />
@@ -580,7 +605,9 @@ const ClaimRequest = ({ navigation, route }: any) => {
             {payment_option == 'Bank' && (
               <>
                 <View style={{ marginTop: metrics.baseMargin }}>
-                  <Text style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}>
+                  <Text
+                    style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}
+                  >
                     Payee Name (as per bank account number)
                     <Text style={{ color: 'red' }}>*</Text>
                   </Text>
@@ -605,29 +632,41 @@ const ClaimRequest = ({ navigation, route }: any) => {
                   </Text>
                   <Dropdown
                     style={globalStyle(theme).dropdown}
+                    containerStyle={{ backgroundColor: theme.colors.surface }}
+                    itemTextStyle={{ color: theme.colors.onSurface }}
+                    activeColor={theme.dark ? '#374151' : '#E6EBF1'}
                     data={Relations}
                     labelField="label"
                     valueField="value"
                     placeholder="Select Relationship"
+                    placeholderStyle={{
+                      color: (theme.colors as any).onSurfaceVariant,
+                    }}
+                    selectedTextStyle={{ color: theme.colors.onSurface }}
                     value={payee_relationship}
                     onChange={handleRelationship}
                   />
                 </View>
-                {payee_relationship == 'other' && <View style={{ marginTop: metrics.baseMargin }}>
-                  <Text style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}>
-                    Please specify relationship<Text style={{ color: 'red' }}>*</Text>
-                  </Text>
-                  <TextInput
-                    label=""
-                    value={specified_relationship}
-                    placeholder={'Please enter specify relationship'}
-                    onChangeText={handleSpecifiedRelationship}
-                    mode="outlined"
-                    keyboardType="default"
-                    outlineStyle={globalStyle(theme).textinput}
-                    style={{ height: metrics.screenWidth * 0.13 }}
-                  />
-                </View>}
+                {payee_relationship == 'other' && (
+                  <View style={{ marginTop: metrics.baseMargin }}>
+                    <Text
+                      style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}
+                    >
+                      Please specify relationship
+                      <Text style={{ color: 'red' }}>*</Text>
+                    </Text>
+                    <TextInput
+                      label=""
+                      value={specified_relationship}
+                      placeholder={'Please enter specify relationship'}
+                      onChangeText={handleSpecifiedRelationship}
+                      mode="outlined"
+                      keyboardType="default"
+                      outlineStyle={globalStyle(theme).textinput}
+                      style={{ height: metrics.screenWidth * 0.13 }}
+                    />
+                  </View>
+                )}
                 <View style={{ marginTop: metrics.baseMargin }}>
                   <Text
                     style={[
@@ -639,16 +678,25 @@ const ClaimRequest = ({ navigation, route }: any) => {
                   </Text>
                   <Dropdown
                     style={globalStyle(theme).dropdown}
+                    containerStyle={{ backgroundColor: theme.colors.surface }}
+                    itemTextStyle={{ color: theme.colors.onSurface }}
+                    activeColor={theme.dark ? '#374151' : '#E6EBF1'}
                     data={banks}
                     labelField="label"
                     valueField="value"
                     placeholder="Select Bank"
+                    placeholderStyle={{
+                      color: (theme.colors as any).onSurfaceVariant,
+                    }}
+                    selectedTextStyle={{ color: theme.colors.onSurface }}
                     value={selected_bank}
                     onChange={handleBankSelect}
                   />
                 </View>
                 <View style={{ marginTop: metrics.baseMargin }}>
-                  <Text style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}>
+                  <Text
+                    style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}
+                  >
                     Bank Account<Text style={{ color: 'red' }}>*</Text>
                   </Text>
                   <TextInput
@@ -668,7 +716,9 @@ const ClaimRequest = ({ navigation, route }: any) => {
             {payment_option == 'PayNow' && (
               <>
                 <View style={{ marginTop: metrics.baseMargin }}>
-                  <Text style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}>
+                  <Text
+                    style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}
+                  >
                     PayNow registered Username
                     <Text style={{ color: 'red' }}>*</Text>
                   </Text>
@@ -683,7 +733,9 @@ const ClaimRequest = ({ navigation, route }: any) => {
                   />
                 </View>
                 <View style={{ marginTop: metrics.baseMargin }}>
-                  <Text style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}>
+                  <Text
+                    style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}
+                  >
                     PayNow registered NRIC/FIN
                     <Text style={{ color: 'red' }}>*</Text>
                   </Text>
@@ -735,59 +787,108 @@ const ClaimRequest = ({ navigation, route }: any) => {
                       {'\n\n'}
                       1. Ownership Declaration
                       {'\n'}
-                      You declare that you are the legal and beneficial owner of the bank account linked to your Singapore NRIC/FIN, which you have registered for PayNow.
+                      You declare that you are the legal and beneficial owner of
+                      the bank account linked to your Singapore NRIC/FIN, which
+                      you have registered for PayNow.
                       {'\n\n'}
                       2. Eligibility for PayNow Payout
                       {'\n'}
                       You will receive the payout via PayNow NRIC/FIN only if:
-                      {'\n'}
-                      • You have registered for PayNow using your Singapore NRIC/FIN with a participating bank (the 'Service Provider');
-                      {'\n'}
-                      • Your Singapore NRIC/FIN is correctly linked to your bank account;
-                      {'\n'}
-                      • You are eligible for the payout; and
-                      {'\n'}
-                      • Your current payout method is NOT Direct Credit.
+                      {'\n'}• You have registered for PayNow using your
+                      Singapore NRIC/FIN with a participating bank (the 'Service
+                      Provider');
+                      {'\n'}• Your Singapore NRIC/FIN is correctly linked to
+                      your bank account;
+                      {'\n'}• You are eligible for the payout; and
+                      {'\n'}• Your current payout method is NOT Direct Credit.
                       {'\n\n'}
                       3. Failed Transactions
                       {'\n'}
-                      In the event that the payout cannot be credited to your bank account via PayNow for any reason whatsoever, United Overseas Insurance Limited ("UOI") reserves the right to reissue the payout through any alternative means at our sole discretion and without prior notice. Such reissuance shall constitute full and final discharge of our obligations and liabilities to you in respect of the payout.
+                      In the event that the payout cannot be credited to your
+                      bank account via PayNow for any reason whatsoever, United
+                      Overseas Insurance Limited ("UOI") reserves the right to
+                      reissue the payout through any alternative means at our
+                      sole discretion and without prior notice. Such reissuance
+                      shall constitute full and final discharge of our
+                      obligations and liabilities to you in respect of the
+                      payout.
                       {'\n\n'}
                       4. Consent and Personal Data Usage
                       {'\n'}
-                      You acknowledge that PayNow is an electronic funds transfer service provided by the Service Provider. In addition to these terms and conditions, you consent to the collection, use, and disclosure of your personal data in accordance with UOI's Privacy Notice, and any applicable terms and conditions imposed by the Service Provider that are required to issue the payout to you via PayNow.
+                      You acknowledge that PayNow is an electronic funds
+                      transfer service provided by the Service Provider. In
+                      addition to these terms and conditions, you consent to the
+                      collection, use, and disclosure of your personal data in
+                      accordance with UOI's Privacy Notice, and any applicable
+                      terms and conditions imposed by the Service Provider that
+                      are required to issue the payout to you via PayNow.
                       {'\n\n'}
                       5. Service Availability
                       {'\n'}
-                      PayNow is provided 'as is' and 'as available' by the Service Provider. You acknowledge that the PayNow service may not always be available, accessible, function or inter-operate with any network infrastructure system or such other services as the Service Provider may offer from time to time.
+                      PayNow is provided 'as is' and 'as available' by the
+                      Service Provider. You acknowledge that the PayNow service
+                      may not always be available, accessible, function or
+                      inter-operate with any network infrastructure system or
+                      such other services as the Service Provider may offer from
+                      time to time.
                       {'\n\n'}
                       6. Transfer Limits and Payment Methods
                       {'\n'}
-                      Use of PayNow is subject to the Service Provider's terms and conditions, including any applicable PayNow transfer limits. UOI is not liable for any changes to these terms and conditions or transfer limits that may affect the timeliness, accuracy or completion of payments. For payouts exceeding the PayNow transfer limit, we reserve the right to use alternative payment methods at our sole discretion.
+                      Use of PayNow is subject to the Service Provider's terms
+                      and conditions, including any applicable PayNow transfer
+                      limits. UOI is not liable for any changes to these terms
+                      and conditions or transfer limits that may affect the
+                      timeliness, accuracy or completion of payments. For
+                      payouts exceeding the PayNow transfer limit, we reserve
+                      the right to use alternative payment methods at our sole
+                      discretion.
                       {'\n\n'}
                       7. No Warranty or Liability
                       {'\n'}
-                      UOI does not represent or warrant that PayNow transactions will be successful, timely, secure, or error-free. You agree not to hold UOI liable for any losses or damages resulting from any delay, error, or non-payment due to system disruptions, malfunctions, or malware affecting PayNow.
+                      UOI does not represent or warrant that PayNow transactions
+                      will be successful, timely, secure, or error-free. You
+                      agree not to hold UOI liable for any losses or damages
+                      resulting from any delay, error, or non-payment due to
+                      system disruptions, malfunctions, or malware affecting
+                      PayNow.
                       {'\n\n'}
                       8. Accuracy of Information
                       {'\n'}
-                      You declare that all information that you provide is true, complete, and accurate. You must promptly notify UOI of any changes to your Singapore NRIC/FIN.
+                      You declare that all information that you provide is true,
+                      complete, and accurate. You must promptly notify UOI of
+                      any changes to your Singapore NRIC/FIN.
                       {'\n\n'}
                       9. Verification of Instructions
                       {'\n'}
-                      UOI is not responsible for verifying the authenticity, completeness or accuracy of your instructions or information, and shall not be liable for any delays or failures in processing any payout to your bank account via PayNow.
+                      UOI is not responsible for verifying the authenticity,
+                      completeness or accuracy of your instructions or
+                      information, and shall not be liable for any delays or
+                      failures in processing any payout to your bank account via
+                      PayNow.
                       {'\n\n'}
                       10. Non-Compliance and Liability
                       {'\n'}
-                      UOI is not liable for any payout made to a bank account not legally or beneficially owned by you due to your non-compliance with Clause 8. If a payout is made to a bank account not legally or beneficially owned by you due to your non-compliance with Clause 8, such payout shall be deemed a full and final discharge of UOI's obligations and liabilities to you in respect of the payout, and no appeals will be entertained.
+                      UOI is not liable for any payout made to a bank account
+                      not legally or beneficially owned by you due to your
+                      non-compliance with Clause 8. If a payout is made to a
+                      bank account not legally or beneficially owned by you due
+                      to your non-compliance with Clause 8, such payout shall be
+                      deemed a full and final discharge of UOI's obligations and
+                      liabilities to you in respect of the payout, and no
+                      appeals will be entertained.
                       {'\n\n'}
                       11. Account Verification
                       {'\n'}
-                      You authorise UOI to conduct any verifications on your account(s) with any third party at our discretion and without prior notice for the purpose of processing payouts.
+                      You authorise UOI to conduct any verifications on your
+                      account(s) with any third party at our discretion and
+                      without prior notice for the purpose of processing
+                      payouts.
                       {'\n\n'}
                       12. Right to Suspend or Terminate PayNow Usage
                       {'\n'}
-                      UOI reserves the right to suspend or discontinue the use of PayNow for payouts or other transactions at our sole discretion and without prior notice.
+                      UOI reserves the right to suspend or discontinue the use
+                      of PayNow for payouts or other transactions at our sole
+                      discretion and without prior notice.
                     </Text>
                   </View>
                 </View>
@@ -810,7 +911,12 @@ const ClaimRequest = ({ navigation, route }: any) => {
                 </View>
 
                 <View style={{ marginTop: metrics.baseMargin }}>
-                  <Text style={[fontStyle(theme).headingSmall, { marginLeft: 0, marginBottom: metrics.baseMargin / 2 }]}>
+                  <Text
+                    style={[
+                      fontStyle(theme).headingSmall,
+                      { marginLeft: 0, marginBottom: metrics.baseMargin / 2 },
+                    ]}
+                  >
                     Digital Signature<Text style={{ color: 'red' }}>*</Text>
                   </Text>
                   <TouchableOpacity

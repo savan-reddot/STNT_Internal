@@ -52,19 +52,30 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
     </View>
   );
 
-  const adultFee = (values.planAdultPricing?.base_premium || 0) * (values.adults || 0);
-  const childFee = (values.planChildPricing?.base_premium || 0) * (values.children || 0);
+  const adultFee =
+    (values.planAdultPricing?.base_premium || 0) * (values.adults || 0);
+  const childFee =
+    (values.planChildPricing?.base_premium || 0) * (values.children || 0);
 
   return (
-    <ScrollView contentContainerStyle={styles.container} style={{ flexGrow: 0 }}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      style={{ flexGrow: 0 }}
+    >
       <View style={styles.section}>
         {renderSectionHeader('Contact Details')}
         {renderRow('Travelling to Saudi with', values.travellingSaudiWith)}
         {renderRow('Name', values.name)}
-        {renderRow('Phone Number', `${values.phone_code || '+65'}${values.phone}`)}
+        {renderRow(
+          'Phone Number',
+          `${values.phone_code || '+65'}${values.phone}`,
+        )}
         {renderRow('Email ID', values.email)}
         {renderRow('Next of Kin Name', values.nextOfKinName)}
-        {renderRow('Next of Kin Phone Number', `${values.phone_code_nok || '+65'}${values.nextOfKinPhone}`)}
+        {renderRow(
+          'Next of Kin Phone Number',
+          `${values.phone_code_nok || '+65'}${values.nextOfKinPhone}`,
+        )}
         {renderRow('Next of Kin Email ID', values.nextOfKinEmail)}
       </View>
 
@@ -88,7 +99,8 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
               ? index - (values.adults || 0) + 1
               : index + 1;
             const genderCapitalized = customer.gender
-              ? customer.gender.charAt(0).toUpperCase() + customer.gender.slice(1).toLowerCase()
+              ? customer.gender.charAt(0).toUpperCase() +
+                customer.gender.slice(1).toLowerCase()
               : '-';
             const isLastCustomer = index === values.customers.length - 1;
 
@@ -100,14 +112,19 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
                   isLastCustomer && styles.customerBlockLast,
                 ]}
               >
-                <Text style={[fontStyle(theme).headingSmall, styles.customerTitle]}>
+                <Text
+                  style={[fontStyle(theme).headingSmall, styles.customerTitle]}
+                >
                   {customerType} {customerNumber}
                 </Text>
                 {renderRow('Full Name', customer.fullName)}
                 {renderRow('Passport Number', customer.passportNumber)}
                 {renderRow('Nationality', customer.nationality)}
                 {renderRow('Gender', genderCapitalized)}
-                {renderRow('Date of Birth', formatDateForDisplay(customer.dateOfBirth))}
+                {renderRow(
+                  'Date of Birth',
+                  formatDateForDisplay(customer.dateOfBirth),
+                )}
               </View>
             );
           })}
@@ -117,15 +134,22 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
       <View style={styles.section}>
         {renderSectionHeader('Notice & Declaration')}
         <Text style={styles.noticeText}>
-          This insurance must be purchased before departure from Singapore and the journey must
-          include return to Singapore within the period of insurance.
+          This insurance must be purchased before departure from Singapore and
+          the journey must include return to Singapore within the period of
+          insurance.
         </Text>
         <Text style={styles.noticeText}>
-          We hereby declare that I/we are in good health and are aware and agree to abide by the
-          policy’s terms, conditions and obligations.
+          We hereby declare that I/we are in good health and are aware and agree
+          to abide by the policy’s terms, conditions and obligations.
         </Text>
-        {renderRow('Not discharged within 30 days', values.notDischargedWithin30Days ? 'Yes' : 'No')}
-        {renderRow('Information accurate', values.confirmInformationAccurate ? 'Yes' : 'No')}
+        {renderRow(
+          'Not discharged within 30 days',
+          values.notDischargedWithin30Days ? 'Yes' : 'No',
+        )}
+        {renderRow(
+          'Information accurate',
+          values.confirmInformationAccurate ? 'Yes' : 'No',
+        )}
       </View>
 
       <View style={styles.section}>
@@ -135,8 +159,14 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
 
       <View style={styles.section}>
         {renderSectionHeader('Order')}
-        {renderRow(`Adult Fees × ${values.adults || 0}`, formatCurrency(adultFee))}
-        {renderRow(`Child Fees × ${values.children || 0}`, formatCurrency(childFee))}
+        {renderRow(
+          `Adult Fees × ${values.adults || 0}`,
+          formatCurrency(adultFee),
+        )}
+        {renderRow(
+          `Child Fees × ${values.children || 0}`,
+          formatCurrency(childFee),
+        )}
         <View style={[styles.row, styles.totalRow]}>
           <Text style={[styles.rowLabel, styles.totalLabel]}>Total Price</Text>
           <Text style={[styles.rowValue, styles.totalValue]}>
@@ -156,7 +186,7 @@ const getStyles = (theme: MD3Theme) =>
       gap: metrics.doubleMargin,
     },
     section: {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: theme.colors.surface,
       borderRadius: metrics.baseRadius,
       padding: metrics.doubleMargin,
       shadowColor: '#000',
@@ -177,32 +207,33 @@ const getStyles = (theme: MD3Theme) =>
     },
     rowLabel: {
       flex: 1,
-      color: '#4A4A4A',
+      color: theme.dark ? '#CAC4D0' : '#4A4A4A',
     },
     rowValue: {
       flex: 1,
       textAlign: 'right',
-      color: '#1F1F1F',
+      color: theme.colors.onSurface,
       fontWeight: '500',
     },
     totalRow: {
       marginTop: metrics.baseMargin,
       borderTopWidth: 1,
-      borderTopColor: '#ECECEC',
+      borderTopColor: theme.dark ? '#49454F' : '#ECECEC',
       paddingTop: metrics.baseMargin,
     },
     totalLabel: {
       fontWeight: '700',
+      color: theme.colors.onSurface,
     },
     totalValue: {
       fontWeight: '700',
       color: theme.colors.primary,
     },
     discountText: {
-      color: '#D32F2F',
+      color: theme.colors.error,
     },
     noticeText: {
-      color: '#4A4A4A',
+      color: theme.dark ? '#CAC4D0' : '#4A4A4A',
       marginBottom: metrics.baseMargin,
       lineHeight: 20,
     },
@@ -216,7 +247,7 @@ const getStyles = (theme: MD3Theme) =>
       marginBottom: metrics.doubleMargin,
       paddingBottom: metrics.doubleMargin,
       borderBottomWidth: 1,
-      borderBottomColor: '#ECECEC',
+      borderBottomColor: theme.dark ? '#49454F' : '#ECECEC',
     },
     customerBlockLast: {
       marginBottom: 0,
@@ -230,5 +261,3 @@ const getStyles = (theme: MD3Theme) =>
   });
 
 export default PaymentDetailsSummary;
-
-

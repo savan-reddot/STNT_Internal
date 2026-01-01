@@ -109,7 +109,7 @@ const ClaimDetails = ({ route, navigation }: any) => {
                   {
                     fontSize: 14,
                     fontWeight: '400',
-                    color: '#616161',
+                    color: (theme.colors as any).onSurfaceVariant || '#616161',
                     marginTop: 0,
                   },
                 ]}
@@ -270,7 +270,7 @@ const ClaimDetails = ({ route, navigation }: any) => {
             globalStyle(theme).container,
             {
               marginHorizontal: -metrics.doubleMargin,
-              backgroundColor: '#F8F8F8',
+              backgroundColor: theme.colors.background,
             },
           ]}
         >
@@ -280,7 +280,7 @@ const ClaimDetails = ({ route, navigation }: any) => {
               [
                 globalStyle(theme).container,
                 {
-                  backgroundColor: '#F8F8F8',
+                  backgroundColor: theme.colors.background,
                 },
               ],
             ]}
@@ -308,7 +308,8 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     {
                       fontSize: 14,
                       fontWeight: '400',
-                      color: '#616161',
+                      color:
+                        (theme.colors as any).onSurfaceVariant || '#616161',
                       flex: 1,
                     },
                   ]}
@@ -335,7 +336,8 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     {
                       fontSize: 14,
                       fontWeight: '400',
-                      color: '#616161',
+                      color:
+                        (theme.colors as any).onSurfaceVariant || '#616161',
                       flex: 1,
                     },
                   ]}
@@ -362,7 +364,8 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     {
                       fontSize: 14,
                       fontWeight: '400',
-                      color: '#616161',
+                      color:
+                        (theme.colors as any).onSurfaceVariant || '#616161',
                       flex: 1,
                     },
                   ]}
@@ -392,7 +395,8 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     {
                       fontSize: 14,
                       fontWeight: '400',
-                      color: '#616161',
+                      color:
+                        (theme.colors as any).onSurfaceVariant || '#616161',
                       flex: 1,
                     },
                   ]}
@@ -429,7 +433,8 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     {
                       fontSize: 14,
                       fontWeight: '400',
-                      color: '#616161',
+                      color:
+                        (theme.colors as any).onSurfaceVariant || '#616161',
                       flex: 1,
                     },
                   ]}
@@ -547,7 +552,8 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     {
                       fontSize: 14,
                       fontWeight: '400',
-                      color: '#616161',
+                      color:
+                        (theme.colors as any).onSurfaceVariant || '#616161',
                       flex: 1,
                     },
                   ]}
@@ -564,13 +570,15 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     },
                   ]}
                 >
-                  {user_review?.paymentDetails?.paymentOptions == 'Paynow Linked Account'
+                  {user_review?.paymentDetails?.paymentOptions ==
+                  'Paynow Linked Account'
                     ? 'PayNow'
                     : user_review?.paymentDetails?.paymentOptions}
                 </Text>
               </View>
 
-              {user_review?.paymentDetails?.paymentOptions == 'Paynow Linked Account' ? (
+              {user_review?.paymentDetails?.paymentOptions ==
+              'Paynow Linked Account' ? (
                 <>
                   <View style={styles(theme).travel_detail_item}>
                     <Text
@@ -791,7 +799,9 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     <Icon
                       name="check-box-outline-blank"
                       size={24}
-                      color={'#616161'}
+                      color={
+                        (theme.colors as any).onSurfaceVariant || '#616161'
+                      }
                     />
                   ) : (
                     <Icon
@@ -807,7 +817,8 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     {
                       fontSize: 14,
                       fontWeight: '400',
-                      color: '#616161',
+                      color:
+                        (theme.colors as any).onSurfaceVariant || '#616161',
                       flex: 1,
                       marginLeft: metrics.baseMargin * 1.5,
                     },
@@ -822,7 +833,7 @@ const ClaimDetails = ({ route, navigation }: any) => {
                   {
                     fontSize: 14,
                     fontWeight: '400',
-                    color: '#616161',
+                    color: (theme.colors as any).onSurfaceVariant || '#616161',
                     flex: 1,
                     marginTop: metrics.baseMargin,
                     marginLeft: metrics.baseMargin * 2,
@@ -883,7 +894,9 @@ const ClaimDetails = ({ route, navigation }: any) => {
                       <Icon
                         name="check-box-outline-blank"
                         size={24}
-                        color={'#616161'}
+                        color={
+                          (theme.colors as any).onSurfaceVariant || '#616161'
+                        }
                       />
                     ) : (
                       <Icon
@@ -1027,12 +1040,12 @@ const styles = (theme: MD3Theme) =>
     label: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
     signBox: {
       borderWidth: 1,
-      borderColor: '#ccc',
+      borderColor: theme.dark ? '#444' : '#ccc',
       borderRadius: 8,
       height: 120,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#f9f9f9',
+      backgroundColor: theme.colors.surface,
     },
     keyboard_container: {
       flexGrow: 1,
@@ -1044,6 +1057,6 @@ const styles = (theme: MD3Theme) =>
       borderBottomWidth: 0.3,
       padding: metrics.baseMargin * 0.8,
       paddingHorizontal: metrics.baseMargin * 1.5,
-      borderColor: '#616161',
+      borderColor: theme.dark ? '#444' : '#616161',
     },
   });

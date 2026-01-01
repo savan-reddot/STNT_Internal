@@ -16,8 +16,10 @@ import QRCode from 'react-native-qrcode-svg';
 import NoDataFound from '../../components/no_data_found';
 import ScreenLoader from '../../components/loader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from 'react-native-paper';
 
 const VirtualCard = () => {
+  const theme = useTheme();
   const [metaData, setMetaData] = useState<any>(null);
   const [user_meta, { isLoading }] = useLazyUser_metaQuery();
 
@@ -71,7 +73,12 @@ const VirtualCard = () => {
 
   if (!metaData || metaData?.virtualCard?.isExpired) {
     return (
-      <View style={styles.noDataFoundContainer}>
+      <View
+        style={[
+          styles.noDataFoundContainer,
+          { backgroundColor: theme.colors.background },
+        ]}
+      >
         <NoDataFound
           title="No Virtual Card Found"
           description="Please verify your details in profile."

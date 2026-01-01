@@ -23,14 +23,14 @@ export const globalStyle = (theme: MD3Theme) =>
             borderWidth: 1,
             padding: metrics.baseMargin * 2,
             marginTop: metrics.baseMargin,
-            backgroundColor: '#FBFBFB',
-            borderColor: '#E6EBF1',
+            backgroundColor: theme.colors.surface, // Used to be #FBFBFB
+            borderColor: theme.dark ? '#333' : '#E6EBF1', // Theme aware
             borderRadius: metrics.baseRadius,
         },
         textinput: {
             borderWidth: 1,
-            backgroundColor: theme.colors.background,
-            borderColor: 'rgb(190,190,190)',
+            backgroundColor: theme.colors.surface, // Used to be theme.colors.background
+            borderColor: theme.dark ? '#444' : 'rgb(190,190,190)',
             borderRadius: metrics.baseRadius,
             // height: metrics.screenWidth * 0.13,
             alignItems: 'center',

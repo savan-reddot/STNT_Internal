@@ -121,12 +121,14 @@ const UIDSelection = ({
           placeholderStyle={styles(theme).placeholderStyle}
           selectedTextStyle={styles(theme).selectedTextStyle}
           data={data}
-          itemTextStyle={{ fontSize: 12 }}
           labelField="label"
           valueField="value"
           placeholder="Select UID"
           value={value}
           onChange={item => setValue(item.value)}
+          containerStyle={styles(theme).dropdownContainer}
+          itemTextStyle={styles(theme).dropdownItemText}
+          activeColor={theme.dark ? '#374151' : '#E6EBF1'} // active color for dark mode
         />
       </View>
     </Modal>
@@ -138,7 +140,7 @@ export default UIDSelection;
 const styles = (theme: MD3Theme) =>
   StyleSheet.create({
     container: {
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       height: '35%',
       borderTopEndRadius: metrics.baseRadius,
       borderTopLeftRadius: metrics.baseRadius,
@@ -157,27 +159,40 @@ const styles = (theme: MD3Theme) =>
       fontSize: 16,
       fontWeight: 'bold',
       marginBottom: metrics.baseMargin * 1.5,
+      color: theme.colors.onSurface,
     },
     contentContainer: {
       padding: metrics.doubleMargin * 2,
       paddingHorizontal: metrics.doubleMargin,
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       borderRadius: metrics.baseRadius,
+      borderTopLeftRadius: metrics.baseRadius,
+      borderTopRightRadius: metrics.baseRadius,
     },
 
     dropdown: {
       height: 50,
-      borderColor: '#ccc',
+      borderColor: theme.dark ? '#444' : '#ccc',
       borderWidth: 1,
       borderRadius: 8,
       paddingHorizontal: 8,
     },
     placeholderStyle: {
       fontSize: 14,
-      color: '#999',
+      color: (theme.colors as any).onSurfaceVariant || '#999',
     },
     selectedTextStyle: {
       fontSize: 14,
-      color: '#000',
+      color: theme.colors.onSurface,
+    },
+    dropdownContainer: {
+      borderRadius: metrics.baseRadius,
+      borderColor: theme.dark ? '#444' : '#E6EBF1',
+      borderWidth: 1,
+      backgroundColor: theme.colors.surface,
+    },
+    dropdownItemText: {
+      fontSize: 12,
+      color: theme.colors.onSurface,
     },
   });

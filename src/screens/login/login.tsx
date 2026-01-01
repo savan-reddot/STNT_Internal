@@ -55,9 +55,10 @@ const Login = ({ navigation }: any) => {
 
       if (resp?.error) {
         const errorData = 'data' in resp.error ? resp.error.data : null;
-        const errorMessage = errorData && typeof errorData === 'object' && 'message' in errorData
-          ? (errorData as any).message
-          : 'Login failed';
+        const errorMessage =
+          errorData && typeof errorData === 'object' && 'message' in errorData
+            ? (errorData as any).message
+            : 'Login failed';
         showErrorToast(errorMessage, 'Error !!');
         return;
       }
@@ -76,7 +77,10 @@ const Login = ({ navigation }: any) => {
           dispatch(setUser({ ...user, latestUid, availableUids }));
         } catch (storageError) {
           console.error('Error storing login data:', storageError);
-          showErrorToast('Error saving login data. Please try again.', 'Error !!');
+          showErrorToast(
+            'Error saving login data. Please try again.',
+            'Error !!',
+          );
           return;
         }
 
@@ -94,19 +98,32 @@ const Login = ({ navigation }: any) => {
               });
 
               if (verificationResp?.data?.success) {
-                const { user: verificationUserData, token: webToken } = verificationResp?.data;
+                const { user: verificationUserData, token: webToken } =
+                  verificationResp?.data;
 
                 // Store additional verification data
                 try {
-                  await AsyncStorage.setItem('webtoken', JSON.stringify(webToken));
-                  await AsyncStorage.setItem('userdetails', JSON.stringify(verificationUserData));
+                  await AsyncStorage.setItem(
+                    'webtoken',
+                    JSON.stringify(webToken),
+                  );
+                  await AsyncStorage.setItem(
+                    'userdetails',
+                    JSON.stringify(verificationUserData),
+                  );
                   dispatch(setUserDetails(verificationUserData));
                   dispatch(setWebToken(webToken));
                 } catch (verificationStorageError) {
-                  console.error('Error storing verification data:', verificationStorageError);
+                  console.error(
+                    'Error storing verification data:',
+                    verificationStorageError,
+                  );
                 }
               } else {
-                showErrorToast(verificationResp?.data?.message || 'Verification failed', 'Warning');
+                showErrorToast(
+                  verificationResp?.data?.message || 'Verification failed',
+                  'Warning',
+                );
               }
             } else {
               showErrorToast('Passport Not Found !!', 'Warning');
@@ -140,7 +157,10 @@ const Login = ({ navigation }: any) => {
 
   return (
     <KeyboardAwareScrollView
-      contentContainerStyle={styles(theme).keyboard_avoid}
+      contentContainerStyle={[
+        styles(theme).keyboard_avoid,
+        { backgroundColor: theme.colors.background },
+      ]}
       enableOnAndroid={true}
       extraScrollHeight={20}
     >
@@ -153,7 +173,12 @@ const Login = ({ navigation }: any) => {
           ]}
         >
           <Text style={fontStyle(theme).headingMedium}>WELCOME BACK</Text>
-          <Text style={[fontStyle(theme).titleSmall, { color: '#4F4F4F' }]}>
+          <Text
+            style={[
+              fontStyle(theme).titleSmall,
+              { color: theme.dark ? '#D1D5DB' : '#4F4F4F' },
+            ]}
+          >
             Log in to access your digital ePass and concierge services.
           </Text>
 
@@ -176,8 +201,9 @@ const Login = ({ navigation }: any) => {
                     outlineStyle={{ borderRadius: metrics.baseRadius }}
                     style={{
                       height: metrics.screenWidth * 0.13,
-                      borderColor: '#BDBDBD',
+                      borderColor: theme.dark ? '#4B5563' : '#BDBDBD',
                       fontSize: 14,
+                      backgroundColor: theme.colors.surface,
                     }}
                     keyboardType="email-address"
                   />
@@ -202,6 +228,8 @@ const Login = ({ navigation }: any) => {
                     style={{
                       height: metrics.screenWidth * 0.13,
                       fontSize: 14,
+                      borderColor: theme.dark ? '#4B5563' : '#BDBDBD',
+                      backgroundColor: theme.colors.surface,
                     }}
                     secureTextEntry={!showPassword}
                     right={
@@ -219,7 +247,7 @@ const Login = ({ navigation }: any) => {
               <UButton
                 title={'LOGIN'}
                 onPress={handleSubmit(onLogin)}
-              // style={{ flex: 0 }}
+                // style={{ flex: 0 }}
               />
             </View>
 
@@ -262,9 +290,7 @@ const Login = ({ navigation }: any) => {
               <Text style={[fontStyle(theme).headingSmall]}>
                 Don’t have an account?
               </Text>
-              <Pressable
-                onPress={() => navigation.navigate(Screens.Register)}
-              >
+              <Pressable onPress={() => navigation.navigate(Screens.Register)}>
                 <Text
                   style={[
                     fontStyle(theme).headingSmall,
@@ -292,7 +318,7 @@ const Login = ({ navigation }: any) => {
                   fontStyle(theme).headingSmall,
                   {
                     textAlign: 'center',
-                    color: 'grey',
+                    color: theme.dark ? '#9CA3AF' : 'grey',
                     marginEnd: metrics.baseMargin,
                     fontSize: 14,
                     margin: 0,

@@ -24,7 +24,8 @@ import { Dropdown } from 'react-native-element-dropdown';
 
 const PreferredMerchants = ({ navigation }: any) => {
   const theme = useTheme();
-  const [preferred_merchants, { isLoading }] = useLazyPreferred_merchantsQuery();
+  const [preferred_merchants, { isLoading }] =
+    useLazyPreferred_merchantsQuery();
 
   // FIX: Always keep merchantsData as an array
   const [merchantsData, setMerchantsData] = useState<any[]>([]);
@@ -153,9 +154,10 @@ const PreferredMerchants = ({ navigation }: any) => {
         <Icon
           name="chevron-down"
           size={metrics.moderateScale(16)}
-          color="#1D3557"
+          color={theme.colors.onSurface}
         />
       )}
+      activeColor={theme.dark ? '#374151' : '#E6EBF1'}
     />
   );
 
@@ -201,7 +203,6 @@ const PreferredMerchants = ({ navigation }: any) => {
               }}
             />
           </View>
-
         )}
 
         <ScreenLoader visible={isLoading} />
@@ -235,7 +236,6 @@ const PreferredMerchants = ({ navigation }: any) => {
           renderItem={({ item: hotel }) => {
             return (
               <View style={styles(theme).card}>
-
                 {/* IMAGE */}
                 <ImageBackground
                   source={
@@ -250,7 +250,9 @@ const PreferredMerchants = ({ navigation }: any) => {
                   {hotel?.rating && (
                     <View style={styles(theme).ratingBadge}>
                       <Icon name="star" size={12} color="#FFC107" />
-                      <Text style={styles(theme).ratingText}>{hotel.rating}</Text>
+                      <Text style={styles(theme).ratingText}>
+                        {hotel.rating}
+                      </Text>
                     </View>
                   )}
                 </ImageBackground>
@@ -275,7 +277,9 @@ const PreferredMerchants = ({ navigation }: any) => {
                   {/* ADDRESS */}
                   {hotel?.address && (
                     <View style={styles(theme).metaRow}>
-                      <Text style={styles(theme).metaText}>{hotel.address}</Text>
+                      <Text style={styles(theme).metaText}>
+                        {hotel.address}
+                      </Text>
                     </View>
                   )}
 
@@ -305,7 +309,6 @@ const PreferredMerchants = ({ navigation }: any) => {
               </View>
             );
           }}
-
         />
       </View>
     </AppLayout>
@@ -318,7 +321,7 @@ const styles = (theme: MD3Theme) =>
   StyleSheet.create({
     list_parent: {
       margin: metrics.baseMargin,
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       borderRadius: metrics.baseRadius,
       elevation: 1,
       shadowOpacity: 0.4,
@@ -337,7 +340,7 @@ const styles = (theme: MD3Theme) =>
     citySelector: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       paddingHorizontal: metrics.doubleMargin,
       paddingVertical: metrics.baseMargin * 0.6,
       borderRadius: metrics.screenWidth * 0.08,
@@ -354,7 +357,7 @@ const styles = (theme: MD3Theme) =>
       marginRight: metrics.smallMargin,
     },
     citySelectorText: {
-      color: '#1D3557',
+      color: theme.colors.onSurface,
       fontWeight: '600',
       marginRight: metrics.smallMargin,
       maxWidth: metrics.screenWidth * 0.25,
@@ -363,17 +366,18 @@ const styles = (theme: MD3Theme) =>
       borderRadius: metrics.baseRadius,
     },
     dropdownContainer: {
-      minWidth: metrics.screenWidth * 0.30,
-      backgroundColor: theme.colors.background,
+      minWidth: metrics.screenWidth * 0.3,
+      backgroundColor: theme.colors.surface,
       borderRadius: metrics.screenWidth * 0.08,
       paddingHorizontal: metrics.baseMargin,
       paddingVertical: metrics.baseMargin * 0,
       borderWidth: 1,
-      borderColor: '#E0E0E0',
+      borderColor: theme.dark ? '#444' : '#E0E0E0',
     },
     dropdownMenu: {
       borderRadius: metrics.baseRadius,
       paddingVertical: metrics.baseMargin,
+      backgroundColor: theme.colors.surface,
     },
     dropdownItem: {
       paddingVertical: metrics.baseMargin,
@@ -383,7 +387,7 @@ const styles = (theme: MD3Theme) =>
       fontFamily: Font_Bold,
       fontWeight: '700',
       fontSize: metrics.moderateScale(16),
-      color: theme.colors.onBackground,
+      color: (theme.colors as any).onSurface,
       margin: metrics.baseMargin,
       marginLeft: 0,
       marginTop: metrics.baseMargin * 2,
@@ -416,9 +420,9 @@ const styles = (theme: MD3Theme) =>
       paddingHorizontal: 20,
       paddingVertical: 10,
       borderRadius: 999,
-      backgroundColor: '#FFFFFF',
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
-      borderColor: '#EAECF0',
+      borderColor: theme.dark ? '#333' : '#EAECF0',
       marginRight: 12,
       minWidth: 80,
       alignItems: 'center',
@@ -431,14 +435,14 @@ const styles = (theme: MD3Theme) =>
     pillText: {
       fontSize: metrics.moderateScale(14),
       fontFamily: Font_Regular,
-      color: '#98A2B3',
+      color: theme.dark ? '#9CA3AF' : '#98A2B3',
       textTransform: 'uppercase',
-      fontWeight: "bold"
+      fontWeight: 'bold',
     },
     pillTextActive: {
       color: '#FFFFFF',
       fontFamily: Font_Bold,
-      fontWeight: "bold"
+      fontWeight: 'bold',
     },
     categoryTabs: {
       flexDirection: 'row',
@@ -449,7 +453,7 @@ const styles = (theme: MD3Theme) =>
       alignItems: 'center',
     },
     categoryText: {
-      color: '#475467',
+      color: (theme.colors as any).onSurfaceVariant || '#475467',
       fontWeight: '500',
       textTransform: 'capitalize',
       width: '100%',
@@ -492,7 +496,7 @@ const styles = (theme: MD3Theme) =>
       ...StyleSheet.absoluteFillObject,
     },
     card: {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: theme.colors.surface,
       borderRadius: 20,
       marginBottom: metrics.doubleMargin,
       elevation: 3,
@@ -534,11 +538,11 @@ const styles = (theme: MD3Theme) =>
     cardTitle: {
       fontFamily: Font_Bold,
       fontSize: 18,
-      color: '#101828',
+      color: theme.colors.onSurface,
       flex: 1,
       marginRight: 8,
-      fontWeight: "bold",
-      textTransform: "uppercase"
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
     },
     partnerBadge: {
       borderWidth: 1,
@@ -568,19 +572,19 @@ const styles = (theme: MD3Theme) =>
       flex: 1,
     },
     tag: {
-      backgroundColor: '#F2F4F7',
+      backgroundColor: theme.dark ? '#374151' : '#F2F4F7',
       paddingHorizontal: 10,
       paddingVertical: 4,
       borderRadius: 12,
       marginTop: 10,
-      position: "absolute",
+      position: 'absolute',
       left: 10,
-      flex: 1
+      flex: 1,
     },
     tagText: {
       fontSize: 12,
-      color: '#475467',
-      textTransform: "uppercase"
+      color: theme.dark ? '#D1D5DB' : '#475467',
+      textTransform: 'uppercase',
     },
     actionRow: {
       flexDirection: 'row',
@@ -598,7 +602,7 @@ const styles = (theme: MD3Theme) =>
       flex: 1,
       marginRight: 10,
       justifyContent: 'center',
-      height: 45
+      height: 45,
     },
     callText: {
       color: '#008069',
@@ -608,13 +612,13 @@ const styles = (theme: MD3Theme) =>
     directionButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#0B132B',
+      backgroundColor: '#2E8B57',
       paddingHorizontal: 14,
       paddingVertical: 10,
       borderRadius: 14,
       flex: 1,
       justifyContent: 'center',
-      height: 45
+      height: 45,
     },
     directionText: {
       color: '#FFFFFF',

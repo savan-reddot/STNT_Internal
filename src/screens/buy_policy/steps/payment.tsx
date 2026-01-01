@@ -1,4 +1,10 @@
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import React, { useState } from 'react';
 import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
 import { UseFormWatch } from 'react-hook-form';
@@ -8,7 +14,12 @@ import fontStyle from '../../../styles/fontStyle';
 import { metrics } from '../../../utils/metrics';
 import { PaymentCompletionData, PolicyFormData } from '../types';
 import KeyboardAwareContainer from '../components/KeyboardAwareContainer';
-import { useApply_referral_codeMutation, usePayment_ordersMutation, usePayment_successMutation, useReferral_code_usersMutation } from '../../../redux/services';
+import {
+  useApply_referral_codeMutation,
+  usePayment_ordersMutation,
+  usePayment_successMutation,
+  useReferral_code_usersMutation,
+} from '../../../redux/services';
 import { showErrorToast, showSuccessToast } from '../../../utils/toastUtils';
 import { useAppSelector } from '../../../redux/hooks';
 import { getUser } from '../../../redux/reducer';
@@ -35,9 +46,12 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
   const user = useAppSelector(getUser);
   const [referralCodeValue, setReferralCodeValue] = useState('');
   const countryOfTravel = watch('countryOfTravel') || '';
-  const [apply_referral_code, { isLoading: isApplyingCode }] = useApply_referral_codeMutation();
-  const [payment_orders, { isLoading: isCreatingOrder }] = usePayment_ordersMutation();
-  const [payment_success, { isLoading: isVerifyingPayment }] = usePayment_successMutation();
+  const [apply_referral_code, { isLoading: isApplyingCode }] =
+    useApply_referral_codeMutation();
+  const [payment_orders, { isLoading: isCreatingOrder }] =
+    usePayment_ordersMutation();
+  const [payment_success, { isLoading: isVerifyingPayment }] =
+    usePayment_successMutation();
   const [referral_code_users] = useReferral_code_usersMutation();
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null);
   const [isCodeApplied, setIsCodeApplied] = useState(false);
@@ -62,7 +76,9 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
   }
   const insuranceTotal = formatCurrency(billAmount);
   const amountToPay = discountInfo?.finalBillAmount ?? billAmount;
-  const formattedDiscountAmount = formatCurrency(discountInfo?.discountAmount ?? 0);
+  const formattedDiscountAmount = formatCurrency(
+    discountInfo?.discountAmount ?? 0,
+  );
   const formattedAmountToPay = formatCurrency(amountToPay);
   const formatOptionalNumber = (value?: string) => {
     if (!value) {
@@ -76,14 +92,18 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
   };
   const referralMessage = isCodeApplied
     ? (() => {
-      const influencerName = discountInfo?.referralData?.influencer_name;
-      const percentage = formatOptionalNumber(discountInfo?.referralData?.discount_percentage);
-      const maximum = formatOptionalNumber(discountInfo?.referralData?.maximum_discount);
-      if (influencerName && percentage && maximum) {
-        return `Referral code by ${influencerName} gets you ${percentage}% extra discount (Upto $${maximum})`;
-      }
-      return 'Referral code applied successfully.';
-    })()
+        const influencerName = discountInfo?.referralData?.influencer_name;
+        const percentage = formatOptionalNumber(
+          discountInfo?.referralData?.discount_percentage,
+        );
+        const maximum = formatOptionalNumber(
+          discountInfo?.referralData?.maximum_discount,
+        );
+        if (influencerName && percentage && maximum) {
+          return `Referral code by ${influencerName} gets you ${percentage}% extra discount (Upto $${maximum})`;
+        }
+        return 'Referral code applied successfully.';
+      })()
     : '';
 
   const handleApplyCode = async () => {
@@ -120,13 +140,17 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
 
       setDiscountInfo({
         discountAmount: parseFloat(responseData.discount_amount) || 0,
-        finalBillAmount: parseFloat(responseData.final_bill_amount) || billAmount,
+        finalBillAmount:
+          parseFloat(responseData.final_bill_amount) || billAmount,
         referralData: responseData.referral_data || undefined,
       });
       setIsCodeApplied(true);
       showSuccessToast('Referral code applied successfully', 'Success !!');
     } catch (error: any) {
-      const errorMessage = error?.data?.message || error?.message || 'Failed to apply referral code';
+      const errorMessage =
+        error?.data?.message ||
+        error?.message ||
+        'Failed to apply referral code';
       showErrorToast(errorMessage, 'Error !!');
     }
   };
@@ -143,7 +167,10 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
 
     try {
       // Step 1: Create payment order via API
-      console.log('Creating payment order...', { amount: amountInSGD, currency: 'SGD' });
+      console.log('Creating payment order...', {
+        amount: amountInSGD,
+        currency: 'SGD',
+      });
       const orderResponse = await payment_orders({
         amount: amountInSGD,
         currency: 'SGD',
@@ -153,7 +180,9 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
 
       // Check for errors first
       if (orderResponse.error) {
-        const errorMessage = (orderResponse.error as any)?.data?.message || 'Failed to create payment order';
+        const errorMessage =
+          (orderResponse.error as any)?.data?.message ||
+          'Failed to create payment order';
         showErrorToast(errorMessage, 'Error !!');
         return;
       }
@@ -167,7 +196,7 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
         return;
       }
 
-      console.log('Using order_id:', orderId,);
+      console.log('Using order_id:', orderId);
 
       // Step 2: Open Razorpay checkout with order_id
       const options = {
@@ -218,7 +247,10 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
             } catch (referralError: any) {
               console.error('Error saving referral code user:', referralError);
               // Don't block payment completion if referral user save fails
-              const errorMessage = referralError?.data?.message || referralError?.message || 'Failed to save referral code user';
+              const errorMessage =
+                referralError?.data?.message ||
+                referralError?.message ||
+                'Failed to save referral code user';
               console.warn('Referral code user save failed:', errorMessage);
             }
           }
@@ -231,7 +263,7 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
             discountAmount: discountInfo?.discountAmount ?? 0,
             billAmount,
             finalBillAmount: amountToPay,
-            referralCode: isCodeApplied ? referralCodeValue.trim() : "",
+            referralCode: isCodeApplied ? referralCodeValue.trim() : '',
             referralDetails: discountInfo?.referralData,
             paymentTimestamp: new Date().toISOString(),
           };
@@ -243,17 +275,23 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
         }
       } catch (verifyError: any) {
         console.error('Payment verification error:', verifyError);
-        const errorMessage = verifyError?.data?.message || verifyError?.message || 'Payment verification failed';
+        const errorMessage =
+          verifyError?.data?.message ||
+          verifyError?.message ||
+          'Payment verification failed';
         showErrorToast(errorMessage, 'Error !!');
       }
-
     } catch (error: any) {
       // Handle errors
       console.log('Payment Error:', error);
 
       // Check if it's an order creation error
       if (error?.data || error?.error) {
-        const errorMessage = error?.data?.message || error?.error?.message || error?.message || 'Failed to process payment';
+        const errorMessage =
+          error?.data?.message ||
+          error?.error?.message ||
+          error?.message ||
+          'Failed to process payment';
         showErrorToast(errorMessage, 'Error !!');
         return;
       }
@@ -262,7 +300,10 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
       if (error.code === 'BAD_REQUEST_ERROR') {
         showErrorToast('Invalid payment request', 'Error !!');
       } else if (error.code === 'NETWORK_ERROR') {
-        showErrorToast('Network error. Please check your connection', 'Error !!');
+        showErrorToast(
+          'Network error. Please check your connection',
+          'Error !!',
+        );
       } else if (error.code !== 'Payment Cancelled') {
         // Don't show error for user cancellation
         showErrorToast(error.description || 'Payment failed', 'Error !!');
@@ -275,7 +316,12 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
       <View>
         {/* Referral Code Section */}
         <View style={styles(theme).fieldContainer}>
-          <Text style={[fontStyle(theme).headingSmall, { marginBottom: metrics.baseMargin }]}>
+          <Text
+            style={[
+              fontStyle(theme).headingSmall,
+              { marginBottom: metrics.baseMargin },
+            ]}
+          >
             Referral Code
           </Text>
           <View style={styles(theme).referralCodeContainer}>
@@ -307,32 +353,65 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
             </TouchableOpacity>
           </View>
           {!!referralMessage && (
-            <Text style={styles(theme).referralSuccessText}>{referralMessage}</Text>
+            <Text style={styles(theme).referralSuccessText}>
+              {referralMessage}
+            </Text>
           )}
         </View>
 
         {/* Bill Summary Section */}
         <View style={styles(theme).billSummaryContainer}>
-          <Text style={[fontStyle(theme).headingMedium, { marginBottom: metrics.doubleMargin }]}>
+          <Text
+            style={[
+              fontStyle(theme).headingMedium,
+              { marginBottom: metrics.doubleMargin },
+            ]}
+          >
             Bill summary
           </Text>
           <View style={styles(theme).billSummaryRow}>
             <Text style={fontStyle(theme).headingSmall}>Insurance Total</Text>
-            <Text style={[fontStyle(theme).headingSmall, { fontWeight: 'bold' }]}>
+            <Text
+              style={[fontStyle(theme).headingSmall, { fontWeight: 'bold' }]}
+            >
               {insuranceTotal}
             </Text>
           </View>
           {discountInfo && (
-            <View style={[styles(theme).billSummaryRow, { marginTop: metrics.baseMargin }]}>
+            <View
+              style={[
+                styles(theme).billSummaryRow,
+                { marginTop: metrics.baseMargin },
+              ]}
+            >
               <Text style={fontStyle(theme).headingSmall}>Discount</Text>
-              <Text style={[fontStyle(theme).headingSmall, styles(theme).discountValueText]}>
+              <Text
+                style={[
+                  fontStyle(theme).headingSmall,
+                  styles(theme).discountValueText,
+                ]}
+              >
                 - {formattedDiscountAmount}
               </Text>
             </View>
           )}
-          <View style={[styles(theme).billSummaryRow, { marginTop: metrics.baseMargin }]}>
-            <Text style={[fontStyle(theme).headingSmall, { fontWeight: 'bold' }]}>To Pay</Text>
-            <Text style={[fontStyle(theme).headingSmall, styles(theme).amountToPayText]}>
+          <View
+            style={[
+              styles(theme).billSummaryRow,
+              { marginTop: metrics.baseMargin },
+            ]}
+          >
+            <Text
+              style={[fontStyle(theme).headingSmall, { fontWeight: 'bold' }]}
+            >
+              To Pay
+            </Text>
+            <Text
+              style={[
+                fontStyle(theme).headingSmall,
+                styles(theme).amountToPayText,
+              ]}
+            >
               {formattedAmountToPay}
             </Text>
           </View>
@@ -344,14 +423,17 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
             onPress={handleMakePayment}
             style={[
               styles(theme).makePaymentButton,
-              (isCreatingOrder || isVerifyingPayment) && styles(theme).makePaymentButtonDisabled,
+              (isCreatingOrder || isVerifyingPayment) &&
+                styles(theme).makePaymentButtonDisabled,
             ]}
             disabled={isCreatingOrder || isVerifyingPayment}
           >
-            {(isCreatingOrder || isVerifyingPayment) ? (
+            {isCreatingOrder || isVerifyingPayment ? (
               <ActivityIndicator color="white" size="small" />
             ) : (
-              <Text style={styles(theme).makePaymentButtonText}>Make Payment</Text>
+              <Text style={styles(theme).makePaymentButtonText}>
+                Make Payment
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -387,7 +469,7 @@ const styles = (theme: MD3Theme) =>
       opacity: 0.6,
     },
     removeButton: {
-      backgroundColor: '#D32F2F',
+      backgroundColor: theme.colors.error,
     },
     applyButtonText: {
       color: 'white',
@@ -401,7 +483,7 @@ const styles = (theme: MD3Theme) =>
     billSummaryContainer: {
       marginBottom: metrics.doubleMargin * 2,
       padding: metrics.doubleMargin,
-      backgroundColor: '#F5F5F5',
+      backgroundColor: theme.dark ? '#1F2937' : '#F5F5F5',
       borderRadius: metrics.baseRadius,
     },
     billSummaryRow: {
@@ -410,7 +492,7 @@ const styles = (theme: MD3Theme) =>
       alignItems: 'center',
     },
     discountValueText: {
-      color: '#D32F2F',
+      color: theme.colors.error,
       fontWeight: 'bold',
     },
     amountToPayText: {
@@ -421,7 +503,7 @@ const styles = (theme: MD3Theme) =>
       marginTop: metrics.doubleMargin,
     },
     makePaymentButton: {
-      backgroundColor: '#2196F3', // Blue color
+      backgroundColor: theme.colors.primary,
       paddingVertical: metrics.doubleMargin,
       paddingHorizontal: metrics.doubleMargin,
       borderRadius: metrics.baseRadius,

@@ -94,7 +94,9 @@ const Register = ({ navigation }: any) => {
         }, 500);
       }
     } else if (resp?.error) {
-      showErrorToast(resp?.error?.data?.message || 'Registration failed', 'Error !!');
+      const errorMsg =
+        (resp.error as any)?.data?.message || 'Registration failed';
+      showErrorToast(errorMsg, 'Error !!');
     }
   };
 
@@ -148,7 +150,12 @@ const Register = ({ navigation }: any) => {
             ]}
           >
             <Text style={fontStyle(theme).headingMedium}>JOIN STNT</Text>
-            <Text style={[fontStyle(theme).titleSmall, { color: '#4F4F4F' }]}>
+            <Text
+              style={[
+                fontStyle(theme).titleSmall,
+                { color: theme.dark ? '#D1D5DB' : '#4F4F4F' },
+              ]}
+            >
               Start your premium journey with us today.
             </Text>
 
@@ -327,7 +334,7 @@ const Register = ({ navigation }: any) => {
                     fontStyle(theme).headingSmall,
                     {
                       textAlign: 'center',
-                      color: 'grey',
+                      color: theme.dark ? '#9CA3AF' : 'grey',
                       // alignItems: 'center',
                       marginEnd: metrics.baseMargin,
                       fontSize: 14,

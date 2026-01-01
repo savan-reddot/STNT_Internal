@@ -1,9 +1,17 @@
 import { View, Text, StyleSheet, ScrollView, Linking } from 'react-native';
 import React, { useState } from 'react';
 import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
-import { Control, Controller, FieldErrors, UseFormWatch } from 'react-hook-form';
+import {
+  Control,
+  Controller,
+  FieldErrors,
+  UseFormWatch,
+} from 'react-hook-form';
 import { Dropdown } from 'react-native-element-dropdown';
-import CountryPicker, { Country, CountryCode } from 'react-native-country-picker-modal';
+import CountryPicker, {
+  Country,
+  CountryCode,
+} from 'react-native-country-picker-modal';
 import fontStyle from '../../../styles/fontStyle';
 import { metrics } from '../../../utils/metrics';
 import { globalStyle } from '../../../utils/globalStyles';
@@ -19,13 +27,16 @@ interface ContactDetailsProps {
 const travellingSaudiOptions = [
   { label: 'Individual', value: 'individual' },
   { label: 'Partenered Travel Agency', value: 'partnered_travel_agency' },
-  { label: 'Non-Partenered Travel Agency', value: 'non_partnered_travel_agency' },
+  {
+    label: 'Non-Partenered Travel Agency',
+    value: 'non_partnered_travel_agency',
+  },
 ];
 
 const partneredTravelAgents = [
   'ABU BAKAR TRAVEL SERVICES PTE LTD',
   'AFANDI TRAVEL & SERVICES PTE LTD',
-  "AFANA SERVICES PTE LTD",
+  'AFANA SERVICES PTE LTD',
   'AK TOURS & TRAVELS PTE LTD',
   'AL-FATTAH TRAVEL & TOURS PTE LTD',
   'AL FIRDAUS TRAVELS PTE LTD',
@@ -78,30 +89,38 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
   const emailValue = watch('email');
   const isIndividual = travellingSaudiWith === 'individual';
   const isPartneredAgency = travellingSaudiWith === 'partnered_travel_agency';
-  const isNonPartneredAgency = travellingSaudiWith === 'non_partnered_travel_agency';
+  const isNonPartneredAgency =
+    travellingSaudiWith === 'non_partnered_travel_agency';
   const showContactFields = isIndividual || isNonPartneredAgency;
 
   const [phoneCountryCode, setPhoneCountryCode] = useState<CountryCode>('SG');
-  const [nextOfKinPhoneCountryCode, setNextOfKinPhoneCountryCode] = useState<CountryCode>('SG');
+  const [nextOfKinPhoneCountryCode, setNextOfKinPhoneCountryCode] =
+    useState<CountryCode>('SG');
   const [phoneCallingCode, setPhoneCallingCode] = useState('65');
-  const [nextOfKinPhoneCallingCode, setNextOfKinPhoneCallingCode] = useState('65');
+  const [nextOfKinPhoneCallingCode, setNextOfKinPhoneCallingCode] =
+    useState('65');
 
   const handlePhonePress = (phone: string) => {
-    Linking.openURL(`tel:${phone.replace(/\s/g, '')}`).catch((err) =>
-      console.error('Failed to open phone:', err)
+    Linking.openURL(`tel:${phone.replace(/\s/g, '')}`).catch(err =>
+      console.error('Failed to open phone:', err),
     );
   };
 
   const handleEmailPress = (email: string) => {
-    Linking.openURL(`mailto:${email}`).catch((err) =>
-      console.error('Failed to open email:', err)
+    Linking.openURL(`mailto:${email}`).catch(err =>
+      console.error('Failed to open email:', err),
     );
   };
 
   return (
     <KeyboardAwareContainer>
       <View>
-        <Text style={[fontStyle(theme).headingMedium, { marginBottom: metrics.doubleMargin }]}>
+        <Text
+          style={[
+            fontStyle(theme).headingMedium,
+            { marginBottom: metrics.doubleMargin },
+          ]}
+        >
           Contact Details
         </Text>
 
@@ -123,9 +142,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 valueField="value"
                 placeholder="Select"
                 value={value}
-                onChange={(item) => onChange(item.value)}
+                onChange={item => onChange(item.value)}
                 containerStyle={styles(theme).dropdownContainer}
                 itemTextStyle={styles(theme).dropdownItemText}
+                activeColor={theme.dark ? '#374151' : '#E6EBF1'} // Dark grey for dark mode, light grey for light
               />
               {errors.travellingSaudiWith && (
                 <Text style={styles(theme).errorText}>
@@ -139,31 +159,55 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
         {/* Partnered Travel Agency - Show contact info and list */}
         {isPartneredAgency && (
           <View style={styles(theme).fieldContainer}>
-            <Text style={[fontStyle(theme).headingSmall, { marginBottom: metrics.baseMargin }]}>
+            <Text
+              style={[
+                fontStyle(theme).headingSmall,
+                { marginBottom: metrics.baseMargin },
+              ]}
+            >
               Please contact us through{' '}
               <Text
-                style={styles(theme).linkText}
+                style={[
+                  styles(theme).linkText,
+                  { color: theme.colors.primary },
+                ]}
                 onPress={() => handlePhonePress('62950012')}
               >
                 62950012
               </Text>
               {' / '}
               <Text
-                style={styles(theme).linkText}
+                style={[
+                  styles(theme).linkText,
+                  { color: theme.colors.primary },
+                ]}
                 onPress={() => handlePhonePress('91362973')}
               >
                 91362973
               </Text>
               {' or '}
               <Text
-                style={styles(theme).linkText}
-                onPress={() => handleEmailPress('enquiry@stntinternational.com')}
+                style={[
+                  styles(theme).linkText,
+                  { color: theme.colors.primary },
+                ]}
+                onPress={() =>
+                  handleEmailPress('enquiry@stntinternational.com')
+                }
               >
                 enquiry@stntinternational.com
               </Text>
             </Text>
 
-            <Text style={[fontStyle(theme).headingSmall, { marginTop: metrics.doubleMargin, marginBottom: metrics.baseMargin }]}>
+            <Text
+              style={[
+                fontStyle(theme).headingSmall,
+                {
+                  marginTop: metrics.doubleMargin,
+                  marginBottom: metrics.baseMargin,
+                },
+              ]}
+            >
               List of our partnered Travel Agents:
             </Text>
 
@@ -189,7 +233,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 render={({ field: { onChange, value } }) => (
                   <View style={styles(theme).fieldContainer}>
                     <Text style={fontStyle(theme).headingSmall}>
-                      Name of Travel Agency<Text style={{ color: 'red' }}>*</Text>
+                      Name of Travel Agency
+                      <Text style={{ color: 'red' }}>*</Text>
                     </Text>
                     <TextInput
                       mode="outlined"
@@ -229,7 +274,9 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                     error={!!errors.name}
                   />
                   {errors.name && (
-                    <Text style={styles(theme).errorText}>{errors.name.message}</Text>
+                    <Text style={styles(theme).errorText}>
+                      {errors.name.message}
+                    </Text>
                   )}
                 </View>
               )}
@@ -254,7 +301,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                         withFilter
                         withAlphaFilter
                         containerButtonStyle={styles(theme).countryPickerButton}
-                        onSelect={(country) => {
+                        onSelect={country => {
                           setPhoneCountryCode(country.cca2);
                           const callingCode = country.callingCode[0];
                           setPhoneCallingCode(callingCode);
@@ -285,10 +332,14 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 />
               </View>
               {errors.phone && (
-                <Text style={styles(theme).errorText}>{errors.phone.message}</Text>
+                <Text style={styles(theme).errorText}>
+                  {errors.phone.message}
+                </Text>
               )}
               {errors.phone_code && (
-                <Text style={styles(theme).errorText}>{errors.phone_code.message}</Text>
+                <Text style={styles(theme).errorText}>
+                  {errors.phone_code.message}
+                </Text>
               )}
             </View>
 
@@ -318,7 +369,9 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                     error={!!errors.email}
                   />
                   {errors.email && (
-                    <Text style={styles(theme).errorText}>{errors.email.message}</Text>
+                    <Text style={styles(theme).errorText}>
+                      {errors.email.message}
+                    </Text>
                   )}
                 </View>
               )}
@@ -370,7 +423,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                         withFilter
                         withAlphaFilter
                         containerButtonStyle={styles(theme).countryPickerButton}
-                        onSelect={(country) => {
+                        onSelect={country => {
                           setNextOfKinPhoneCountryCode(country.cca2);
                           const callingCode = country.callingCode[0];
                           setNextOfKinPhoneCallingCode(callingCode);
@@ -385,10 +438,17 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                   name="nextOfKinPhone"
                   rules={{
                     required: 'Phone Number (NOK) is required',
-                    validate: (value) => {
-                      const primaryFull = `${phoneCodeValue || ''}${phoneValue || ''}`.trim();
-                      const nokFull = `${phoneCodeNokValue || ''}${value || ''}`.trim();
-                      return primaryFull !== nokFull || 'Phone Number (NOK) must be different from Phone Number';
+                    validate: value => {
+                      const primaryFull = `${phoneCodeValue || ''}${
+                        phoneValue || ''
+                      }`.trim();
+                      const nokFull = `${phoneCodeNokValue || ''}${
+                        value || ''
+                      }`.trim();
+                      return (
+                        primaryFull !== nokFull ||
+                        'Phone Number (NOK) must be different from Phone Number'
+                      );
                     },
                   }}
                   render={({ field: { onChange, value } }) => (
@@ -428,11 +488,14 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: 'Invalid email address',
                 },
-                validate: (value) => {
+                validate: value => {
                   if (!value || !emailValue) {
                     return true;
                   }
-                  return value.toLowerCase() !== emailValue.toLowerCase() || 'Email (NOK) must be different from Email';
+                  return (
+                    value.toLowerCase() !== emailValue.toLowerCase() ||
+                    'Email (NOK) must be different from Email'
+                  );
                 },
               }}
               render={({ field: { onChange, value } }) => (
@@ -478,16 +541,17 @@ const styles = (theme: MD3Theme) =>
     },
     placeholderStyle: {
       fontSize: 14,
-      color: '#999',
+      color: (theme.colors as any).onSurfaceVariant || '#999',
     },
     selectedTextStyle: {
       fontSize: 14,
-      color: theme.colors.onBackground,
+      color: theme.colors.onSurface,
     },
     dropdownContainer: {
       borderRadius: metrics.baseRadius,
-      borderColor: '#E6EBF1',
+      borderColor: theme.dark ? '#444' : '#E6EBF1',
       borderWidth: 1,
+      backgroundColor: theme.colors.surface,
     },
     dropdownItemText: {
       fontSize: 16,
@@ -498,7 +562,7 @@ const styles = (theme: MD3Theme) =>
       textDecorationLine: 'underline',
     },
     agentsListContainer: {
-      backgroundColor: '#F5F5F5',
+      backgroundColor: theme.dark ? '#1F2937' : '#F5F5F5',
       borderRadius: metrics.baseRadius,
       padding: metrics.doubleMargin,
     },
@@ -518,7 +582,7 @@ const styles = (theme: MD3Theme) =>
       backgroundColor: theme.colors.surface,
       borderRadius: metrics.baseRadius,
       borderWidth: 1,
-      borderColor: theme.colors.outline,
+      borderColor: theme.dark ? '#444' : theme.colors.outline,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',

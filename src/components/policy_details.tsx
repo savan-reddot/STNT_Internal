@@ -114,19 +114,22 @@ const PolicyDetails = ({
             {policyData?.status && (
               <View
                 style={{
-                  backgroundColor: policyData.isExpired ? "#F9E4F1" : '#CEF6BB',
+                  backgroundColor: policyData.isExpired ? '#F9E4F1' : '#CEF6BB',
                   paddingVertical: 0,
                   paddingHorizontal: metrics.baseMargin,
                   borderRadius: 4,
                   borderWidth: 1,
-                  borderColor: policyData.isExpired ? "#F2C9E3" : '#B4E1A2',
+                  borderColor: policyData.isExpired ? '#F2C9E3' : '#B4E1A2',
                   alignSelf: 'flex-end',
                 }}
               >
                 <Text
                   style={[
                     fontStyle(theme).headingSmall,
-                    { color: policyData.isExpired ? "#B3063D" : '#05690D', fontSize: 11 },
+                    {
+                      color: policyData.isExpired ? '#B3063D' : '#05690D',
+                      fontSize: 11,
+                    },
                   ]}
                 >
                   {policyData?.status?.toUpperCase()}
@@ -190,7 +193,7 @@ const PolicyDetails = ({
                 },
               ]}
             >
-              {`${policyData.isExpired ? "Expired" : "Expire"} On :`}
+              {`${policyData.isExpired ? 'Expired' : 'Expire'} On :`}
             </Text>
             <Text
               style={[
@@ -223,7 +226,7 @@ const PolicyDetails = ({
                 {
                   fontWeight: 'regular',
                   textDecorationLine: 'underline',
-                  color: 'blue',
+                  color: theme.colors.primary,
                 },
               ]}
             >
@@ -259,29 +262,30 @@ const styles = (theme: MD3Theme) =>
     title: {
       fontSize: 16,
       fontWeight: 'bold',
+      color: theme.colors.onSurface,
     },
     contentContainer: {
       padding: metrics.doubleMargin * 2,
       paddingTop: metrics.doubleMargin,
       paddingHorizontal: metrics.doubleMargin,
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       borderRadius: metrics.baseRadius,
     },
 
     dropdown: {
       height: 50,
-      borderColor: '#ccc',
+      borderColor: theme.dark ? '#444' : '#ccc',
       borderWidth: 1,
       borderRadius: 8,
       paddingHorizontal: 8,
     },
     placeholderStyle: {
       fontSize: 14,
-      color: '#999',
+      color: (theme.colors as any).placeholder,
     },
     selectedTextStyle: {
       fontSize: 14,
-      color: '#000',
+      color: theme.colors.onSurface,
     },
     item_view: {
       flexDirection: 'row',
