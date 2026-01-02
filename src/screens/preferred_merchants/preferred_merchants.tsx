@@ -269,9 +269,9 @@ const PreferredMerchants = ({ navigation }: any) => {
                   <View style={styles(theme).titleRow}>
                     <Text style={styles(theme).cardTitle}>{hotel?.name}</Text>
 
-                    <View style={styles(theme).partnerBadge}>
+                    {/* <View style={styles(theme).partnerBadge}>
                       <Text style={styles(theme).partnerText}>PARTNER</Text>
-                    </View>
+                    </View> */}
                   </View>
 
                   {/* ADDRESS */}

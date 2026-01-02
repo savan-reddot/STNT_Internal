@@ -9,8 +9,9 @@ import {
 import { NavigationContainer } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
+import { PersistGate } from 'redux-persist/integration/react';
 import { darkTheme, lightTheme } from './src/theme/theme';
-import { store } from './src/redux/store';
+import { store, persistor } from './src/redux/store';
 import MainStack from './src/navigation/main';
 import { toastConfig } from './src/utils/toastConfig';
 import { navigationRef } from './src/utils/navigationRef';
@@ -46,9 +47,11 @@ const AppContent = () => {
 const App = () => {
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <AppContent />
-      </SafeAreaProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <SafeAreaProvider>
+          <AppContent />
+        </SafeAreaProvider>
+      </PersistGate>
     </Provider>
   );
 };

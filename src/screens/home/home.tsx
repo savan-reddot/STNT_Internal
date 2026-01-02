@@ -722,6 +722,8 @@ const styles = (theme: MD3Theme) =>
       paddingHorizontal: 20,
       paddingVertical: 15,
       alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: '#E5E7EB',
     },
     headerLeft: {
       flexDirection: 'row',
@@ -888,7 +890,7 @@ const styles = (theme: MD3Theme) =>
       backgroundColor: theme.colors.surface,
       borderRadius: 24,
       alignItems: 'center',
-      paddingVertical: 24,
+      paddingVertical: 20,
       margin: 8,
       shadowColor: '#000',
       shadowOffset: {

@@ -201,7 +201,7 @@ const Profile = ({ navigation }: any) => {
                 <Switch
                   value={theme.dark}
                   onValueChange={toggleTheme}
-                  color="#4F46E5"
+                  color={theme.colors.primary}
                 />
               </View>
             </View>
