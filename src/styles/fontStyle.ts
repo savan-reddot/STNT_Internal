@@ -32,7 +32,6 @@ const fontStyle = (theme: MD3Theme) =>
       fontWeight: '700',
       fontSize: metrics.moderateScale(20),
       letterSpacing: 0.2,
-      lineHeight: 19.3,
       marginHorizontal: 0,
       color: theme.colors.onBackground,
     },

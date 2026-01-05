@@ -105,7 +105,7 @@ const VirtualCard = () => {
                     <Text style={styles.logoText}>✔</Text>
                   </View>
                   <View>
-                    <Text style={styles.orgName}>STNT GLOBAL</Text>
+                    <Text style={styles.orgName}>ST&T GLOBAL</Text>
                     <Text style={styles.subTitle}>VERIFIED IDENTITY</Text>
                   </View>
                 </View>

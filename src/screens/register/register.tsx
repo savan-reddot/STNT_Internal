@@ -149,7 +149,7 @@ const Register = ({ navigation }: any) => {
               { padding: metrics.doubleMargin },
             ]}
           >
-            <Text style={fontStyle(theme).headingMedium}>JOIN STNT</Text>
+            <Text style={fontStyle(theme).headingMedium}>JOIN ST&T</Text>
             <Text
               style={[
                 fontStyle(theme).titleSmall,

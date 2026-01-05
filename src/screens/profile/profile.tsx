@@ -271,7 +271,7 @@ const Profile = ({ navigation }: any) => {
             <Text style={styles(theme).signOutText}>SIGN OUT</Text>
           </TouchableOpacity>
           <Text style={styles(theme).versionText}>
-            V{DeviceInfo.getVersion()} • STNT GLOBAL SYSTEMS
+            V{DeviceInfo.getVersion()} • ST&T GLOBAL SYSTEMS
           </Text>
         </View>
       </View>

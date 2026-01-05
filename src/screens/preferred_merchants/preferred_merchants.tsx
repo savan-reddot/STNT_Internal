@@ -4,11 +4,18 @@ import {
   ImageBackground,
   Linking,
   Platform,
+  PermissionsAndroid,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import Geolocation from 'react-native-geolocation-service';
+import {
+  getCoordinatesFromAddress,
+  calculateDistance,
+  formatDistance,
+} from '../../utils/locationUtils';
 import React, { useEffect, useMemo, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';
 import { MD3Theme, useTheme } from 'react-native-paper';
@@ -32,7 +39,12 @@ const PreferredMerchants = ({ navigation }: any) => {
 
   const [selectedCity, setSelectedCity] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState('All');
-
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+  const [distances, setDistances] = useState<{ [key: string]: string }>({});
+  console.log('distances', distances);
   // FIX: Generate city options only after data loads
   const cityOptions = useMemo(() => {
     if (!merchantsData || merchantsData.length === 0) return ['All'];
@@ -73,7 +85,137 @@ const PreferredMerchants = ({ navigation }: any) => {
 
   useEffect(() => {
     getPreferredMerchants();
+    requestLocationPermission();
   }, []);
+
+  const requestLocationPermission = async () => {
+    try {
+      if (Platform.OS === 'ios') {
+        const auth = await Geolocation.requestAuthorization('whenInUse');
+        if (auth === 'granted') {
+          getCurrentLocation();
+        }
+      } else {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          getCurrentLocation();
+        }
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
+  const getCurrentLocation = () => {
+    Geolocation.getCurrentPosition(
+      position => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      },
+      error => {
+        console.log(error.code, error.message);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+    );
+  };
+
+  useEffect(() => {
+    console.log(
+      'Distances effect triggered. UserLocation:',
+      userLocation,
+      'FilteredMerchants:',
+      filteredMerchants?.length,
+    );
+    if (!userLocation || filteredMerchants.length === 0) {
+      console.log('Skipping distance calc: Missing location or merchants');
+      return;
+    }
+
+    let isMounted = true;
+
+    const calculateDistances = async () => {
+      console.log('Starting distance calculation loop...');
+      // Process items sequentially to respect API rate limits
+      for (const merchant of filteredMerchants) {
+        if (!isMounted) break;
+
+        const id = merchant.id || merchant.name;
+        // Skip if already calculated
+        if (distances[id]) {
+          console.log(`Skipping ${id}, already calculated.`);
+          continue;
+        }
+
+        if (merchant.address) {
+          // If we pass name + city + address it might be more accurate or less.
+          // Strategy: Try most specific -> least specific
+
+          let coords = null;
+
+          // 1. Try Full Query: Name + Address + City
+          const query1 = `${merchant.name}, ${merchant.address}, ${
+            merchant.city || ''
+          }`;
+          console.log(`[1] Trying: ${query1}`);
+          coords = await getCoordinatesFromAddress(query1);
+
+          // 2. Fallback: Name + City (Often works for well-known places)
+          if (!coords) {
+            const query2 = `${merchant.name}, ${merchant.city || ''}`;
+            console.log(`[2] Fallback: ${query2}`);
+            coords = await getCoordinatesFromAddress(query2);
+          }
+
+          // 3. Fallback: Address + City cleanup (Remove "Near", "Opposite", etc if possible, or just raw)
+          if (!coords && merchant.address) {
+            // Simple heuristic: if address has "Near", try removing it?
+            // Or just try the raw address with city, hoping it's a street name.
+            const cleanAddress = merchant.address.replace(
+              /^(Near|Opposite|Behind|Next to)\s+/i,
+              '',
+            );
+            const query3 = `${cleanAddress}, ${merchant.city || ''}`;
+            console.log(`[3] Fallback: ${query3}`);
+            coords = await getCoordinatesFromAddress(query3);
+          }
+          console.log(`Coords result for ${merchant.name}:`, coords);
+
+          if (coords && isMounted) {
+            const dist = calculateDistance(
+              userLocation.lat,
+              userLocation.lon,
+              coords.lat,
+              coords.lon,
+            );
+            console.log(`Calculated distance for ${merchant.name}: ${dist} km`);
+            setDistances(prev => {
+              console.log('Updating distances state');
+              return { ...prev, [id]: formatDistance(dist) };
+            });
+          } else {
+            console.log(
+              `No coords found for ${merchant.name} or component unmounted.`,
+            );
+          }
+        } else {
+          console.log(`No address for merchant: ${merchant.name}`);
+        }
+
+        // Wait 1.2s to be safe with Nominatim (1 req/sec limit)
+        if (isMounted) await new Promise(resolve => setTimeout(resolve, 1200));
+      }
+    };
+
+    calculateDistances();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userLocation, filteredMerchants]); // Note: dependency on 'distances' omitted to avoid loop, but we check existence inside.
 
   const getPreferredMerchants = async () => {
     try {
@@ -234,6 +376,7 @@ const PreferredMerchants = ({ navigation }: any) => {
             </View>
           }
           renderItem={({ item: hotel }) => {
+            console.log('hotel', hotel);
             return (
               <View style={styles(theme).card}>
                 {/* IMAGE */}
@@ -279,6 +422,17 @@ const PreferredMerchants = ({ navigation }: any) => {
                     <View style={styles(theme).metaRow}>
                       <Text style={styles(theme).metaText}>
                         {hotel.address}
+                        {distances[hotel.id || hotel.name] && (
+                          <Text
+                            style={{
+                              color: theme.colors.primary,
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            {' • '}
+                            {distances[hotel.id || hotel.name]} away
+                          </Text>
+                        )}
                       </Text>
                     </View>
                   )}
