@@ -7,6 +7,7 @@ import {
   Linking,
   Platform,
   Image,
+  FlatList,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';
@@ -81,81 +82,98 @@ const TrustedHospitals = ({ navigation }: any) => {
           })}
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: metrics.doubleMargin }}
-        >
+        <View style={{ flex: 1 }}>
           <ScreenLoader visible={isLoading} />
 
-          {hospitals.length > 0 ? (
-            hospitals.map((item, index) => (
-              <View key={index} style={styles(theme).card}>
-                {/* Hospital Image */}
-                <Image
-                  source={
-                    item?.imageUrl
-                      ? { uri: item.imageUrl }
-                      : require('../../../assets/images/logo.png')
-                  }
-                  style={styles(theme).hospitalImage}
-                  resizeMode="cover"
+          <FlatList
+            style={{ flex: 1 }}
+            data={hospitals}
+            keyExtractor={(item, index) =>
+              item?.id ? item.id.toString() : `hospitals-${index}`
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              padding: metrics.doubleMargin,
+              paddingBottom: metrics.doubleMargin * 4,
+              flexGrow: 1,
+            }}
+            ListEmptyComponent={
+              <View
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: metrics.screenHeight * 0.7,
+                }}
+              >
+                <NoDataFound
+                  title={'No Data Found'}
+                  description={'Looks like there’s nothing here yet.'}
                 />
+              </View>
+            }
+            renderItem={({ item, index }) => {
+              return (
+                <View key={index} style={styles(theme).card}>
+                  {/* Hospital Image */}
+                  <Image
+                    source={
+                      item?.imageUrl
+                        ? { uri: item.imageUrl }
+                        : require('../../../assets/images/logo.png')
+                    }
+                    style={styles(theme).hospitalImage}
+                    resizeMode="cover"
+                  />
 
-                {/* Header */}
-                <View style={styles(theme).row}>
-                  <View style={styles(theme).iconWrap}>
-                    <Icon name="hospital-building" size={26} color="#D14343" />
-                  </View>
+                  {/* Header */}
+                  <View style={styles(theme).row}>
+                    <View style={styles(theme).iconWrap}>
+                      <Icon
+                        name="hospital-building"
+                        size={26}
+                        color="#D14343"
+                      />
+                    </View>
 
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles(theme).title}>{item?.name}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles(theme).title}>{item?.name}</Text>
 
-                    <View style={styles(theme).addressRow}>
-                      <Icon name="map-marker" size={16} color="#9CA3AF" />
-                      <Text style={styles(theme).address}>{item?.address}</Text>
+                      <View style={styles(theme).addressRow}>
+                        <Icon name="map-marker" size={16} color="#9CA3AF" />
+                        <Text style={styles(theme).address}>
+                          {item?.address}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
 
-                {/* Actions */}
-                <View style={styles(theme).actions}>
-                  <TouchableOpacity
-                    disabled={!item?.phoneNumber}
-                    style={[
-                      styles(theme).callBtn,
-                      !item?.phoneNumber && { opacity: 0.5 },
-                    ]}
-                    onPress={() => openDialer(item.phoneNumber)}
-                  >
-                    <Icon name="phone" size={20} color="#4B5563" />
-                    <Text style={styles(theme).callText}>CALL NOW</Text>
-                  </TouchableOpacity>
+                  {/* Actions */}
+                  <View style={styles(theme).actions}>
+                    <TouchableOpacity
+                      disabled={!item?.phoneNumber}
+                      style={[
+                        styles(theme).callBtn,
+                        !item?.phoneNumber && { opacity: 0.5 },
+                      ]}
+                      onPress={() => openDialer(item.phoneNumber)}
+                    >
+                      <Icon name="phone" size={20} color="#4B5563" />
+                      <Text style={styles(theme).callText}>CALL NOW</Text>
+                    </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles(theme).routeBtn}
-                    onPress={() => openMap(item?.address)}
-                  >
-                    <Icon name="navigation" size={20} color="#fff" />
-                    <Text style={styles(theme).routeText}>ROUTE</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles(theme).routeBtn}
+                      onPress={() => openMap(item?.address)}
+                    >
+                      <Icon name="navigation" size={20} color="#fff" />
+                      <Text style={styles(theme).routeText}>ROUTE</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            ))
-          ) : (
-            <View
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: metrics.screenHeight * 0.7,
-              }}
-            >
-              <NoDataFound
-                title="No Data Found"
-                description="Looks like there’s nothing here yet."
-              />
-            </View>
-          )}
-        </ScrollView>
+              );
+            }}
+          />
+        </View>
       </View>
     </AppLayout>
   );
@@ -203,16 +221,16 @@ const styles = (theme: MD3Theme) =>
       backgroundColor: theme.colors.surface,
       borderRadius: 24,
       marginBottom: 20,
-      overflow: 'hidden',
+      elevation: 3,
       shadowColor: '#000',
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 6 },
-      elevation: 4,
+      shadowOpacity: 0.1,
+      shadowOffset: { width: 0, height: 4 },
     },
     hospitalImage: {
       width: '100%',
       height: 160,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
     },
     row: {
       flexDirection: 'row',

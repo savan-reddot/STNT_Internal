@@ -226,13 +226,13 @@ I need some help.
       bgColor: '#FFF8E8',
       onPress: () => navigation.navigate(Screens.PreferredMerchants),
     },
-    // {
-    //   id: 6,
-    //   title: 'Vault',
-    //   icon: 'lock-closed-outline',
-    //   iconColor: '#5A67F2',
-    //   bgColor: '#F1F3FF',
-    // },
+    {
+      id: 6,
+      title: 'Vault',
+      icon: 'lock-closed-outline',
+      iconColor: '#5A67F2',
+      bgColor: '#F1F3FF',
+    },
   ];
 
   return (
@@ -311,7 +311,7 @@ I need some help.
           {/* ---------- PLAN CARD ---------- */}
           {currentPlan && (
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={0.95}
               style={[
                 styles(theme).planCard,
                 { backgroundColor: theme.dark ? '#1F2937' : '#0B1320' },
@@ -321,13 +321,18 @@ I need some help.
               }
             >
               <View style={styles(theme).planHeader}>
-                <Icon name="shield-checkmark" size={32} color="#6EE7B7" />
+                <Icon
+                  name="shield-checkmark-outline"
+                  size={42}
+                  color="#6EE7B7"
+                  style={{ opacity: 0.9 }}
+                />
 
                 <View style={styles(theme).activeBadge}>
                   <Icon
                     name="ellipse"
-                    size={10}
-                    color={isExpired ? '#EF4444' : '#6EE7B7'}
+                    size={8}
+                    color={isExpired ? '#EF4444' : '#10B981'}
                   />
                   <Text
                     style={[
@@ -335,15 +340,77 @@ I need some help.
                       isExpired && styles(theme).expiredText,
                     ]}
                   >
-                    {isExpired ? 'PROTECTION EXPIRED' : 'ACTIVE PROTECTION'}
+                    {isExpired ? 'EXPIRED' : 'ACTIVE PROTECTION'}
                   </Text>
                 </View>
               </View>
 
-              <Text style={styles(theme).planLabel}>CURRENT PLAN</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginTop: 24,
+                  gap: 10,
+                }}
+              >
+                <Text style={styles(theme).planLabel}>CURRENT PLAN</Text>
+                <View
+                  style={{
+                    backgroundColor: theme.dark ? '#0B1320' : '#1F2937',
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 6,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: '#9CA3AF',
+                      fontSize: 11,
+                      fontWeight: '700',
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {policy_data?.policies?.[0]?.policyNumber}
+                  </Text>
+                </View>
+              </View>
+
               <Text style={styles(theme).planName}>{currentPlan}</Text>
 
-              <View style={styles(theme).divider} />
+              {/* Feature Icons */}
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 15 }}>
+                {['heart', 'airplane', 'briefcase', 'car', 'person'].map(
+                  (icon, index) => (
+                    <View
+                      key={icon}
+                      style={{
+                        width: 35,
+                        height: 35,
+                        borderRadius: 19,
+                        borderWidth: 1.5,
+                        borderColor: index < 3 ? '#10B981' : '#374151',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor:
+                          index < 3 ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                      }}
+                    >
+                      <Icon
+                        name={`${icon}-outline`}
+                        size={18}
+                        color={index < 3 ? '#10B981' : '#4B5563'}
+                      />
+                    </View>
+                  ),
+                )}
+              </View>
+
+              <View
+                style={[
+                  styles(theme).divider,
+                  { backgroundColor: theme.dark ? '#0B1320' : '#1F2937' },
+                ]}
+              />
 
               <View style={styles(theme).coverageRow}>
                 <View>
@@ -353,7 +420,7 @@ I need some help.
                   <Text style={styles(theme).coverageAmount}>SGD 100,000</Text>
                 </View>
 
-                <Icon name="chevron-forward" size={24} color="#6EE7B7" />
+                <Icon name="chevron-forward" size={24} color="#10B981" />
               </View>
             </TouchableOpacity>
           )}
@@ -412,10 +479,14 @@ I need some help.
             keyExtractor={item => item.id.toString()}
             scrollEnabled={false}
             contentContainerStyle={styles(theme).serviceGrid}
-            renderItem={({ item }) => (
+            renderItem={({ item, index }) => (
               <TouchableOpacity
-                style={styles(theme).serviceCard}
+                style={[
+                  styles(theme).serviceCard,
+                  { opacity: index === 5 ? 0.5 : 1 },
+                ]}
                 onPress={item?.onPress}
+                disabled={index === 5}
               >
                 <View
                   style={[
@@ -804,7 +875,6 @@ const styles = (theme: MD3Theme) =>
       color: '#EF4444',
     },
     planLabel: {
-      marginTop: 20,
       color: '#9CA3AF',
       fontSize: 12,
       fontWeight: '600',
@@ -818,7 +888,6 @@ const styles = (theme: MD3Theme) =>
     },
     divider: {
       height: 1,
-      backgroundColor: '#1F2937',
       marginVertical: 20,
     },
     coverageRow: {
@@ -890,7 +959,7 @@ const styles = (theme: MD3Theme) =>
       backgroundColor: theme.colors.surface,
       borderRadius: 24,
       alignItems: 'center',
-      paddingVertical: 20,
+      paddingVertical: 15,
       margin: 8,
       shadowColor: '#000',
       shadowOffset: {
@@ -902,9 +971,9 @@ const styles = (theme: MD3Theme) =>
       elevation: 5,
     },
     iconWrapper: {
-      width: 64,
-      height: 64,
-      borderRadius: 20,
+      width: 60,
+      height: 60,
+      borderRadius: 15,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 14,

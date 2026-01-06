@@ -144,6 +144,7 @@ const Claim = ({ navigation }: any) => {
     <BottomSheetModalProvider>
       <AppLayout
         title="Claims"
+        titleExtraStyle={{ marginLeft: 50 }}
         right={[
           <View
             style={{
@@ -186,6 +187,14 @@ const Claim = ({ navigation }: any) => {
                       paddingVertical: 3,
                       borderRadius: metrics.baseRadius * 2,
                       height: 'auto',
+                      shadowColor: '#000',
+                      shadowOffset: {
+                        width: 0,
+                        height: 2,
+                      },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 3.84,
+                      elevation: 5,
                     }}
                   >
                     <Text
