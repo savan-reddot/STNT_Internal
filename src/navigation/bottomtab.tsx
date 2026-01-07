@@ -38,7 +38,7 @@ const BottomTab = () => {
                 : 'card-account-details-outline';
               break;
             case Screens.Policies:
-              iconName = focused ? 'file-document' : 'file-document-outline';
+              iconName = focused ? 'shield-check' : 'shield-check-outline';
               break;
             case Screens.Profile:
               iconName = focused ? 'account' : 'account-outline';
@@ -70,7 +70,11 @@ const BottomTab = () => {
     >
       <Tab.Screen name={Screens.Home} component={Home} />
       <Tab.Screen name={Screens.Certification} component={VirtualCard} />
-      <Tab.Screen name={Screens.Policies} component={Policies} />
+      <Tab.Screen
+        name={Screens.Policies}
+        component={Policies}
+        options={{ tabBarLabel: 'Insurance' }}
+      />
       <Tab.Screen name={Screens.Profile} component={Profile} />
     </Tab.Navigator>
   );

@@ -200,7 +200,8 @@ I need some help.
       icon: 'document-text-outline',
       iconColor: '#3D6AF2',
       bgColor: '#EEF3FF',
-      onPress: () => navigation.navigate(Screens.Claim),
+      onPress: () =>
+        navigation.navigate(Screens.Policies, { initialTab: 'claims' }),
     },
     {
       id: 3,

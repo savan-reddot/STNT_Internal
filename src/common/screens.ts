@@ -25,4 +25,7 @@ export const Screens = {
   BuyPolicy: 'BuyPolicy',
   BuyPolicySuccess: 'BuyPolicySuccess',
   PlanSelection: 'PlanSelection',
+  PolicyHistory: 'PolicyHistory',
+  Benefits: 'Benefits',
+  Exclusions: 'Exclusions',
 } as const;

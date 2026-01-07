@@ -76,7 +76,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const Claim = ({ navigation }: any) => {
+const Claim = ({ navigation, showHeader = true }: any) => {
   const theme = useTheme();
   const user = useAppSelector(getUser);
   const [get_claims, { isLoading }] = useLazyGet_claimsQuery();
@@ -144,7 +144,8 @@ const Claim = ({ navigation }: any) => {
     <BottomSheetModalProvider>
       <AppLayout
         title="Claims"
-        titleExtraStyle={{ marginLeft: 50 }}
+        showHeader={showHeader}
+        titleExtraStyle={{ marginLeft: 40 }}
         right={[
           <View
             style={{
@@ -163,7 +164,39 @@ const Claim = ({ navigation }: any) => {
         ]}
         onBackPress={() => navigation.pop()}
       >
-        <View style={[{ flex: 1, padding: metrics.doubleMargin }]}>
+        <View
+          style={[
+            {
+              flex: 1,
+              paddingHorizontal: metrics.doubleMargin,
+              paddingVertical: metrics.smallMargin,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles(theme).newClaimButton}
+            onPress={() => {
+              if (user?.passportNo == null || user?.passportNo == '') {
+                Alert.alert(
+                  'Error !!',
+                  'Please update Passport Number in Profile Settings first. If updated and still not able to see? contact us via (enquiry@stntinternational.com)',
+                );
+                return;
+              } else if (user?.availableUids?.length == 0) {
+                Alert.alert(
+                  'Error !!',
+                  'We could not found any attached policy with your account. Please contact on (enquiry@stntinternational.com)',
+                );
+                return;
+              } else {
+                setVisible(true);
+              }
+            }}
+          >
+            <Icon name="add-circle-outline" size={30} color="#10B981" />
+            <Text style={styles(theme).newClaimText}>FILE NEW CLAIM</Text>
+          </TouchableOpacity>
+
           <View
             style={{
               flexDirection: 'row',
@@ -180,6 +213,8 @@ const Claim = ({ navigation }: any) => {
                     style={{
                       backgroundColor: isSelected
                         ? theme.colors.primary
+                        : theme.dark
+                        ? '#374151'
                         : '#fff',
                       margin: metrics.baseMargin,
                       marginLeft: 0,
@@ -202,7 +237,11 @@ const Claim = ({ navigation }: any) => {
                         fontStyle(theme).headingSmall,
                         {
                           fontWeight: isSelected ? '700' : '500',
-                          color: isSelected ? '#fff' : '#000',
+                          color: isSelected
+                            ? '#fff'
+                            : theme.dark
+                            ? '#E5E7EB'
+                            : '#000',
                           fontSize: 13,
                         },
                       ]}
@@ -217,7 +256,7 @@ const Claim = ({ navigation }: any) => {
 
           {list_data && list_data?.length > 0 ? (
             <ScrollView
-              style={{ flexGrow: 1, marginBottom: metrics.doubleMargin * 4 }}
+              style={{ flexGrow: 1 }}
               showsVerticalScrollIndicator={false}
             >
               {list_data?.map((item, index) => {
@@ -251,6 +290,7 @@ const Claim = ({ navigation }: any) => {
                               fontSize: 14,
                               fontWeight: '600',
                               textTransform: 'capitalize',
+                              color: theme.colors.onSurface,
                             },
                           ]}
                         >
@@ -259,7 +299,11 @@ const Claim = ({ navigation }: any) => {
                         <Text
                           style={[
                             fontStyle(theme).headingMedium,
-                            { fontSize: 14, fontWeight: '600' },
+                            {
+                              fontSize: 14,
+                              fontWeight: '600',
+                              color: theme.colors.onSurfaceVariant,
+                            },
                           ]}
                         >
                           {item?.claimTypes
@@ -272,7 +316,7 @@ const Claim = ({ navigation }: any) => {
                             {
                               fontSize: 14,
                               fontWeight: '400',
-                              color: '#72849A',
+                              color: theme.colors.onSurfaceVariant,
                             },
                           ]}
                         >
@@ -284,7 +328,7 @@ const Claim = ({ navigation }: any) => {
                             {
                               fontSize: 14,
                               fontWeight: '400',
-                              color: '#72849A',
+                              color: theme.colors.onSurfaceVariant,
                             },
                           ]}
                         >
@@ -330,33 +374,6 @@ const Claim = ({ navigation }: any) => {
               }
             />
           )}
-          <UButton
-            title={'New Claim'}
-            onPress={() => {
-              if (user?.passportNo == null || user?.passportNo == '') {
-                Alert.alert(
-                  'Error !!',
-                  'Please update Passport Number in Profile Settings first. If updated and still not able to see? contact us via (enquiry@stntinternational.com)',
-                );
-                return;
-              } else if (user?.availableUids?.length == 0) {
-                Alert.alert(
-                  'Error !!',
-                  'We could not found any attached policy with your account. Please contact on (enquiry@stntinternational.com)',
-                );
-                return;
-              } else {
-                setVisible(true);
-              }
-              //
-            }}
-            style={{
-              position: 'absolute',
-              bottom: metrics.baseMargin * 2,
-              alignSelf: 'center',
-              width: '100%',
-            }}
-          />
         </View>
         <UIDSelection
           isVisible={visible}
@@ -381,8 +398,8 @@ const styles = (theme: MD3Theme) =>
       borderRadius: 16,
       flexDirection: 'row',
       borderWidth: 2,
-      borderColor: '#F6F6F6',
-      backgroundColor: theme.colors.background,
+      borderColor: theme.dark ? '#374151' : '#F6F6F6',
+      backgroundColor: theme.dark ? '#1F2937' : '#fff',
       margin: metrics.baseMargin,
       marginHorizontal: 0,
     },
@@ -393,5 +410,26 @@ const styles = (theme: MD3Theme) =>
       height: metrics.screenWidth * 0.17,
       width: metrics.screenWidth * 0.17,
       borderRadius: metrics.baseRadius / 2,
+    },
+    newClaimButton: {
+      borderWidth: 2,
+      borderColor: '#10B981',
+      borderStyle: 'dashed',
+      borderRadius: 30,
+      backgroundColor: theme.dark ? 'rgba(16, 185, 129, 0.1)' : '#F0FDF9',
+      height: 100,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: metrics.doubleMargin,
+      marginTop: metrics.smallMargin,
+      width: '100%',
+    },
+    newClaimText: {
+      color: '#10B981',
+      fontSize: 12,
+      fontWeight: '800',
+      marginTop: 12,
+      textTransform: 'uppercase',
+      letterSpacing: 1.5,
     },
   });
