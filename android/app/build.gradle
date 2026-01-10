@@ -5,7 +5,7 @@ apply plugin: "com.facebook.react"
 project.ext.hermesEnabled = "true"
 
 project.ext.vectoricons = [
-        iconFontNames: [ 'MaterialIcons.ttf', 'FontAwesome.ttf', 'Ionicons.ttf', 'MaterialCommunityIcons.ttf' ] // Add as needed
+        iconFontNames: [ 'MaterialIcons.ttf', 'FontAwesome.ttf', 'Ionicons.ttf', 'MaterialCommunityIcons.ttf', 'FontAwesome6_Brands.ttf', 'FontAwesome6_Regular.ttf', 'FontAwesome6_Solid.ttf' ] // Add as needed
 ]
 
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
@@ -90,8 +90,8 @@ android {
         applicationId "com.umrah_traveller_new"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 30
-        versionName "30.0"
+        versionCode 31
+        versionName "31.0"
     }
     signingConfigs {
         debug {

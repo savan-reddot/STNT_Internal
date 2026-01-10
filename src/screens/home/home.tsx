@@ -20,13 +20,21 @@ import { Font_Bold, Font_Regular } from '../../theme/fonts';
 import { Screens } from '../../common/screens';
 import { useAppSelector } from '../../redux/hooks';
 import { getUser } from '../../redux/reducer';
-import { useLazyGet_policyQuery } from '../../redux/services';
+import {
+  useLazyGet_policyQuery,
+  useLazyGetplansQuery,
+} from '../../redux/services';
 import ScreenLoader from '../../components/loader';
 import { useFocusEffect } from '@react-navigation/native';
 import AppLayout from '../../components/safeareawrapper';
 import UpdateModal from '../../components/update_modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import Entypo from 'react-native-vector-icons/Entypo';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 10;
@@ -41,6 +49,7 @@ interface POLICY_DATA {
 
 const Home = ({ navigation }: any) => {
   const theme = useTheme();
+  const [getplans] = useLazyGetplansQuery();
   const [get_policy, { isLoading }] = useLazyGet_policyQuery();
   const initPolicyData: POLICY_DATA = {
     policies: [],
@@ -51,6 +60,7 @@ const Home = ({ navigation }: any) => {
   const [policy_data, setPolicy_Data] = useState<POLICY_DATA>(initPolicyData);
   const [updateInfo, setUpdateInfo] = useState({});
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [currentPlanDetails, setCurrentPlanDetails] = useState<any>(null);
   const { top } = useSafeAreaInsets();
 
   const user = useAppSelector(getUser);
@@ -111,6 +121,11 @@ const Home = ({ navigation }: any) => {
     }
   }, []);
 
+  const isExpired = policy_data?.policies?.[0]?.isExpired;
+  const currentPlan = policy_data?.policies?.[0]?.manifest?.type
+    ? `${policy_data?.policies?.[0]?.manifest?.type} ${policy_data?.policies?.[0]?.manifest?.package}`
+    : '';
+
   // Listen for app state changes (background/foreground)
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
@@ -136,15 +151,44 @@ const Home = ({ navigation }: any) => {
 
   const init = async () => {
     const resp = await get_policy({ category: 'all' });
-    // console.log('resp?.data?.data -----> ', resp?.data?.data);
+    // console.log('resp?.data?.data -----> ', resp?.data?.data?.policies[0]);
     if (resp?.data?.status && resp?.data?.data) {
       const { policies, totalPolicies, activePolicies, expiredPolicies } =
         resp?.data?.data;
       if (policies?.length > 0) {
         setPolicy_Data(resp?.data?.data);
+        fetchPlans(resp?.data?.data);
       }
     } else {
       setPolicy_Data(initPolicyData);
+    }
+  };
+
+  const fetchPlans = async (data: POLICY_DATA) => {
+    try {
+      const resp = await getplans(0);
+      // console.log('fetchPlans', resp?.data?.data?.rows);
+      if (resp?.data?.success) {
+        const plansList = resp?.data?.data?.rows;
+        if (Array.isArray(plansList) && plansList.length > 0) {
+          const currentPolicy = data?.policies?.[0];
+          if (currentPolicy) {
+            const currentPlanName = currentPolicy?.manifest?.type
+              ? `${currentPolicy?.manifest?.type || ''} ${
+                  currentPolicy?.manifest?.package || ''
+                }`.trim()
+              : '';
+
+            const plan = plansList.find(
+              (p: any) =>
+                p.display_name?.toUpperCase() === currentPlanName.toUpperCase(),
+            );
+            setCurrentPlanDetails(plan);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching plans:', error);
     }
   };
 
@@ -179,11 +223,6 @@ I need some help.
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     Linking.openURL(url);
   };
-
-  const isExpired = policy_data?.policies?.[0]?.isExpired;
-  const currentPlan = policy_data?.policies?.[0]?.manifest?.type
-    ? `${policy_data?.policies?.[0]?.manifest?.type} ${policy_data?.policies?.[0]?.manifest?.package}`
-    : '';
 
   const SERVICES = [
     {
@@ -348,33 +387,85 @@ I need some help.
               <Text style={styles(theme).planName}>{currentPlan}</Text>
 
               {/* Feature Icons */}
-              {/* <View style={styles(theme).featureIconsContainer}>
+              <View style={styles(theme).featureIconsContainer}>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles(theme).featureIconsContent}
                 >
                   {[
-                    'heart',
-                    'pulse',
-                    'airplane',
-                    'briefcase',
-                    'shield-checkmark',
-                    'thermometer',
-                    'headset',
-                  ].map((icon, index) => (
-                    <View key={icon} style={styles(theme).featureIconWrapper}>
-                      <Icon
-                        name={`${icon}-outline`}
-                        size={15}
-                        color={'#10B981'}
-                      />
-                    </View>
-                  ))}
-                </ScrollView>
-              </View> */}
+                    {
+                      key: 'medical_expense_coverage',
+                      icon: 'briefcase-medical',
+                      IconComponent: FontAwesome5,
+                    },
+                    {
+                      key: 'accidental_death_disability',
+                      icon: 'shield',
+                      IconComponent: Entypo,
+                    },
+                    {
+                      key: 'travel_disruption_delays',
+                      icon: 'airplane-clock',
+                      IconComponent: MaterialCommunityIcons,
+                    },
+                    {
+                      key: 'baggage_personal_belongings',
+                      icon: 'suitcase-rolling',
+                      IconComponent: FontAwesome6,
+                    },
+                    {
+                      key: 'personal_safety_liability',
+                      icon: 'safety-check',
+                      IconComponent: MaterialIcons,
+                    },
+                    {
+                      key: 'covid_special_extensions',
+                      icon: 'virus-covid',
+                      IconComponent: FontAwesome6,
+                    },
+                    {
+                      key: 'assistance_services',
+                      icon: 'hours-24',
+                      IconComponent: MaterialCommunityIcons, // Replaced MaterialDesignIcons with MaterialCommunityIcons for 'hours-24'
+                    },
+                  ].map(item => {
+                    const status =
+                      currentPlanDetails?.plan_features?.[item.key] || 'none';
+                    let color = '#6B7280'; // Grey for none
+                    let bgColor = 'rgba(156, 163, 175, 0.1)';
 
-              {policy_data?.policies?.[0]?.maximum_coverage_amount && (
+                    if (status === 'full') {
+                      color = '#10B981'; // Sharp Green
+                      bgColor = 'rgba(16, 185, 129, 0.1)';
+                    } else if (status === 'semi') {
+                      color = '#166534'; // Dark Green
+                      bgColor = 'rgba(22, 101, 52, 0.1)';
+                    }
+
+                    return (
+                      <View
+                        key={item.key}
+                        style={[
+                          styles(theme).featureIconWrapper,
+                          {
+                            borderColor: color,
+                            backgroundColor: bgColor,
+                          },
+                        ]}
+                      >
+                        <item.IconComponent
+                          name={item.icon}
+                          size={15}
+                          color={color}
+                        />
+                      </View>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+
+              {currentPlanDetails?.maximum_coverage_amount && (
                 <View
                   style={[
                     styles(theme).divider,
@@ -383,14 +474,14 @@ I need some help.
                 />
               )}
 
-              {policy_data?.policies?.[0]?.maximum_coverage_amount && (
+              {currentPlanDetails?.maximum_coverage_amount && (
                 <View style={styles(theme).coverageRow}>
                   <View>
                     <Text style={styles(theme).coverageLabel}>
                       COVERAGE AMOUNT
                     </Text>
                     <Text style={styles(theme).coverageAmount}>
-                      SGD {policy_data?.policies?.[0]?.maximum_coverage_amount}
+                      SGD {currentPlanDetails?.maximum_coverage_amount}
                     </Text>
                   </View>
 

@@ -9,11 +9,17 @@ import {
 import AppLayout from '../../components/safeareawrapper';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import Entypo from 'react-native-vector-icons/Entypo';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { Screens } from '../../common/screens';
 import Claim from '../claim/claim';
 import {
   useLazyGet_policyQuery,
   useLazyGetAllWarrantyAndExclusionsQuery,
+  useLazyGetplansQuery,
 } from '../../redux/services';
 import ScreenLoader from '../../components/loader';
 import fontStyle from '../../styles/fontStyle';
@@ -37,6 +43,7 @@ const Policies = ({ navigation, route }: any) => {
   }, [initialTab]);
 
   // Data State for Policy Card (copied from Home logic)
+  const [getplans] = useLazyGetplansQuery();
   const [get_policy, { isLoading }] = useLazyGet_policyQuery();
   const [getAllWarrantyAndExclusions] =
     useLazyGetAllWarrantyAndExclusionsQuery();
@@ -49,6 +56,12 @@ const Policies = ({ navigation, route }: any) => {
   const [policy_data, setPolicy_Data] = useState<POLICY_DATA>(initPolicyData);
   const [benefitsData, setBenefitsData] = useState<any[]>([]);
   const [exclusionsData, setExclusionsData] = useState<any[]>([]);
+  const [currentPlanDetails, setCurrentPlanDetails] = useState<any>(null);
+
+  const isExpired = policy_data?.policies?.[0]?.isExpired;
+  const currentPlan = policy_data?.policies?.[0]?.manifest?.type
+    ? `${policy_data?.policies?.[0]?.manifest?.type} ${policy_data?.policies?.[0]?.manifest?.package}`
+    : '';
 
   useEffect(() => {
     init();
@@ -60,6 +73,7 @@ const Policies = ({ navigation, route }: any) => {
     if (resp?.data?.status && resp?.data?.data) {
       setPolicy_Data(resp?.data?.data);
       currentPolicy = resp?.data?.data?.policies?.[0];
+      fetchPlans(resp?.data?.data);
     }
 
     const res = await getAllWarrantyAndExclusions({});
@@ -103,10 +117,32 @@ const Policies = ({ navigation, route }: any) => {
     }
   };
 
-  const isExpired = policy_data?.policies?.[0]?.isExpired;
-  const currentPlan = policy_data?.policies?.[0]?.manifest?.type
-    ? `${policy_data?.policies?.[0]?.manifest?.type} ${policy_data?.policies?.[0]?.manifest?.package}`
-    : '';
+  const fetchPlans = async (data: POLICY_DATA) => {
+    try {
+      const resp = await getplans(0);
+      if (resp?.data?.success) {
+        const plansList = resp?.data?.data?.rows;
+        if (Array.isArray(plansList) && plansList.length > 0) {
+          const currentPolicy = data?.policies?.[0];
+          if (currentPolicy) {
+            const currentPlanName = currentPolicy?.manifest?.type
+              ? `${currentPolicy?.manifest?.type || ''} ${
+                  currentPolicy?.manifest?.package || ''
+                }`.trim()
+              : '';
+
+            const plan = plansList.find(
+              (p: any) =>
+                p.display_name?.toUpperCase() === currentPlanName.toUpperCase(),
+            );
+            setCurrentPlanDetails(plan);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+    }
+  };
 
   return (
     <AppLayout
@@ -215,54 +251,96 @@ const Policies = ({ navigation, route }: any) => {
                 </View>
 
                 {/* Feature Icons */}
-                {/* <View style={styles(theme).featureIconsContainer}>
+                <View style={styles(theme).featureIconsContainer}>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={{ gap: 12, paddingRight: 20 }}
                   >
                     {[
-                      'heart',
-                      'pulse',
-                      'airplane',
-                      'briefcase',
-                      'shield-checkmark',
-                      'thermometer',
-                      'headset',
-                    ].map((icon, index) => (
-                      <View
-                        key={icon}
-                        style={[
-                          styles(theme).featureIconWrapper,
-                          {
-                            borderColor: '#10B981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                          },
-                        ]}
-                      >
-                        <Icon
-                          name={`${icon}-outline`}
-                          size={15}
-                          color={'#10B981'}
-                        />
-                      </View>
-                    ))}
-                  </ScrollView>
-                </View> */}
+                      {
+                        key: 'medical_expense_coverage',
+                        icon: 'briefcase-medical',
+                        IconComponent: FontAwesome5,
+                      },
+                      {
+                        key: 'accidental_death_disability',
+                        icon: 'shield',
+                        IconComponent: Entypo,
+                      },
+                      {
+                        key: 'travel_disruption_delays',
+                        icon: 'airplane-clock',
+                        IconComponent: MaterialCommunityIcons,
+                      },
+                      {
+                        key: 'baggage_personal_belongings',
+                        icon: 'suitcase-rolling',
+                        IconComponent: FontAwesome6,
+                      },
+                      {
+                        key: 'personal_safety_liability',
+                        icon: 'safety-check',
+                        IconComponent: MaterialIcons,
+                      },
+                      {
+                        key: 'covid_special_extensions',
+                        icon: 'virus-covid',
+                        IconComponent: FontAwesome6,
+                      },
+                      {
+                        key: 'assistance_services',
+                        icon: 'hours-24',
+                        IconComponent: MaterialCommunityIcons,
+                      },
+                    ].map(item => {
+                      const status =
+                        currentPlanDetails?.plan_features?.[item.key] || 'none';
+                      let color = '#6B7280'; // Grey for none
+                      let bgColor = 'rgba(156, 163, 175, 0.1)';
 
-                {policy_data?.policies?.[0]?.maximum_coverage_amount && (
+                      if (status === 'full') {
+                        color = '#10B981'; // Sharp Green
+                        bgColor = 'rgba(16, 185, 129, 0.1)';
+                      } else if (status === 'semi') {
+                        color = '#166534'; // Dark Green
+                        bgColor = 'rgba(22, 101, 52, 0.1)';
+                      }
+
+                      return (
+                        <View
+                          key={item.key}
+                          style={[
+                            styles(theme).featureIconWrapper,
+                            {
+                              borderColor: color,
+                              backgroundColor: bgColor,
+                            },
+                          ]}
+                        >
+                          <item.IconComponent
+                            name={item.icon}
+                            size={15}
+                            color={color}
+                          />
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+
+                {currentPlanDetails?.maximum_coverage_amount && (
                   <View style={styles(theme).divider} />
                 )}
 
-                {policy_data?.policies?.[0]?.maximum_coverage_amount && (
+                {currentPlanDetails?.maximum_coverage_amount && (
                   <View style={styles(theme).coverageRow}>
                     <View>
                       <Text style={styles(theme).coverageLabel}>
-                        COVERAGE LIMIT
+                        COVERAGE AMOUNT
                       </Text>
                       <Text style={styles(theme).coverageAmount}>
-                        SGD{' '}
-                        {policy_data?.policies?.[0]?.maximum_coverage_amount}
+                        SGD {currentPlanDetails?.maximum_coverage_amount}
                       </Text>
                     </View>
 
