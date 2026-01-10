@@ -267,18 +267,11 @@ I need some help.
             </View>
           </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={styles(theme).headerActions}>
             {/* WARNING ICON */}
             <TouchableOpacity
               onPress={() => navigation.navigate(Screens.EmergencyHelp)}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: theme.dark ? '#3B1E1E' : '#FDECEC',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              style={styles(theme).warningButton}
             >
               <Icon name="warning-outline" size={22} color="#EF4444" />
             </TouchableOpacity>
@@ -286,14 +279,7 @@ I need some help.
             {/* NOTIFICATION ICON */}
             <TouchableOpacity
               onPress={() => navigation.navigate(Screens.Notification)}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: theme.dark ? '#1F2937' : '#F5F6FA',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              style={styles(theme).notificationButton}
             >
               <Icon
                 name="notifications-outline"
@@ -346,31 +332,10 @@ I need some help.
                 </View>
               </View>
 
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginTop: 24,
-                  gap: 10,
-                }}
-              >
+              <View style={styles(theme).planLabelRow}>
                 <Text style={styles(theme).planLabel}>CURRENT PLAN</Text>
-                <View
-                  style={{
-                    backgroundColor: theme.dark ? '#0B1320' : '#1F2937',
-                    paddingHorizontal: 8,
-                    paddingVertical: 4,
-                    borderRadius: 6,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: '#9CA3AF',
-                      fontSize: 11,
-                      fontWeight: '700',
-                      letterSpacing: 0.5,
-                    }}
-                  >
+                <View style={styles(theme).policyBadge}>
+                  <Text style={styles(theme).policyNumberText}>
                     {policy_data?.policies?.[0]?.policyNumber}
                   </Text>
                 </View>
@@ -379,55 +344,60 @@ I need some help.
               <Text style={styles(theme).planName}>{currentPlan}</Text>
 
               {/* Feature Icons */}
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 15 }}>
-                {['heart', 'airplane', 'briefcase', 'car', 'person'].map(
-                  (icon, index) => (
-                    <View
-                      key={icon}
-                      style={{
-                        width: 35,
-                        height: 35,
-                        borderRadius: 19,
-                        borderWidth: 1.5,
-                        borderColor: index < 3 ? '#10B981' : '#374151',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor:
-                          index < 3 ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                      }}
-                    >
+              {/* <View style={styles(theme).featureIconsContainer}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles(theme).featureIconsContent}
+                >
+                  {[
+                    'heart',
+                    'pulse',
+                    'airplane',
+                    'briefcase',
+                    'shield-checkmark',
+                    'thermometer',
+                    'headset',
+                  ].map((icon, index) => (
+                    <View key={icon} style={styles(theme).featureIconWrapper}>
                       <Icon
                         name={`${icon}-outline`}
-                        size={18}
-                        color={index < 3 ? '#10B981' : '#4B5563'}
+                        size={15}
+                        color={'#10B981'}
                       />
                     </View>
-                  ),
-                )}
-              </View>
+                  ))}
+                </ScrollView>
+              </View> */}
 
-              <View
-                style={[
-                  styles(theme).divider,
-                  { backgroundColor: theme.dark ? '#0B1320' : '#1F2937' },
-                ]}
-              />
+              {policy_data?.policies?.[0]?.maximum_coverage_amount && (
+                <View
+                  style={[
+                    styles(theme).divider,
+                    { backgroundColor: theme.dark ? '#0B1320' : '#1F2937' },
+                  ]}
+                />
+              )}
 
-              <View style={styles(theme).coverageRow}>
-                <View>
-                  <Text style={styles(theme).coverageLabel}>
-                    COVERAGE AMOUNT
-                  </Text>
-                  <Text style={styles(theme).coverageAmount}>SGD 100,000</Text>
+              {policy_data?.policies?.[0]?.maximum_coverage_amount && (
+                <View style={styles(theme).coverageRow}>
+                  <View>
+                    <Text style={styles(theme).coverageLabel}>
+                      COVERAGE AMOUNT
+                    </Text>
+                    <Text style={styles(theme).coverageAmount}>
+                      SGD {policy_data?.policies?.[0]?.maximum_coverage_amount}
+                    </Text>
+                  </View>
+
+                  <Icon name="chevron-forward" size={24} color="#10B981" />
                 </View>
-
-                <Icon name="chevron-forward" size={24} color="#10B981" />
-              </View>
+              )}
             </TouchableOpacity>
           )}
 
           {/* ---------- ALERTS ---------- */}
-          <ScrollView
+          {/* <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles(theme).alertContainer}
@@ -464,7 +434,7 @@ I need some help.
                 </Text>
               </View>
             </View>
-          </ScrollView>
+          </ScrollView> */}
 
           {/* ---------- SERVICES ---------- */}
           <View style={styles(theme).serviceHeader}>
@@ -519,10 +489,7 @@ I need some help.
       >
         <Image
           source={require('../../../assets/images/WhatsApp.png')}
-          style={{
-            height: metrics.screenWidth * 0.15,
-            width: metrics.screenWidth * 0.15,
-          }}
+          style={styles(theme).fabImage}
         />
       </TouchableOpacity>
     </>
@@ -983,5 +950,65 @@ const styles = (theme: MD3Theme) =>
       fontSize: 14,
       fontWeight: '600',
       color: theme.colors.onSurface,
+    },
+    featureIconsContainer: {
+      marginTop: 15,
+    },
+    featureIconsContent: {
+      gap: 12,
+      paddingRight: 20,
+    },
+    featureIconWrapper: {
+      width: 30,
+      height: 30,
+      borderRadius: 19,
+      borderWidth: 1.5,
+      borderColor: '#10B981',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    warningButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.dark ? '#3B1E1E' : '#FDECEC',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    notificationButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.dark ? '#1F2937' : '#F5F6FA',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    planLabelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 24,
+      gap: 10,
+    },
+    policyBadge: {
+      backgroundColor: theme.dark ? '#0B1320' : '#1F2937',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+    },
+    policyNumberText: {
+      color: '#9CA3AF',
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
+    fabImage: {
+      height: metrics.screenWidth * 0.15,
+      width: metrics.screenWidth * 0.15,
     },
   });

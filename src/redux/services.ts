@@ -303,6 +303,9 @@ export const apiClient = createApi({
         body: request,
       }),
     }),
+    getAllWarrantyAndExclusions: builder.query({
+      query: () => `mobile-data/warranty-and-exclusions`,
+    }),
   }),
 });
 
@@ -349,4 +352,5 @@ export const {
   useLazyPlanPricingQuery,
   useLazyPreferred_merchantsQuery,
   useReferral_code_usersMutation,
+  useLazyGetAllWarrantyAndExclusionsQuery,
 } = apiClient;

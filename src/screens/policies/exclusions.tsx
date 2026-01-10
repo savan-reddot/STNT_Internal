@@ -4,23 +4,17 @@ import AppLayout from '../../components/safeareawrapper';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const EXCLUSIONS_DATA = [
-  { id: '1', title: 'Pre-existing medical conditions (undeclared)' },
-  { id: '2', title: 'Extreme sports / Hazardous activities' },
-  { id: '3', title: 'Self-inflicted injuries or suicide' },
-  { id: '4', title: 'Loss due to negligence / unattended items' },
-  { id: '5', title: 'Travel against medical advice' },
-];
-
-const Exclusions = ({ navigation }: any) => {
+const Exclusions = ({ navigation, route }: any) => {
   const theme = useTheme();
+  const { data } = route.params || {};
+  const listData = data || [];
 
   return (
     <AppLayout title="EXCLUSIONS" onBackPress={() => navigation.goBack()}>
       <View style={styles(theme).container}>
         <View style={styles(theme).card}>
-          {EXCLUSIONS_DATA.map(item => (
-            <View key={item.id} style={styles(theme).row}>
+          {listData.map((item: any, index: number) => (
+            <View key={item.id || index} style={styles(theme).row}>
               <View style={styles(theme).iconContainer}>
                 <Icon name="close-circle-outline" size={20} color="#EF4444" />
               </View>

@@ -25,6 +25,7 @@ import SignatureModal from '../../components/signature_modal';
 import moment from 'moment';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 import RNFS from 'react-native-fs';
+import { Font_Medium } from '../../theme/fonts';
 
 const ClaimDetails = ({ route, navigation }: any) => {
   const theme = useTheme();
@@ -40,6 +41,12 @@ const ClaimDetails = ({ route, navigation }: any) => {
   const [isFinalDeclare, setIsFinalDeclare] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
+
+  function isDateString(val: any) {
+    return (
+      typeof val === 'string' && !isNaN(Date.parse(val)) // valid date
+    );
+  }
 
   useEffect(() => {
     if (claimRequestId) {
@@ -64,7 +71,10 @@ const ClaimDetails = ({ route, navigation }: any) => {
 
   const ClaimReviewDetails = React.memo(
     ({ item, index }: { item: any; index: number }) => {
-      console.log('Claim Review Details');
+      const claimFormData = item?.claimCategory?.claimForm
+        ? JSON.parse(item?.claimCategory?.claimForm?.claimFormData)
+        : null;
+
       return (
         <View
           key={'crd' + index}
@@ -173,6 +183,48 @@ const ClaimDetails = ({ route, navigation }: any) => {
                 </View>
               );
             })}
+
+          {claimFormData && (
+            <View>
+              <Text
+                style={[
+                  fontStyle(theme).headingSmall,
+                  {
+                    fontSize: 18,
+                    fontWeight: '800',
+                    color: theme.colors.onBackground,
+                    marginHorizontal: metrics.baseMargin,
+                  },
+                ]}
+              >
+                Claim Information
+              </Text>
+
+              {Object.entries(claimFormData).map(([label, value]) => {
+                let displayValue;
+                if (isDateString(value)) {
+                  displayValue = moment(value, 'DD-MM-YYYY').format(
+                    'DD-MM-YYYY',
+                  );
+                } else if (typeof value === 'object' && 'status' in value) {
+                  displayValue =
+                    value.status && value.status === true ? 'Yes' : 'No';
+                } else if (typeof value === 'object') {
+                  displayValue = Object.entries(value)
+                    .map(([k, v]) => `${v}`)
+                    .join('  ');
+                } else {
+                  displayValue = String(value);
+                }
+                return (
+                  <View key={label} style={styles(theme).row}>
+                    <Text style={styles(theme).label}>{label}</Text>
+                    <Text style={styles(theme).value}>{displayValue}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </View>
       );
     },
@@ -1037,7 +1089,24 @@ const styles = (theme: MD3Theme) =>
       justifyContent: 'center',
       backgroundColor: theme.colors.background,
     },
-    label: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: metrics.baseMargin,
+      paddingHorizontal: metrics.doubleMargin,
+      borderBottomWidth: 1,
+      borderBottomColor: '#eee',
+    },
+    label: { flex: 1, fontSize: 16, fontWeight: '600', marginBottom: 0 },
+    value: {
+      flex: 1,
+      fontSize: 14,
+      color: '#000',
+      textAlign: 'right',
+      fontFamily: Font_Medium,
+      fontWeight: 'medium',
+    },
     signBox: {
       borderWidth: 1,
       borderColor: theme.dark ? '#444' : '#ccc',

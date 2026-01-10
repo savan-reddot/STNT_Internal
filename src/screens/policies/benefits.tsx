@@ -4,23 +4,10 @@ import AppLayout from '../../components/safeareawrapper';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const BENEFITS_DATA = [
-  'Emergency Medical Evacuation (Unlimited)',
-  'Overseas Hospitalization Expenses',
-  'Trip Cancellation & Curtailment',
-  'Lost Baggage Reimbursement',
-  'Personal Liability Coverage',
-  'Travel Delay Allowance',
-  'Emergency Dental Care',
-  'Repatriation of Remains',
-  'COVID-19 Diagnosis & Treatment',
-  '24/7 Global Assistance Hotline',
-  'Compassionate Visit',
-  'Accidental Death & Disablement',
-];
-
-const Benefits = ({ navigation }: any) => {
+const Benefits = ({ navigation, route }: any) => {
   const theme = useTheme();
+  const { data } = route.params || {};
+  const listData = data || [];
 
   return (
     <AppLayout title="BENEFITS" onBackPress={() => navigation.goBack()}>
@@ -29,12 +16,14 @@ const Benefits = ({ navigation }: any) => {
         contentContainerStyle={{ padding: 20 }}
       >
         <View style={styles(theme).card}>
-          {BENEFITS_DATA.map((item, index) => (
+          {listData.map((item: any, index: number) => (
             <View key={index} style={styles(theme).row}>
               <View style={styles(theme).iconContainer}>
                 <Icon name="checkmark" size={16} color="#10B981" />
               </View>
-              <Text style={styles(theme).text}>{item}</Text>
+              <Text style={styles(theme).text}>
+                {item.title || item.description || item}
+              </Text>
             </View>
           ))}
         </View>

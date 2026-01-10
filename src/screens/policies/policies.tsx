@@ -11,7 +11,10 @@ import { MD3Theme, useTheme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Screens } from '../../common/screens';
 import Claim from '../claim/claim';
-import { useLazyGet_policyQuery } from '../../redux/services';
+import {
+  useLazyGet_policyQuery,
+  useLazyGetAllWarrantyAndExclusionsQuery,
+} from '../../redux/services';
 import ScreenLoader from '../../components/loader';
 import fontStyle from '../../styles/fontStyle';
 
@@ -35,6 +38,8 @@ const Policies = ({ navigation, route }: any) => {
 
   // Data State for Policy Card (copied from Home logic)
   const [get_policy, { isLoading }] = useLazyGet_policyQuery();
+  const [getAllWarrantyAndExclusions] =
+    useLazyGetAllWarrantyAndExclusionsQuery();
   const initPolicyData: POLICY_DATA = {
     policies: [],
     totalPolicies: 0,
@@ -42,6 +47,8 @@ const Policies = ({ navigation, route }: any) => {
     expiredPolicies: 0,
   };
   const [policy_data, setPolicy_Data] = useState<POLICY_DATA>(initPolicyData);
+  const [benefitsData, setBenefitsData] = useState<any[]>([]);
+  const [exclusionsData, setExclusionsData] = useState<any[]>([]);
 
   useEffect(() => {
     init();
@@ -49,8 +56,50 @@ const Policies = ({ navigation, route }: any) => {
 
   const init = async () => {
     const resp = await get_policy({ category: 'all' });
+    let currentPolicy = null;
     if (resp?.data?.status && resp?.data?.data) {
       setPolicy_Data(resp?.data?.data);
+      currentPolicy = resp?.data?.data?.policies?.[0];
+    }
+
+    const res = await getAllWarrantyAndExclusions({});
+    const rows = res?.data?.data?.rows || [];
+
+    if (currentPolicy) {
+      const planType = currentPolicy.manifest?.type || '';
+      const planPackage = currentPolicy.manifest?.package || '';
+      const currentPlanName = `${planType} ${planPackage}`.trim();
+
+      const myBenefits: any[] = [];
+      const myExclusions: any[] = [];
+
+      rows.forEach((row: any) => {
+        let visibility: string[] = [];
+        try {
+          visibility = JSON.parse(row.plan_visibility || '[]');
+        } catch (e) {
+          console.error('Error parsing plan_visibility', e);
+        }
+
+        // Normalize for comparison: replace underscores with spaces, uppercase
+        const isVisible = visibility.some((v: string) => {
+          const normalizedV = v.replace(/_/g, ' ').toUpperCase();
+          const normalizedPlan = currentPlanName.toUpperCase();
+          return normalizedV === normalizedPlan;
+        });
+
+        if (isVisible) {
+          if (row.category === 'Warranty') {
+            // Warranty maps to Benefits based on data content (positive coverage)
+            if (row.data_list) myBenefits.push(...row.data_list);
+          } else if (row.category === 'Exclusion') {
+            if (row.data_list) myExclusions.push(...row.data_list);
+          }
+        }
+      });
+
+      setBenefitsData(myBenefits);
+      setExclusionsData(myExclusions);
     }
   };
 
@@ -166,50 +215,64 @@ const Policies = ({ navigation, route }: any) => {
                 </View>
 
                 {/* Feature Icons */}
-                <View style={styles(theme).featureIconsContainer}>
-                  {['heart', 'airplane', 'briefcase', 'car', 'person'].map(
-                    (icon, index) => (
+                {/* <View style={styles(theme).featureIconsContainer}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 12, paddingRight: 20 }}
+                  >
+                    {[
+                      'heart',
+                      'pulse',
+                      'airplane',
+                      'briefcase',
+                      'shield-checkmark',
+                      'thermometer',
+                      'headset',
+                    ].map((icon, index) => (
                       <View
                         key={icon}
                         style={[
                           styles(theme).featureIconWrapper,
                           {
-                            borderColor: index < 3 ? '#10B981' : '#374151',
-                            backgroundColor:
-                              index < 3
-                                ? 'rgba(16, 185, 129, 0.1)'
-                                : 'transparent',
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
                           },
                         ]}
                       >
                         <Icon
                           name={`${icon}-outline`}
-                          size={18}
-                          color={index < 3 ? '#10B981' : '#4B5563'}
+                          size={15}
+                          color={'#10B981'}
                         />
                       </View>
-                    ),
-                  )}
-                </View>
+                    ))}
+                  </ScrollView>
+                </View> */}
 
-                <View style={styles(theme).divider} />
+                {policy_data?.policies?.[0]?.maximum_coverage_amount && (
+                  <View style={styles(theme).divider} />
+                )}
 
-                <View style={styles(theme).coverageRow}>
-                  <View>
-                    <Text style={styles(theme).coverageLabel}>
-                      COVERAGE LIMIT
-                    </Text>
-                    <Text style={styles(theme).coverageAmount}>
-                      SGD 100,000
-                    </Text>
+                {policy_data?.policies?.[0]?.maximum_coverage_amount && (
+                  <View style={styles(theme).coverageRow}>
+                    <View>
+                      <Text style={styles(theme).coverageLabel}>
+                        COVERAGE LIMIT
+                      </Text>
+                      <Text style={styles(theme).coverageAmount}>
+                        SGD{' '}
+                        {policy_data?.policies?.[0]?.maximum_coverage_amount}
+                      </Text>
+                    </View>
+
+                    <Icon
+                      name="document-text-outline"
+                      size={24}
+                      color="#6B7280"
+                    />
                   </View>
-
-                  <Icon
-                    name="document-text-outline"
-                    size={24}
-                    color="#6B7280"
-                  />
-                </View>
+                )}
               </View>
             ) : (
               <View style={styles(theme).noPolicyContainer}>
@@ -221,18 +284,26 @@ const Policies = ({ navigation, route }: any) => {
             <View style={styles(theme).actionButtonsRow}>
               <TouchableOpacity
                 style={styles(theme).actionButton}
-                onPress={() => navigation.navigate(Screens.Exclusions)}
+                onPress={() =>
+                  navigation.navigate(Screens.Exclusions, {
+                    data: exclusionsData,
+                  })
+                }
               >
                 <Icon name="close-circle-outline" size={24} color="#9CA3AF" />
                 <View>
-                  <Text style={styles(theme).actionNumber}>5</Text>
+                  <Text style={styles(theme).actionNumber}>
+                    {exclusionsData.length}
+                  </Text>
                   <Text style={styles(theme).actionLabel}>EXCLUSIONS</Text>
                 </View>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles(theme).actionButton}
-                onPress={() => navigation.navigate(Screens.Benefits)}
+                onPress={() =>
+                  navigation.navigate(Screens.Benefits, { data: benefitsData })
+                }
               >
                 <Icon
                   name="checkmark-circle-outline"
@@ -240,7 +311,9 @@ const Policies = ({ navigation, route }: any) => {
                   color="#9CA3AF"
                 />
                 <View>
-                  <Text style={styles(theme).actionNumber}>12</Text>
+                  <Text style={styles(theme).actionNumber}>
+                    {benefitsData.length}
+                  </Text>
                   <Text style={styles(theme).actionLabel}>BENEFITS</Text>
                 </View>
               </TouchableOpacity>
@@ -437,13 +510,11 @@ const styles = (theme: MD3Theme) =>
       letterSpacing: 0.5,
     },
     featureIconsContainer: {
-      flexDirection: 'row',
-      gap: 12,
       marginTop: 24,
     },
     featureIconWrapper: {
-      width: 38,
-      height: 38,
+      width: 30,
+      height: 30,
       borderRadius: 19,
       borderWidth: 1.5,
       alignItems: 'center',

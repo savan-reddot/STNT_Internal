@@ -81,8 +81,8 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
 
       <View style={styles.section}>
         {renderSectionHeader('Travel Details')}
-        {renderRow('Date of departure', values.departureDate)}
-        {renderRow('Date of arrival', values.arrivalDate)}
+        {renderRow('Date of departure', formatDateForDisplay(values.departureDate))}
+        {renderRow('Date of arrival', formatDateForDisplay(values.arrivalDate))}
         {renderRow('No of days', values.numberOfDays)}
         {renderRow('Umrah coverage plan', values.selectedPlanDisplayName)}
         {renderRow('Country of travel', values.destination)}

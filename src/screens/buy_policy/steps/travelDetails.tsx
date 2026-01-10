@@ -18,7 +18,7 @@ import {
 } from 'react-hook-form';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { DatePickerModal } from 'react-native-paper-dates';
+import { DatePickerModal, TimePickerModal } from 'react-native-paper-dates';
 import fontStyle from '../../../styles/fontStyle';
 import { metrics } from '../../../utils/metrics';
 import { globalStyle } from '../../../utils/globalStyles';
@@ -59,7 +59,10 @@ interface PlanPricingData {
   childPricingRaw?: any;
 }
 
-const formatDateForDisplay = (dateString: string): string => {
+const formatDateForDisplay = (
+  dateString: string,
+  includeTime: boolean = false,
+): string => {
   if (!dateString) return '';
   try {
     // Handle ISO string (full timestamp) format
@@ -69,7 +72,9 @@ const formatDateForDisplay = (dateString: string): string => {
     ) {
       const date = new Date(dateString);
       if (!isNaN(date.getTime())) {
-        return format(date, 'dd/MM/yyyy');
+        return includeTime
+          ? format(date, 'dd/MM/yyyy HH:mm')
+          : format(date, 'dd/MM/yyyy');
       }
     }
     // Parse YYYY-MM-DD format (legacy support)
@@ -167,6 +172,11 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
     departureDate: '',
   });
   const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [tempSelectedDate, setTempSelectedDate] = useState<Date | null>(null);
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [activeFieldForPicker, setActiveFieldForPicker] = useState<
+    'modal' | 'flightDepartureDateDeparture' | 'flightDepartureDateArrival'
+  >('modal');
 
   const selectedDestination = watch('destination');
   const selectedPlan = watch('umrahCoveragePlan');
@@ -506,39 +516,6 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
     setValue('additionalFlights', currentFlights);
   };
 
-  const formatDateForModal = (dateString: string): string => {
-    if (!dateString) return '';
-    try {
-      // Handle ISO string (full timestamp) format
-      if (
-        dateString.includes('T') &&
-        (dateString.includes('Z') || dateString.includes('+'))
-      ) {
-        const date = new Date(dateString);
-        if (!isNaN(date.getTime())) {
-          return format(date, 'dd/MM/yyyy');
-        }
-      }
-      // Parse YYYY-MM-DD format (legacy support)
-      const date = parse(dateString, 'yyyy-MM-dd', new Date());
-      if (!isNaN(date.getTime())) {
-        return format(date, 'dd/MM/yyyy');
-      }
-      // Try parsing as DD-MM-YYYY if YYYY-MM-DD fails
-      const parts = dateString.split('-');
-      if (parts.length === 3 && parts[0].length === 2) {
-        const [day, month, year] = parts;
-        const parsedDate = new Date(`${year}-${month}-${day}`);
-        if (!isNaN(parsedDate.getTime())) {
-          return format(parsedDate, 'dd/MM/yyyy');
-        }
-      }
-      return dateString;
-    } catch {
-      return dateString;
-    }
-  };
-
   const parseDateForPicker = (dateString: string): Date | undefined => {
     if (!dateString) return undefined;
     try {
@@ -657,17 +634,20 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
           render={({ field: { value } }) => (
             <View style={styles(theme).fieldContainer}>
               <Text style={fontStyle(theme).headingSmall}>
-                Flight Departure Date (Departure)
+                Flight Departure Date/Time (Departure)
                 <Text style={{ color: 'red' }}>*</Text>
               </Text>
               <TouchableOpacity
-                onPress={() => openDatePicker('flightDepartureDateDeparture')}
+                onPress={() => {
+                  setActiveFieldForPicker('flightDepartureDateDeparture');
+                  setDatePickerVisible(true);
+                }}
                 activeOpacity={0.7}
               >
                 <TextInput
                   mode="outlined"
-                  placeholder="DD/MM/YYYY"
-                  value={formatDateForModal(value)}
+                  placeholder="DD/MM/YYYY HH:mm"
+                  value={formatDateForDisplay(value, true)}
                   editable={false}
                   pointerEvents="box-none"
                   style={{ height: metrics.screenWidth * 0.13 }}
@@ -675,9 +655,10 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                   right={
                     <TextInput.Icon
                       icon="calendar"
-                      onPress={() =>
-                        openDatePicker('flightDepartureDateDeparture')
-                      }
+                      onPress={() => {
+                        setActiveFieldForPicker('flightDepartureDateDeparture');
+                        setDatePickerVisible(true);
+                      }}
                     />
                   }
                   error={!!errors.flightDepartureDateDeparture}
@@ -765,17 +746,20 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
           render={({ field: { value } }) => (
             <View style={styles(theme).fieldContainer}>
               <Text style={fontStyle(theme).headingSmall}>
-                Flight Departure Date (Arrival)
+                Flight Departure Date/Time (Arrival)
                 <Text style={{ color: 'red' }}>*</Text>
               </Text>
               <TouchableOpacity
-                onPress={() => openDatePicker('flightDepartureDateArrival')}
+                onPress={() => {
+                  setActiveFieldForPicker('flightDepartureDateArrival');
+                  setDatePickerVisible(true);
+                }}
                 activeOpacity={0.7}
               >
                 <TextInput
                   mode="outlined"
-                  placeholder="DD/MM/YYYY"
-                  value={formatDateForModal(value)}
+                  placeholder="DD/MM/YYYY HH:mm"
+                  value={formatDateForDisplay(value, true)}
                   editable={false}
                   pointerEvents="box-none"
                   style={{ height: metrics.screenWidth * 0.13 }}
@@ -783,9 +767,10 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                   right={
                     <TextInput.Icon
                       icon="calendar"
-                      onPress={() =>
-                        openDatePicker('flightDepartureDateArrival')
-                      }
+                      onPress={() => {
+                        setActiveFieldForPicker('flightDepartureDateArrival');
+                        setDatePickerVisible(true);
+                      }}
                     />
                   }
                   error={!!errors.flightDepartureDateArrival}
@@ -816,7 +801,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                   Flight Number
                 </Text>
                 <Text style={styles(theme).flightsTableHeaderText}>
-                  Departure Date
+                  Departure Date/Time
                 </Text>
                 <View style={styles(theme).flightsTableActions} />
               </View>
@@ -833,7 +818,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                     {flight.flight_number}
                   </Text>
                   <Text style={styles(theme).flightsTableCell}>
-                    {formatDateForModal(flight.departure_date)}
+                    {formatDateForDisplay(flight.departure_date, true)}
                   </Text>
                   <View style={styles(theme).flightsTableActions}>
                     <TouchableOpacity
@@ -1108,10 +1093,11 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
 
                 <View style={styles(theme).fieldContainer}>
                   <Text style={fontStyle(theme).headingSmall}>
-                    Departure Date<Text style={{ color: 'red' }}>*</Text>
+                    Departure Date/Time<Text style={{ color: 'red' }}>*</Text>
                   </Text>
                   <TouchableOpacity
                     onPress={() => {
+                      setActiveFieldForPicker('modal');
                       setShowFlightModal(false);
                       setTimeout(() => {
                         setDatePickerVisible(true);
@@ -1121,8 +1107,11 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                   >
                     <TextInput
                       mode="outlined"
-                      placeholder="DD/MM/YYYY"
-                      value={formatDateForModal(flightModalData.departureDate)}
+                      placeholder="DD/MM/YYYY HH:mm"
+                      value={formatDateForDisplay(
+                        flightModalData.departureDate,
+                        true,
+                      )}
                       editable={false}
                       pointerEvents="box-none"
                       style={{ height: metrics.screenWidth * 0.13 }}
@@ -1131,6 +1120,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                         <TextInput.Icon
                           icon="calendar"
                           onPress={() => {
+                            setActiveFieldForPicker('modal');
                             setShowFlightModal(false);
                             setTimeout(() => {
                               setDatePickerVisible(true);
@@ -1177,24 +1167,77 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
           visible={datePickerVisible}
           onDismiss={() => {
             setDatePickerVisible(false);
-            setTimeout(() => {
-              setShowFlightModal(true);
-            }, 500);
-          }}
-          date={parseDateForPicker(flightModalData.departureDate) || new Date()}
-          onConfirm={({ date }) => {
-            if (date) {
-              const formattedDate = format(date, 'yyyy-MM-dd');
-              setFlightModalData(prev => ({
-                ...prev,
-                departureDate: formattedDate,
-              }));
-              setDatePickerVisible(false);
+            if (activeFieldForPicker === 'modal') {
               setTimeout(() => {
                 setShowFlightModal(true);
               }, 500);
             }
           }}
+          date={
+            activeFieldForPicker === 'modal'
+              ? parseDateForPicker(flightModalData.departureDate) || new Date()
+              : activeFieldForPicker === 'flightDepartureDateDeparture'
+              ? parseDateForPicker(watch('flightDepartureDateDeparture')) ||
+                new Date()
+              : activeFieldForPicker === 'flightDepartureDateArrival'
+              ? parseDateForPicker(watch('flightDepartureDateArrival')) ||
+                new Date()
+              : new Date()
+          }
+          onConfirm={({ date }) => {
+            if (date) {
+              setTempSelectedDate(date);
+              setDatePickerVisible(false);
+              setTimeout(() => {
+                setTimePickerVisible(true);
+              }, 500);
+            }
+          }}
+        />
+
+        <TimePickerModal
+          visible={timePickerVisible}
+          onDismiss={() => {
+            setTimePickerVisible(false);
+            if (activeFieldForPicker === 'modal') {
+              setTimeout(() => {
+                setShowFlightModal(true);
+              }, 500);
+            }
+          }}
+          onConfirm={({ hours, minutes }) => {
+            setTimePickerVisible(false);
+            if (tempSelectedDate) {
+              const combinedDate = new Date(tempSelectedDate);
+              combinedDate.setHours(hours);
+              combinedDate.setMinutes(minutes);
+              const formattedDate = combinedDate.toISOString();
+
+              if (activeFieldForPicker === 'modal') {
+                setFlightModalData(prev => ({
+                  ...prev,
+                  departureDate: formattedDate,
+                }));
+                setTimeout(() => {
+                  setShowFlightModal(true);
+                }, 500);
+              } else if (
+                activeFieldForPicker === 'flightDepartureDateDeparture'
+              ) {
+                setValue('flightDepartureDateDeparture', formattedDate, {
+                  shouldValidate: true,
+                });
+              } else if (
+                activeFieldForPicker === 'flightDepartureDateArrival'
+              ) {
+                setValue('flightDepartureDateArrival', formattedDate, {
+                  shouldValidate: true,
+                });
+              }
+            }
+          }}
+          hours={12}
+          minutes={0}
         />
       </View>
     </KeyboardAwareContainer>
