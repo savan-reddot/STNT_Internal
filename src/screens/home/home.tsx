@@ -239,7 +239,11 @@ I need some help.
   return (
     <>
       <View
-        style={{ paddingTop: top, backgroundColor: theme.colors.background }}
+        style={{
+          flex: 1,
+          paddingTop: top,
+          backgroundColor: theme.colors.background,
+        }}
       >
         <ScreenLoader visible={isLoading} />
 
@@ -462,7 +466,9 @@ I need some help.
                 <View
                   style={[
                     styles(theme).iconWrapper,
-                    { backgroundColor: theme.dark ? '#1F2937' : item.bgColor },
+                    {
+                      backgroundColor: theme.dark ? '#1F2937' : item.bgColor,
+                    },
                   ]}
                 >
                   <Icon name={item.icon} size={28} color={item.iconColor} />
@@ -808,7 +814,7 @@ const styles = (theme: MD3Theme) =>
       borderRadius: 24,
       marginHorizontal: 20,
       padding: 20,
-      marginTop: 10,
+      marginTop: 20,
     },
     planHeader: {
       flexDirection: 'row',

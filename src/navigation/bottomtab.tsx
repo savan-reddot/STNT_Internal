@@ -33,9 +33,7 @@ const BottomTab = () => {
               iconName = focused ? 'home' : 'home-outline';
               break;
             case Screens.Certification:
-              iconName = focused
-                ? 'card-account-details'
-                : 'card-account-details-outline';
+              iconName = focused ? 'account' : 'account-outline';
               break;
             case Screens.Policies:
               iconName = focused ? 'shield-check' : 'shield-check-outline';
