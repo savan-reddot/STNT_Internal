@@ -266,13 +266,13 @@ I need some help.
       bgColor: '#FFF8E8',
       onPress: () => navigation.navigate(Screens.PreferredMerchants),
     },
-    {
-      id: 6,
-      title: 'Vault',
-      icon: 'lock-closed-outline',
-      iconColor: '#5A67F2',
-      bgColor: '#F1F3FF',
-    },
+    // {
+    //   id: 6,
+    //   title: 'Vault',
+    //   icon: 'lock-closed-outline',
+    //   iconColor: '#5A67F2',
+    //   bgColor: '#F1F3FF',
+    // },
   ];
 
   return (
