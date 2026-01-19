@@ -90,7 +90,7 @@ const VirtualCard = () => {
   const details = metaData.policyDetails;
 
   return (
-    <AppLayout title="E-Pass">
+    <AppLayout title="E-Card">
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <TouchableOpacity activeOpacity={0.9} onPress={flipCard}>
           <View style={styles.cardWrapper}>
@@ -175,7 +175,7 @@ const VirtualCard = () => {
               ]}
             >
               <View style={styles.backInner}>
-                <Text style={styles.encryptedText}>ENCRYPTED E-PASS</Text>
+                <Text style={styles.encryptedText}>ENCRYPTED E-CARD</Text>
 
                 <View style={styles.qrBox}>
                   <QRCode value={metaData?.virtualCard?.urlPath} size={180} />
