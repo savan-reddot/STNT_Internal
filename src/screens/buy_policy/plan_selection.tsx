@@ -203,21 +203,16 @@ const PlanSelection = ({ navigation }: any) => {
             if (!pricing) {
               return null;
             }
-            const isDeluxe = index % 2 !== 0; // Simple logic
-            const cardStyle = isDeluxe
-              ? styles(theme).cardDark
-              : styles(theme).cardLight;
-            const textStyle = isDeluxe
-              ? styles(theme).textLight
-              : styles(theme).textDark;
-            const buttonStyle = isDeluxe
-              ? styles(theme).buttonGold
-              : styles(theme).buttonBlue;
-            const buttonText = isDeluxe ? '#000' : '#fff';
+
+            // Uniform Styling (removed Deluxe distinction)
+            const cardStyle = styles(theme).cardLight;
+            const textStyle = styles(theme).textDark;
+            const buttonStyle = styles(theme).buttonBlue;
+            const buttonText = '#fff';
 
             // Get age from pricing raw data or default to 18
             const minAge = pricing?.adultPricingRaw?.min_age || 18;
-            const badgeColor = isDeluxe ? '#F59E0B' : '#3B82F6';
+            const badgeColor = '#3B82F6';
 
             return (
               <View
@@ -241,28 +236,17 @@ const PlanSelection = ({ navigation }: any) => {
                       width: 50,
                       height: 50,
                       borderRadius: 16,
-                      backgroundColor: isDeluxe
-                        ? 'rgba(255,255,255,0.1)'
-                        : '#EFF6FF',
+                      backgroundColor: '#EFF6FF',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    {isDeluxe ? (
-                      <IonIcon
-                        name="star"
-                        size={26}
-                        color="#F59E0B"
-                        style={{ opacity: 1 }}
-                      />
-                    ) : (
-                      <IonIcon
-                        name="shield-outline"
-                        size={26}
-                        color="#2563EB"
-                        style={{ opacity: 1 }}
-                      />
-                    )}
+                    <IonIcon
+                      name="shield-outline"
+                      size={26}
+                      color="#2563EB"
+                      style={{ opacity: 1 }}
+                    />
                   </View>
                 </View>
 
@@ -331,9 +315,7 @@ const PlanSelection = ({ navigation }: any) => {
                     style={[
                       styles(theme).outlineBtn,
                       {
-                        borderColor: isDeluxe
-                          ? 'rgba(255,255,255,0.2)'
-                          : '#E5E7EB',
+                        borderColor: '#E5E7EB',
                       },
                     ]}
                     onPress={() =>
@@ -342,11 +324,7 @@ const PlanSelection = ({ navigation }: any) => {
                   >
                     <Text
                       style={{
-                        color: theme.dark
-                          ? '#fff'
-                          : isDeluxe
-                          ? '#fff'
-                          : '#374151',
+                        color: theme.dark ? '#fff' : '#374151',
                         fontWeight: '600',
                         fontSize: 13,
                       }}

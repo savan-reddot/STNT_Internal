@@ -57,7 +57,7 @@ const TrustedHospitals = ({ navigation }: any) => {
   };
 
   return (
-    <AppLayout title="Hospitals" onBackPress={() => navigation.pop()}>
+    <AppLayout title="Partnered Hospitals" onBackPress={() => navigation.pop()}>
       <View style={{ flex: 1 }}>
         {/* Tabs */}
         <View style={styles(theme).tabs}>
@@ -144,6 +144,21 @@ const TrustedHospitals = ({ navigation }: any) => {
                           {item?.address}
                         </Text>
                       </View>
+
+                      {item?.workingHours && (
+                        <View
+                          style={[styles(theme).addressRow, { marginTop: 5 }]}
+                        >
+                          <Icon
+                            name="clock-time-four"
+                            size={16}
+                            color="#9CA3AF"
+                          />
+                          <Text style={styles(theme).address}>
+                            {item?.workingHours}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </View>
 

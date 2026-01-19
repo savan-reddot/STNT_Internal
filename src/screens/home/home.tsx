@@ -227,7 +227,7 @@ I need some help.
   const SERVICES = [
     {
       id: 1,
-      title: 'Policy',
+      title: 'Purchase Insurance',
       icon: 'shield-outline',
       iconColor: '#3BA66B',
       bgColor: '#EAFBF2',
@@ -244,7 +244,7 @@ I need some help.
     },
     {
       id: 3,
-      title: 'Emergency',
+      title: 'Hotline',
       icon: 'call-outline',
       iconColor: '#E24A3B',
       bgColor: '#FFF0EE',
@@ -252,7 +252,7 @@ I need some help.
     },
     {
       id: 4,
-      title: 'Hospitals',
+      title: 'Partnered Hospitals',
       icon: 'heart-outline',
       iconColor: '#D84A7A',
       bgColor: '#FFF1F6',
@@ -312,12 +312,12 @@ I need some help.
 
           <View style={styles(theme).headerActions}>
             {/* WARNING ICON */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => navigation.navigate(Screens.EmergencyHelp)}
               style={styles(theme).warningButton}
             >
               <Icon name="warning-outline" size={22} color="#EF4444" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {/* NOTIFICATION ICON */}
             <TouchableOpacity
@@ -1047,6 +1047,8 @@ const styles = (theme: MD3Theme) =>
       fontSize: 14,
       fontWeight: '600',
       color: theme.colors.onSurface,
+      textAlign: 'center',
+      paddingHorizontal: 5,
     },
     featureIconsContainer: {
       marginTop: 15,

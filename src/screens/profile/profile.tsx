@@ -160,7 +160,7 @@ const Profile = ({ navigation }: any) => {
               {user?.firstName} {user?.lastName}
             </Text>
             <Text style={styles(theme).userDetails}>
-              MEMBER • {user?.id || 'N/A'}
+              ID Number • {user?.id || 'N/A'}
             </Text>
 
             <TouchableOpacity

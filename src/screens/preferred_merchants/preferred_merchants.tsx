@@ -311,6 +311,10 @@ const PreferredMerchants = ({ navigation }: any) => {
       titleExtraStyle={{ marginLeft: 70 }}
     >
       <View style={{ flex: 1 }}>
+        <Text style={styles(theme).instructionText}>
+          Simply show your e-card to our affiliated shops to enjoy exclusive
+          discounts/benefits!
+        </Text>
         {/* Category Tabs */}
         {categoryOptions.length > 0 && (
           <View style={styles(theme).categoryTabsWrapper}>
@@ -389,12 +393,10 @@ const PreferredMerchants = ({ navigation }: any) => {
                   style={styles(theme).cardImage}
                   imageStyle={styles(theme).cardImageRadius}
                 >
-                  {/* Rating */}
-                  {hotel?.rating && (
+                  {hotel?.discount_offer && (
                     <View style={styles(theme).ratingBadge}>
-                      <Icon name="star" size={12} color="#FFC107" />
                       <Text style={styles(theme).ratingText}>
-                        {hotel.rating}
+                        {hotel.discount_offer}
                       </Text>
                     </View>
                   )}
@@ -668,7 +670,7 @@ const styles = (theme: MD3Theme) =>
     ratingBadge: {
       position: 'absolute',
       right: metrics.baseMargin,
-      top: metrics.baseMargin,
+      bottom: metrics.baseMargin,
       backgroundColor: '#1F2937',
       flexDirection: 'row',
       alignItems: 'center',
@@ -778,5 +780,16 @@ const styles = (theme: MD3Theme) =>
       color: '#FFFFFF',
       fontWeight: '600',
       marginLeft: 6,
+    },
+    instructionText: {
+      marginHorizontal: metrics.doubleMargin,
+      marginTop: metrics.baseMargin,
+      marginBottom: metrics.smallMargin,
+      fontSize: 14,
+      fontFamily: Font_Bold,
+      color: theme.colors.primary,
+      textAlign: 'center',
+      lineHeight: 20,
+      fontWeight: 'bold',
     },
   });
