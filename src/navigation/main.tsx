@@ -1,6 +1,7 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text } from 'react-native';
 import React from 'react';
+import ResetPassword from '../screens/login/reset_password';
 import Login from '../screens/login/login';
 import Register from '../screens/register/register';
 import Home from '../screens/home/home';
@@ -41,6 +42,7 @@ const MainStack = () => {
       <Stack.Screen name={Screens.Splash} component={Splash} />
       <Stack.Screen name={Screens.Onboard} component={Onboard} />
       <Stack.Screen name={Screens.Login} component={Login} />
+      <Stack.Screen name={Screens.ResetPassword} component={ResetPassword} />
       <Stack.Screen name={Screens.Register} component={Register} />
       <Stack.Screen name={Screens.BottomTab} component={BottomTab} />
       <Stack.Screen name={Screens.Home} component={Home} />

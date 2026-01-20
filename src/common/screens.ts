@@ -28,4 +28,5 @@ export const Screens = {
   PolicyHistory: 'PolicyHistory',
   Benefits: 'Benefits',
   Exclusions: 'Exclusions',
+  ResetPassword: 'ResetPassword',
 } as const;

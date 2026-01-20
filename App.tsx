@@ -18,6 +18,7 @@ import { navigationRef } from './src/utils/navigationRef';
 
 import { useAppSelector } from './src/redux/hooks';
 import { getTheme } from './src/redux/reducer';
+import { useDeepLink } from './src/hooks/useDeepLink';
 
 const AppContent = () => {
   const scheme = useColorScheme();
@@ -26,6 +27,7 @@ const AppContent = () => {
 
   const isDark = storedTheme ? storedTheme === 'dark' : scheme === 'dark';
   const activeTheme = isDark ? darkTheme : lightTheme;
+  const linking = useDeepLink();
 
   return (
     <View
@@ -35,7 +37,10 @@ const AppContent = () => {
       }}
     >
       <PaperProvider theme={activeTheme}>
-        <NavigationContainer ref={navigationRef}>
+        <NavigationContainer
+          ref={navigationRef}
+          linking={linking} // Use the linking object returned by the hook
+        >
           <MainStack />
           <Toast config={toastConfig} />
         </NavigationContainer>

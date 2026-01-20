@@ -230,6 +230,13 @@ export const apiClient = createApi({
         body: request,
       }),
     }),
+    resetPasswordConfirm: builder.mutation({
+      query: (request: any) => ({
+        url: 'mobile-auth/reset-password',
+        method: 'POST',
+        body: request,
+      }),
+    }),
     forgot_password: builder.mutation({
       query: (request: any) => ({
         url: 'mobile-auth/forgot-password',
@@ -315,6 +322,7 @@ export const {
   useRegisterMutation,
   useLazyGet_claimsQuery,
   useReset_passwordMutation,
+  useResetPasswordConfirmMutation,
   useUpload_signatureMutation,
   useLazyEmergency_contactsQuery,
   useLazyTrusted_hospitalsQuery,

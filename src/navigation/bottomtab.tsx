@@ -54,9 +54,16 @@ const BottomTab = () => {
           paddingVertical: metrics.doubleMargin,
           // borderRadius: metrics.baseRadius, // Optional: might want to remove border radius or keep it
           borderTopWidth: 0, // Remove top border if desired for cleaner look
-          elevation: 0,
           height: metrics.screenHeight * 0.09,
           borderTopColor: theme.dark ? '#333' : '#E5E7EB',
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
         },
         tabBarLabelStyle: {
           fontSize: 14,
