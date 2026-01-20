@@ -8,6 +8,7 @@ import { showErrorToast } from '../utils/toastUtils';
 import fontStyle from '../styles/fontStyle';
 import UButton from './custombutton';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import ScreenLoader from './loader';
 
 interface ForgotPasswordProps {
   isVisible: boolean;
@@ -68,6 +69,7 @@ const ForgotPassword = ({
         extraScrollHeight={20}
       >
         <View style={styles(theme).contentContainer}>
+          <ScreenLoader visible={isLoading} />
           <View style={{ alignItems: 'center', flexDirection: 'row' }}>
             <Text style={[styles(theme).title, { flex: 1 }]}>
               Forgot Password
