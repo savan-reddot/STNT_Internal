@@ -38,7 +38,7 @@ const Login = ({ navigation }: any) => {
   const { control, handleSubmit } = useForm({
     defaultValues: {
       emailOrPassport: __DEV__ ? 'savan@reddotinnovative.com' : '',
-      password: __DEV__ ? '123456' : '',
+      password: __DEV__ ? '1234567' : '',
     },
   });
   const dispatch = useAppDispatch();

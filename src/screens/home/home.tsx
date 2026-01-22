@@ -366,7 +366,7 @@ I need some help.
           showsVerticalScrollIndicator={false}
         >
           {/* ---------- PLAN CARD OR NO COVERAGE ---------- */}
-          {metaData?.virtualCard?.front ? (
+          {!metaData?.virtualCard?.isExpired && metaData?.virtualCard?.front ? (
             <TouchableOpacity
               activeOpacity={0.95}
               style={{ marginHorizontal: 20, marginTop: 20 }}
@@ -404,7 +404,7 @@ I need some help.
                   <View style={{ marginTop: 10 }}>
                     <Text style={styles(theme).cardLabel}>Validity</Text>
                     <Text style={styles(theme).cardValue}>
-                      {metaData?.policyDetails?.policyEffectiveData} -{' '}
+                      {metaData?.policyDetails?.policyEffectiveData} To{' '}
                       {metaData?.policyDetails?.policyExpirationData}
                     </Text>
                   </View>
@@ -1229,6 +1229,7 @@ const styles = (theme: MD3Theme) =>
       fontSize: 12,
       color: '#000',
       fontWeight: '700',
+      textTransform: 'capitalize',
     },
     noCoverageContainer: {
       borderWidth: 1.5,
