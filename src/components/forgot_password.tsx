@@ -47,6 +47,7 @@ const ForgotPassword = ({
   return (
     <Modal
       isVisible={isVisible}
+      avoidKeyboard={true}
       onBackdropPress={() => {
         onDismiss && onDismiss();
       }}
@@ -58,71 +59,60 @@ const ForgotPassword = ({
       animationOut="slideOutDown"
       backdropOpacity={0.3}
     >
-      <KeyboardAwareScrollView
-        contentContainerStyle={{
-          justifyContent: 'flex-end',
-          bottom: 0,
-          position: 'absolute',
-          width: '100%',
-        }}
-        enableOnAndroid={true}
-        extraScrollHeight={20}
-      >
-        <View style={styles(theme).contentContainer}>
-          <ScreenLoader visible={isLoading} />
-          <View style={{ alignItems: 'center', flexDirection: 'row' }}>
-            <Text style={[styles(theme).title, { flex: 1 }]}>
-              Forgot Password
-            </Text>
-            <TouchableOpacity onPress={() => onDismiss()}>
-              <Text
-                style={[
-                  styles(theme).title,
-                  { color: theme.colors.error, fontSize: 16 },
-                ]}
-              >
-                Cancel
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles(theme).child_view}>
+      <View style={styles(theme).contentContainer}>
+        <ScreenLoader visible={isLoading} />
+        <View style={{ alignItems: 'center', flexDirection: 'row' }}>
+          <Text style={[styles(theme).title, { flex: 1 }]}>
+            Forgot Password
+          </Text>
+          <TouchableOpacity onPress={() => onDismiss()}>
             <Text
               style={[
-                fontStyle(theme).headingSmall,
-                { color: theme.colors.onSurface },
+                styles(theme).title,
+                { color: theme.colors.error, fontSize: 16 },
               ]}
             >
-              Email<Text style={{ color: theme.colors.error }}>*</Text>
+              Cancel
             </Text>
-            <TextInput
-              mode="outlined"
-              placeholder="Enter Email"
-              outlineStyle={{ borderRadius: metrics.baseRadius }}
-              placeholderTextColor={(theme.colors as any).placeholder || '#999'}
-              style={{
-                height: metrics.screenWidth * 0.13,
-                backgroundColor: theme.colors.surface,
-              }}
-              theme={{
-                colors: {
-                  primary: theme.colors.primary,
-                  onSurface: theme.colors.onSurface,
-                  text: theme.colors.onSurface,
-                  placeholder: (theme.colors as any).placeholder,
-                },
-              }}
-              textColor={theme.colors.onSurface}
-              onChangeText={setEmail}
-              value={email}
-            />
-          </View>
-          <UButton
-            style={{ flex: 0 }}
-            title={'Submit'}
-            onPress={() => submitEmail()}
+          </TouchableOpacity>
+        </View>
+        <View style={styles(theme).child_view}>
+          <Text
+            style={[
+              fontStyle(theme).headingSmall,
+              { color: theme.colors.onSurface },
+            ]}
+          >
+            Email<Text style={{ color: theme.colors.error }}>*</Text>
+          </Text>
+          <TextInput
+            mode="outlined"
+            placeholder="Enter Email"
+            outlineStyle={{ borderRadius: metrics.baseRadius }}
+            placeholderTextColor={(theme.colors as any).placeholder || '#999'}
+            style={{
+              height: metrics.screenWidth * 0.13,
+              backgroundColor: theme.colors.surface,
+            }}
+            theme={{
+              colors: {
+                primary: theme.colors.primary,
+                onSurface: theme.colors.onSurface,
+                text: theme.colors.onSurface,
+                placeholder: (theme.colors as any).placeholder,
+              },
+            }}
+            textColor={theme.colors.onSurface}
+            onChangeText={setEmail}
+            value={email}
           />
         </View>
-      </KeyboardAwareScrollView>
+        <UButton
+          style={{ flex: 0 }}
+          title={'Submit'}
+          onPress={() => submitEmail()}
+        />
+      </View>
     </Modal>
   );
 };
@@ -139,12 +129,7 @@ const styles = (theme: MD3Theme) =>
     },
     modal: {
       justifyContent: 'flex-end',
-      marginBottom: -metrics.doubleMargin,
-      paddingBottom: metrics.doubleMargin,
-      marginHorizontal: 0,
-      borderTopEndRadius: metrics.baseRadius,
-      borderTopLeftRadius: metrics.baseRadius,
-      overflow: 'hidden',
+      margin: 0,
     },
     child_view: {
       marginTop: metrics.baseMargin,

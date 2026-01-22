@@ -293,14 +293,24 @@ I need some help.
               activeOpacity={0.8}
               onPress={() => navigation.navigate(Screens.Profile)}
             >
-              <Image
-                source={
-                  user?.profile_picture
-                    ? { uri: user.profile_picture }
-                    : require('../../../assets/images/account-circle-line.png')
-                }
-                style={styles(theme).avatar}
-              />
+              {user?.profile_picture ? (
+                <Image
+                  source={
+                    user?.profile_picture
+                      ? { uri: user.profile_picture }
+                      : require('../../../assets/images/account-circle-line.png')
+                  }
+                  style={styles(theme).avatar}
+                />
+              ) : (
+                <View style={styles(theme).avatarPlaceholder}>
+                  <Text style={styles(theme).avatarText}>
+                    {user?.firstName
+                      ? user.firstName.charAt(0).toUpperCase()
+                      : 'U'}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
             <View>
               <Text style={styles(theme).welcome}>WELCOME BACK,</Text>
@@ -870,6 +880,19 @@ const styles = (theme: MD3Theme) =>
       width: 48,
       height: 48,
       borderRadius: 24,
+    },
+    avatarPlaceholder: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: '#0F8A65',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatarText: {
+      fontSize: 24,
+      color: '#fff',
+      fontFamily: Font_Bold,
     },
     welcome: {
       fontSize: 12,
