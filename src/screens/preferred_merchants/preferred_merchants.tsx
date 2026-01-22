@@ -306,7 +306,6 @@ const PreferredMerchants = ({ navigation }: any) => {
   return (
     <AppLayout
       title="Merchants"
-      onBackPress={() => navigation.pop()}
       right={renderCityDropdown()}
       titleExtraStyle={{ marginLeft: 70 }}
     >

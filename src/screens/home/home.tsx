@@ -404,6 +404,7 @@ I need some help.
                   <View style={{ marginTop: 10 }}>
                     <Text style={styles(theme).cardLabel}>Validity</Text>
                     <Text style={styles(theme).cardValue}>
+                      {metaData?.policyDetails?.policyEffectiveData} -{' '}
                       {metaData?.policyDetails?.policyExpirationData}
                     </Text>
                   </View>
@@ -1225,7 +1226,7 @@ const styles = (theme: MD3Theme) =>
       marginBottom: 2,
     },
     cardValue: {
-      fontSize: 14,
+      fontSize: 12,
       color: '#000',
       fontWeight: '700',
     },
