@@ -9,9 +9,13 @@ import {
   View,
   AppState,
   ScrollView,
+  ImageBackground,
+  Modal,
+  Pressable,
 } from 'react-native';
 import React, { useCallback, useState, useEffect } from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';
+import QRCode from 'react-native-qrcode-svg';
 // @ts-ignore - react-native-version-check doesn't have TypeScript definitions
 import VersionCheck from 'react-native-version-check';
 import { metrics } from '../../utils/metrics';
@@ -23,6 +27,7 @@ import { getUser } from '../../redux/reducer';
 import {
   useLazyGet_policyQuery,
   useLazyGetplansQuery,
+  useLazyUser_metaQuery,
 } from '../../redux/services';
 import ScreenLoader from '../../components/loader';
 import { useFocusEffect } from '@react-navigation/native';
@@ -51,6 +56,7 @@ const Home = ({ navigation }: any) => {
   const theme = useTheme();
   const [getplans] = useLazyGetplansQuery();
   const [get_policy, { isLoading }] = useLazyGet_policyQuery();
+  const [user_meta, { isLoading: isMetaLoading }] = useLazyUser_metaQuery();
   const initPolicyData: POLICY_DATA = {
     policies: [],
     totalPolicies: 0,
@@ -58,8 +64,10 @@ const Home = ({ navigation }: any) => {
     expiredPolicies: 0,
   };
   const [policy_data, setPolicy_Data] = useState<POLICY_DATA>(initPolicyData);
+  const [metaData, setMetaData] = useState<any>(null);
   const [updateInfo, setUpdateInfo] = useState({});
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
   const [currentPlanDetails, setCurrentPlanDetails] = useState<any>(null);
   const { top } = useSafeAreaInsets();
 
@@ -161,6 +169,15 @@ const Home = ({ navigation }: any) => {
       }
     } else {
       setPolicy_Data(initPolicyData);
+    }
+
+    try {
+      const metaResp = await user_meta(0);
+      if (metaResp?.data?.status) {
+        setMetaData(metaResp.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching user meta:', err);
     }
   };
 
@@ -284,7 +301,7 @@ I need some help.
           backgroundColor: theme.colors.background,
         }}
       >
-        <ScreenLoader visible={isLoading} />
+        <ScreenLoader visible={isLoading || isMetaLoading} />
 
         {/* ---------- HEADER ---------- */}
         <View style={styles(theme).header}>
@@ -348,157 +365,92 @@ I need some help.
           contentContainerStyle={{ paddingBottom: 150 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* ---------- PLAN CARD ---------- */}
-          {currentPlan && (
+          {/* ---------- PLAN CARD OR NO COVERAGE ---------- */}
+          {metaData?.virtualCard?.front ? (
             <TouchableOpacity
               activeOpacity={0.95}
-              style={[
-                styles(theme).planCard,
-                { backgroundColor: theme.dark ? '#1F2937' : '#0B1320' },
-              ]}
-              onPress={() =>
-                navigation.navigate(Screens.Policies, { type: 'all' })
-              }
+              style={{ marginHorizontal: 20, marginTop: 20 }}
+              onPress={() => setShowQrModal(true)}
             >
-              <View style={styles(theme).planHeader}>
-                <Icon
-                  name="shield-checkmark-outline"
-                  size={42}
-                  color="#6EE7B7"
-                  style={{ opacity: 0.9 }}
-                />
-
-                <View style={styles(theme).activeBadge}>
-                  <Icon
-                    name="ellipse"
-                    size={8}
-                    color={isExpired ? '#EF4444' : '#10B981'}
-                  />
-                  <Text
-                    style={[
-                      styles(theme).activeText,
-                      isExpired && styles(theme).expiredText,
-                    ]}
-                  >
-                    {isExpired ? 'EXPIRED' : 'ACTIVE PROTECTION'}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles(theme).planLabelRow}>
-                <Text style={styles(theme).planLabel}>CURRENT PLAN</Text>
-                <View style={styles(theme).policyBadge}>
-                  <Text style={styles(theme).policyNumberText}>
-                    {policy_data?.policies?.[0]?.policyNumber}
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={styles(theme).planName}>{currentPlan}</Text>
-
-              {/* Feature Icons */}
-              <View style={styles(theme).featureIconsContainer}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles(theme).featureIconsContent}
-                >
-                  {[
-                    {
-                      key: 'medical_expense_coverage',
-                      icon: 'briefcase-medical',
-                      IconComponent: FontAwesome5,
-                    },
-                    {
-                      key: 'accidental_death_disability',
-                      icon: 'shield',
-                      IconComponent: Entypo,
-                    },
-                    {
-                      key: 'travel_disruption_delays',
-                      icon: 'airplane-clock',
-                      IconComponent: MaterialCommunityIcons,
-                    },
-                    {
-                      key: 'baggage_personal_belongings',
-                      icon: 'suitcase-rolling',
-                      IconComponent: FontAwesome6,
-                    },
-                    {
-                      key: 'personal_safety_liability',
-                      icon: 'safety-check',
-                      IconComponent: MaterialIcons,
-                    },
-                    {
-                      key: 'covid_special_extensions',
-                      icon: 'virus-covid',
-                      IconComponent: FontAwesome6,
-                    },
-                    {
-                      key: 'assistance_services',
-                      icon: 'hours-24',
-                      IconComponent: MaterialCommunityIcons, // Replaced MaterialDesignIcons with MaterialCommunityIcons for 'hours-24'
-                    },
-                  ].map(item => {
-                    const status =
-                      currentPlanDetails?.plan_features?.[item.key] || 'none';
-                    let color = '#6B7280'; // Grey for none
-                    let bgColor = 'rgba(156, 163, 175, 0.1)';
-
-                    if (status === 'full') {
-                      color = '#10B981'; // Sharp Green
-                      bgColor = 'rgba(16, 185, 129, 0.1)';
-                    } else if (status === 'semi') {
-                      color = '#166534'; // Dark Green
-                      bgColor = 'rgba(22, 101, 52, 0.1)';
-                    }
-
-                    return (
-                      <View
-                        key={item.key}
-                        style={[
-                          styles(theme).featureIconWrapper,
-                          {
-                            borderColor: color,
-                            backgroundColor: bgColor,
-                          },
-                        ]}
-                      >
-                        <item.IconComponent
-                          name={item.icon}
-                          size={15}
-                          color={color}
-                        />
-                      </View>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-
-              {currentPlanDetails?.maximum_coverage_amount && (
-                <View
-                  style={[
-                    styles(theme).divider,
-                    { backgroundColor: theme.dark ? '#0B1320' : '#1F2937' },
-                  ]}
-                />
-              )}
-
-              {currentPlanDetails?.maximum_coverage_amount && (
-                <View style={styles(theme).coverageRow}>
+              <ImageBackground
+                source={{
+                  uri: `data:image/png;base64,${metaData?.virtualCard.front}`,
+                }}
+                style={styles(theme).cardBackground}
+                imageStyle={{ borderRadius: 16 }}
+                resizeMode="cover"
+              >
+                <View style={styles(theme).cardOverlay}>
                   <View>
-                    <Text style={styles(theme).coverageLabel}>
-                      COVERAGE AMOUNT
-                    </Text>
-                    <Text style={styles(theme).coverageAmount}>
-                      SGD {currentPlanDetails?.maximum_coverage_amount}
+                    <Text style={styles(theme).cardValue} numberOfLines={1}>
+                      {metaData?.policyDetails?.name}
                     </Text>
                   </View>
 
-                  <Icon name="chevron-forward" size={24} color="#10B981" />
+                  <View style={{ marginTop: 10 }}>
+                    <Text style={styles(theme).cardLabel}>UID NUMBER</Text>
+                    <Text style={styles(theme).cardValue}>
+                      {metaData?.policyDetails?.uidNo}
+                    </Text>
+                  </View>
+
+                  <View style={{ marginTop: 10 }}>
+                    <Text style={styles(theme).cardLabel}>Passport No</Text>
+                    <Text style={styles(theme).cardValue}>
+                      {metaData?.policyDetails?.passportNo}
+                    </Text>
+                  </View>
+
+                  <View style={{ marginTop: 10 }}>
+                    <Text style={styles(theme).cardLabel}>Validity</Text>
+                    <Text style={styles(theme).cardValue}>
+                      {metaData?.policyDetails?.policyExpirationData}
+                    </Text>
+                  </View>
                 </View>
-              )}
+              </ImageBackground>
             </TouchableOpacity>
+          ) : (
+            <View style={styles(theme).noCoverageContainer}>
+              <View style={styles(theme).iconContainer}>
+                <Icon
+                  name="shield-checkmark-outline"
+                  size={32}
+                  color="#9CA3AF"
+                />
+              </View>
+              <Text style={styles(theme).noCoverageTitle}>
+                NO ACTIVE COVERAGE
+              </Text>
+              <Text style={styles(theme).noCoverageDesc}>
+                Ensure your spiritual journey is protected.{'\n'}
+                Purchase a new policy or manage existing claims.
+              </Text>
+
+              <View style={styles(theme).buttonRow}>
+                <TouchableOpacity
+                  style={styles(theme).primaryButton}
+                  onPress={() => navigation.navigate(Screens.PlanSelection)}
+                >
+                  <Text style={styles(theme).btnTextPrimary}>
+                    Purchase New Policy
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles(theme).secondaryButton}
+                  onPress={() =>
+                    navigation.navigate(Screens.Policies, {
+                      initialTab: 'claims',
+                    })
+                  }
+                >
+                  <Text style={styles(theme).btnTextSecondary}>
+                    Claim History
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
 
           {/* ---------- ALERTS ---------- */}
@@ -599,6 +551,121 @@ I need some help.
           style={styles(theme).fabImage}
         />
       </TouchableOpacity>
+
+      {/* POLICY VERIFICATION MODAL */}
+      <Modal
+        visible={showQrModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowQrModal(false)}
+      >
+        <Pressable
+          style={styles(theme).modalOverlay}
+          onPress={() => setShowQrModal(false)}
+        >
+          <Pressable style={styles(theme).modalContent} onPress={() => {}}>
+            <View style={styles(theme).modalHandle} />
+
+            <Text style={styles(theme).modalTitle}>POLICY VERIFICATION</Text>
+            <Text style={styles(theme).modalSubtitle}>
+              Scan to verify coverage status
+            </Text>
+
+            <View style={styles(theme).qrContainer}>
+              <QRCode
+                value={metaData?.virtualCard?.urlPath}
+                size={180}
+                backgroundColor="transparent"
+              />
+            </View>
+
+            <View style={styles(theme).modalFeaturesRow}>
+              <View style={styles(theme).modalFeatureItem}>
+                <View
+                  style={[
+                    styles(theme).modalFeatureIcon,
+                    { backgroundColor: '#E0F2F1' },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="credit-card-outline"
+                    size={20}
+                    color="#009688"
+                  />
+                </View>
+                <Text style={styles(theme).modalFeatureText}>
+                  Cashless services
+                </Text>
+              </View>
+
+              <View style={styles(theme).modalFeatureItem}>
+                <View
+                  style={[
+                    styles(theme).modalFeatureIcon,
+                    { backgroundColor: '#FFEBEE' },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="heart-pulse"
+                    size={20}
+                    color="#E53935"
+                  />
+                </View>
+                <Text style={styles(theme).modalFeatureText}>
+                  Covers Pre-existing condtions
+                </Text>
+              </View>
+
+              <View style={styles(theme).modalFeatureItem}>
+                <View
+                  style={[
+                    styles(theme).modalFeatureIcon,
+                    { backgroundColor: '#E3F2FD' },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="account-group-outline"
+                    size={20}
+                    color="#1E88E5"
+                  />
+                </View>
+                <Text style={styles(theme).modalFeatureText}>
+                  Ground staff available
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles(theme).policyWordingButton}
+              onPress={() => {
+                setShowQrModal(false);
+                navigation.navigate(Screens.WebView, {
+                  url: metaData?.policyDetails?.policy_wording_url
+                    ? metaData?.policyDetails?.policy_wording_url
+                    : currentPlanDetails?.policy_wording_url,
+                });
+              }}
+            >
+              <MaterialCommunityIcons
+                name="file-document-outline"
+                size={20}
+                color="#fff"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles(theme).policyWordingText}>
+                Policy Wording
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles(theme).closeModalButton}
+              onPress={() => setShowQrModal(false)}
+            >
+              <Text style={styles(theme).closeModalText}>Close</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </>
   );
 
@@ -1132,5 +1199,218 @@ const styles = (theme: MD3Theme) =>
     fabImage: {
       height: metrics.screenWidth * 0.15,
       width: metrics.screenWidth * 0.15,
+    },
+    cardBackground: {
+      width: '100%',
+      height: 220, // Approx height matching the card ratio
+      justifyContent: 'flex-end',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    cardOverlay: {
+      width: '65%',
+      padding: 10,
+    },
+    cardLabel: {
+      fontSize: 10,
+      color: '#000',
+      fontWeight: '600',
+      opacity: 0.7,
+      marginBottom: 2,
+    },
+    cardValue: {
+      fontSize: 14,
+      color: '#000',
+      fontWeight: '700',
+    },
+    noCoverageContainer: {
+      borderWidth: 1.5,
+      borderColor: '#E5E7EB',
+      borderStyle: 'dashed',
+      borderRadius: 20,
+      padding: 15,
+      marginHorizontal: 20,
+      alignItems: 'center',
+      marginTop: 20,
+      backgroundColor: theme.colors.surface,
+    },
+    iconContainer: {
+      width: 60,
+      height: 60,
+      borderRadius: 20,
+      backgroundColor: theme.dark ? '#1F2937' : '#F3F4F6',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 16,
+    },
+    noCoverageTitle: {
+      fontSize: 16,
+      fontWeight: '800',
+      color: theme.colors.onBackground,
+      marginBottom: 8,
+    },
+    noCoverageDesc: {
+      fontSize: 13,
+      color: '#6B7280',
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      gap: 10,
+      marginTop: 24,
+      width: '100%',
+    },
+    primaryButton: {
+      flex: 1,
+      backgroundColor: '#0F8A65',
+      height: 44,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 5,
+    },
+    secondaryButton: {
+      flex: 1,
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+      height: 44,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    btnTextPrimary: {
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: 13,
+      textAlign: 'center',
+    },
+    btnTextSecondary: {
+      color: theme.colors.onBackground,
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    modalContent: {
+      backgroundColor: '#fff',
+      borderRadius: 24,
+      width: '100%',
+      maxWidth: 340,
+      padding: 24,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    modalHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: '#E0E0E0',
+      marginBottom: 20,
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: '800',
+      color: '#111827',
+      marginBottom: 6,
+      textAlign: 'center',
+    },
+    modalSubtitle: {
+      fontSize: 13,
+      color: '#6B7280',
+      marginBottom: 24,
+      textAlign: 'center',
+    },
+    qrContainer: {
+      padding: 16,
+      backgroundColor: '#fff',
+      borderRadius: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 2,
+      marginBottom: 24,
+    },
+    modalFeaturesRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      marginBottom: 24,
+      gap: 5,
+    },
+    modalFeatureItem: {
+      flex: 1,
+      alignItems: 'center',
+      backgroundColor: '#fff',
+      padding: 8,
+      borderRadius: 12,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    modalFeatureIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 8,
+    },
+    modalFeatureText: {
+      fontSize: 10,
+      color: '#1F2937',
+      textAlign: 'center',
+      fontWeight: '600',
+      lineHeight: 14,
+    },
+    policyWordingButton: {
+      flexDirection: 'row',
+      backgroundColor: '#0F172A',
+      width: '100%',
+      height: 50,
+      borderRadius: 25,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 12,
+    },
+    policyWordingText: {
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: 15,
+    },
+    closeModalButton: {
+      width: '100%',
+      height: 50,
+      borderRadius: 25,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#F9FAFB',
+    },
+    closeModalText: {
+      color: '#6B7280',
+      fontWeight: '600',
+      fontSize: 15,
     },
   });

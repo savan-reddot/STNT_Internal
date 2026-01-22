@@ -1,8 +1,4 @@
-import {
-  BottomTabNavigationOptions,
-  createBottomTabNavigator,
-} from '@react-navigation/bottom-tabs';
-import { RouteProp } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import Home from '../screens/home/home';
 import Profile from '../screens/profile/profile';
@@ -11,11 +7,8 @@ import { Screens } from '../common/screens';
 import { metrics } from '../utils/metrics';
 import Policies from '../screens/policies/policies';
 import { Font_Regular } from '../theme/fonts';
-import VirtualCard from '../screens/virtual_card/virtual_card';
-
+import PreferredMerchants from '../screens/preferred_merchants/preferred_merchants';
 import { useTheme } from 'react-native-paper';
-
-// ... existing imports ...
 
 const Tab = createBottomTabNavigator();
 
@@ -32,8 +25,8 @@ const BottomTab = () => {
             case Screens.Home:
               iconName = focused ? 'home' : 'home-outline';
               break;
-            case Screens.Certification:
-              iconName = focused ? 'account' : 'account-outline';
+            case Screens.PreferredMerchants:
+              iconName = focused ? 'tag' : 'tag-outline';
               break;
             case Screens.Policies:
               iconName = focused ? 'shield-check' : 'shield-check-outline';
@@ -50,10 +43,9 @@ const BottomTab = () => {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.dark ? '#9CA3AF' : '#72849A',
         tabBarStyle: {
-          backgroundColor: theme.colors.surface, // Theme aware
+          backgroundColor: theme.colors.surface,
           paddingVertical: metrics.doubleMargin,
-          // borderRadius: metrics.baseRadius, // Optional: might want to remove border radius or keep it
-          borderTopWidth: 0, // Remove top border if desired for cleaner look
+          borderTopWidth: 0,
           height: metrics.screenHeight * 0.09,
           borderTopColor: theme.dark ? '#333' : '#E5E7EB',
           shadowColor: '#000',
@@ -74,7 +66,11 @@ const BottomTab = () => {
       })}
     >
       <Tab.Screen name={Screens.Home} component={Home} />
-      <Tab.Screen name={Screens.Certification} component={VirtualCard} />
+      <Tab.Screen
+        name={Screens.PreferredMerchants}
+        component={PreferredMerchants}
+        options={{ tabBarLabel: 'Deals' }}
+      />
       <Tab.Screen
         name={Screens.Policies}
         component={Policies}

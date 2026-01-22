@@ -200,7 +200,14 @@ const VirtualCard = () => {
 export default VirtualCard;
 
 const styles = StyleSheet.create({
-  cardWrapper: { alignItems: 'center' },
+  cardWrapper: {
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
   card: {
     width: '100%',
     borderRadius: 28,
