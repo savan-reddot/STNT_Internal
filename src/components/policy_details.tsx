@@ -230,7 +230,7 @@ const PolicyDetails = ({
                 },
               ]}
             >
-              https://stntinternational.com/wp-content/uploads/2025/03/UMRAH-Policy-Wording_1447H.pdf
+              {policyData?.policy_wording_url}
             </Text>
           </TouchableOpacity>
         </View>

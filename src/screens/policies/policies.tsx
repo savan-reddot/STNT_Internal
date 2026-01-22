@@ -251,7 +251,7 @@ const Policies = ({ navigation, route }: any) => {
                 </View>
 
                 {/* Feature Icons */}
-                <View style={styles(theme).featureIconsContainer}>
+                {/* <View style={styles(theme).featureIconsContainer}>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -327,7 +327,7 @@ const Policies = ({ navigation, route }: any) => {
                       );
                     })}
                   </ScrollView>
-                </View>
+                </View> */}
 
                 {currentPlanDetails?.maximum_coverage_amount && (
                   <View style={styles(theme).divider} />
@@ -335,20 +335,29 @@ const Policies = ({ navigation, route }: any) => {
 
                 {currentPlanDetails?.maximum_coverage_amount && (
                   <View style={styles(theme).coverageRow}>
-                    <View>
+                    {/* <View>
                       <Text style={styles(theme).coverageLabel}>
                         COVERAGE AMOUNT
                       </Text>
                       <Text style={styles(theme).coverageAmount}>
                         SGD {currentPlanDetails?.maximum_coverage_amount}
                       </Text>
-                    </View>
+                    </View> */}
 
-                    <Icon
-                      name="document-text-outline"
-                      size={24}
-                      color="#6B7280"
-                    />
+                    <TouchableOpacity
+                      onPress={() => {
+                        navigation.navigate(Screens.WebView, {
+                          url: currentPlanDetails?.policy_wording_url,
+                        });
+                      }}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Icon
+                        name="document-text-outline"
+                        size={24}
+                        color="#6B7280"
+                      />
+                    </TouchableOpacity>
                   </View>
                 )}
               </View>
@@ -368,7 +377,7 @@ const Policies = ({ navigation, route }: any) => {
                   })
                 }
               >
-                <Icon name="close-circle-outline" size={24} color="#9CA3AF" />
+                <Icon name="close-circle-outline" size={24} color="red" />
                 <View>
                   <Text style={styles(theme).actionNumber}>
                     {exclusionsData.length}
@@ -383,11 +392,7 @@ const Policies = ({ navigation, route }: any) => {
                   navigation.navigate(Screens.Benefits, { data: benefitsData })
                 }
               >
-                <Icon
-                  name="checkmark-circle-outline"
-                  size={24}
-                  color="#9CA3AF"
-                />
+                <Icon name="checkmark-circle-outline" size={24} color="green" />
                 <View>
                   <Text style={styles(theme).actionNumber}>
                     {benefitsData.length}
@@ -506,7 +511,7 @@ const styles = (theme: MD3Theme) =>
     },
     coverageRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-end',
       alignItems: 'center',
     },
     coverageLabel: {
