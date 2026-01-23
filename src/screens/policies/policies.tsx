@@ -367,40 +367,7 @@ const Policies = ({ navigation, route }: any) => {
               </View>
             )}
 
-            {/* Action Buttons Row */}
-            <View style={styles(theme).actionButtonsRow}>
-              <TouchableOpacity
-                style={styles(theme).actionButton}
-                onPress={() =>
-                  navigation.navigate(Screens.Exclusions, {
-                    data: exclusionsData,
-                  })
-                }
-              >
-                <Icon name="close-circle-outline" size={24} color="red" />
-                <View>
-                  <Text style={styles(theme).actionNumber}>
-                    {exclusionsData.length}
-                  </Text>
-                  <Text style={styles(theme).actionLabel}>EXCLUSIONS</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles(theme).actionButton}
-                onPress={() =>
-                  navigation.navigate(Screens.Benefits, { data: benefitsData })
-                }
-              >
-                <Icon name="checkmark-circle-outline" size={24} color="green" />
-                <View>
-                  <Text style={styles(theme).actionNumber}>
-                    {benefitsData.length}
-                  </Text>
-                  <Text style={styles(theme).actionLabel}>BENEFITS</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
+            {/* Action Buttons Row - Hidden as per requirement */}
 
             {/* View Policy History Button */}
             <TouchableOpacity

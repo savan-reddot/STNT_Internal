@@ -319,7 +319,7 @@ const PlanSelection = ({ navigation }: any) => {
                       },
                     ]}
                     onPress={() =>
-                      Linking.openURL(plan?.rawPlan?.policy_wording_url)
+                      Linking.openURL(plan?.rawPlan?.brochure_url)
                     }
                   >
                     <Text
