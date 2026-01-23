@@ -27,3 +27,45 @@ workflows:
           ./gradlew bundleRelease
     artifacts:
       - android/app/build/outputs/**/*.aab
+
+  ios-production:
+    name: iOS Production Build
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: STNT
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.app.umrah-traveller
+      groups:
+        - app_env_vars
+      node: 20
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install --legacy-peer-deps
+      - name: Set up environment file
+        script: |
+          echo "API_URL=$API_URL" > .env
+          echo "RAZORPAY_KEY_ID=$RAZORPAY_KEY_ID" >> .env
+      - name: Install CocoaPods
+        script: |
+          cd ios && pod install
+      - name: Set up code signing
+        script: |
+          keychain initialize
+      - name: Build IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace "$CM_BUILD_DIR/ios/umrah_traveller_new.xcworkspace" \
+            --scheme "umrah_traveller_new"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
