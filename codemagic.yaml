@@ -8,7 +8,7 @@ workflows:
         - keystore_reference
       groups:
         - app_env_vars
-      node: 18
+      node: 20
       java: 17
     scripts:
       - name: Install dependencies
