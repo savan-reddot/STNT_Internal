@@ -62,6 +62,12 @@ export interface PolicyFormData {
     gender: string;
     dateOfBirth: string;
     isChild: boolean; // true for children, false for adults
+    visaType?: string;
+    visaNumber?: string;
+    documentUrl?: string;
+    documentName?: string;
+    documentType?: string;
+    documentUid?: string;
   }>;
 
   // Notice & Declaration

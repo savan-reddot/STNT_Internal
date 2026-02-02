@@ -243,6 +243,17 @@ const BuyPolicy = ({ navigation, route }: any) => {
             `customers.${i}.gender`,
             `customers.${i}.dateOfBirth`,
           );
+
+          if (
+            customers[i].nationality === 'malaysian' ||
+            customers[i].nationality === 'others'
+          ) {
+            customerFields.push(
+              `customers.${i}.visaType`,
+              `customers.${i}.visaNumber`,
+              `customers.${i}.documentUrl`,
+            );
+          }
         }
         const customerResult = await trigger(customerFields as any);
 
@@ -596,6 +607,20 @@ const BuyPolicy = ({ navigation, route }: any) => {
         gender: genderCapitalized,
         dob: dobISO,
         entry_type: customer.isChild ? 'CHILD' : 'ADULT',
+        visa_type: customer.visaType || null,
+        visa_number: customer.visaNumber || '',
+        documents: customer.documentUrl
+          ? [
+              {
+                title: 'Supporting Document',
+                document_url: customer.documentUrl,
+                name: customer.documentName || 'document',
+                type: customer.documentType || 'application/pdf',
+                uid: customer.documentUid || `rc-upload-${Date.now()}`,
+              },
+            ]
+          : [],
+        document_url: customer.documentUrl || '',
       };
     });
 

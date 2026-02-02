@@ -81,7 +81,10 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
 
       <View style={styles.section}>
         {renderSectionHeader('Travel Details')}
-        {renderRow('Date of departure', formatDateForDisplay(values.departureDate))}
+        {renderRow(
+          'Date of departure',
+          formatDateForDisplay(values.departureDate),
+        )}
         {renderRow('Date of arrival', formatDateForDisplay(values.arrivalDate))}
         {renderRow('No of days', values.numberOfDays)}
         {renderRow('Umrah coverage plan', values.selectedPlanDisplayName)}
@@ -103,6 +106,8 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
                 customer.gender.slice(1).toLowerCase()
               : '-';
             const isLastCustomer = index === values.customers.length - 1;
+            const documentUrl = customer.documentUrl;
+            const documentName = customer.documentName;
 
             return (
               <View
@@ -124,6 +129,24 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
                 {renderRow(
                   'Date of Birth',
                   formatDateForDisplay(customer.dateOfBirth),
+                )}
+                {customer.visaType && renderRow('Visa Type', customer.visaType)}
+                {customer.visaNumber &&
+                  renderRow('Visa Number', customer.visaNumber)}
+                {documentUrl && (
+                  <View style={styles.row}>
+                    <Text style={styles.rowLabel}>Supporting Document</Text>
+                    <Text
+                      style={[
+                        styles.rowValue,
+                        { color: '#2196F3', textDecorationLine: 'underline' },
+                      ]}
+                      numberOfLines={1}
+                      onPress={() => {}}
+                    >
+                      {documentName || 'View Document'}
+                    </Text>
+                  </View>
                 )}
               </View>
             );
