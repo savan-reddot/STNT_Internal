@@ -244,6 +244,13 @@ export const apiClient = createApi({
         body: request,
       }),
     }),
+    verify_otp: builder.mutation({
+      query: (request: any) => ({
+        url: 'mobile-auth/verify-otp',
+        method: 'POST',
+        body: request,
+      }),
+    }),
     passportById: builder.mutation({
       query: (request: any) => ({
         url: 'mobile-data/passport-by-uid',
@@ -301,7 +308,7 @@ export const apiClient = createApi({
       }),
     }),
     preferred_merchants: builder.query({
-      query: () => `mobile-data/trusted-retail-outlets?size=10&page=1`,
+      query: () => `mobile-data/trusted-retail-outlets?size=100000&page=1`,
     }),
     referral_code_users: builder.mutation({
       query: (request: any) => ({
@@ -334,6 +341,7 @@ export const {
   useSubmit_payment_detailsMutation,
   useSubmit_payment_details_editMutation,
   useForgot_passwordMutation,
+  useVerify_otpMutation,
   useApple_wallet_passMutation,
   useGoogle_wallet_passMutation,
   useLazySingapore_banksQuery,

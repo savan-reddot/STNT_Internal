@@ -28,19 +28,11 @@ const ResetPassword = ({ navigation, route }: any) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Params from deep link
-  const { token, email } = route.params || {};
-
-  useEffect(() => {
-    console.log('token==>>', token, email);
-    if (!token || !email) {
-      showErrorToast('Invalid link. Missing token or email.', 'Error');
-      // Optionally navigate back to login after some time
-    }
-  }, [token, email]);
+  const { email } = route.params || {};
 
   const handleSubmit = async () => {
-    if (!token || !email) {
-      showErrorToast('Invalid link. Missing token or email.', 'Error');
+    if (!email) {
+      showErrorToast('Invalid or missing email.', 'Error');
       return;
     }
 
@@ -55,9 +47,9 @@ const ResetPassword = ({ navigation, route }: any) => {
     }
 
     const resp = await resetPasswordConfirm({
-      token,
       email,
       newPassword,
+      confirmPassword,
     });
     // console.log('resp==>>', resp);
     if (resp?.data?.status) {
