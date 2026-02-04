@@ -721,7 +721,7 @@ const ClaimDetails = ({ route, navigation }: any) => {
                       {user_review?.paymentDetails?.payeeName}
                     </Text>
                   </View>
-                  <View style={styles(theme).travel_detail_item}>
+                  {/* <View style={styles(theme).travel_detail_item}>
                     <Text
                       style={[
                         fontStyle(theme).headingSmall,
@@ -750,7 +750,7 @@ const ClaimDetails = ({ route, navigation }: any) => {
                     >
                       {user_review?.paymentDetails?.payeeRelationship}
                     </Text>
-                  </View>
+                  </View> */}
                   <View style={styles(theme).travel_detail_item}>
                     <Text
                       style={[

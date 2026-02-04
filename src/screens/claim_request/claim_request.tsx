@@ -395,15 +395,15 @@ const ClaimRequest = ({ navigation, route }: any) => {
           return;
         }
 
-        if (payee_relationship == '') {
-          showErrorToast('Please select Relationship !!');
-          return;
-        }
+        // if (payee_relationship == '') {
+        //   showErrorToast('Please select Relationship !!');
+        //   return;
+        // }
 
-        if (payee_relationship == 'other' && specified_relationship == '') {
-          showErrorToast('Please enter specify relationship !!');
-          return;
-        }
+        // if (payee_relationship == 'other' && specified_relationship == '') {
+        //   showErrorToast('Please enter specify relationship !!');
+        //   return;
+        // }
 
         if (selected_bank == '') {
           showErrorToast('Please select Bank !!');
@@ -473,7 +473,7 @@ const ClaimRequest = ({ navigation, route }: any) => {
         payNow: payment_option == 'PayNow' ? paynow_nric : null,
         payNowSignature: payment_option == 'PayNow' ? paynowSignatureUrl : null,
         payNowUsername: payment_option == 'PayNow' ? paynow_user_name : null,
-        payeeRelationship: payment_option == 'Bank' ? payee_relationship : null,
+        // payeeRelationship: payment_option == 'Bank' ? payee_relationship : null,
         claimRequestId: user_review?.id,
       };
 
@@ -621,7 +621,7 @@ const ClaimRequest = ({ navigation, route }: any) => {
                     style={{ height: metrics.screenWidth * 0.13 }}
                   />
                 </View>
-                <View style={{ marginTop: metrics.baseMargin }}>
+                {/* <View style={{ marginTop: metrics.baseMargin }}>
                   <Text
                     style={[
                       fontStyle(theme).headingSmall,
@@ -666,7 +666,7 @@ const ClaimRequest = ({ navigation, route }: any) => {
                       style={{ height: metrics.screenWidth * 0.13 }}
                     />
                   </View>
-                )}
+                )} */}
                 <View style={{ marginTop: metrics.baseMargin }}>
                   <Text
                     style={[
@@ -957,6 +957,30 @@ const ClaimRequest = ({ navigation, route }: any) => {
               title={route.params?.isPaymentEdit ? 'Update' : 'Next'}
               onPress={() => submit_payment()}
             />
+
+            <View style={{ marginTop: metrics.smallMargin }}>
+              <Text
+                style={[
+                  fontStyle(theme).headingSmall,
+                  {
+                    fontSize: metrics.moderateScale(12),
+                    fontWeight: '500',
+                    color: theme.colors.onSurfaceVariant,
+                    fontFamily: Font_Regular,
+                    fontStyle: 'italic',
+                    lineHeight: 18,
+                  },
+                ]}
+              >
+                <Text style={{ fontWeight: 'bold' }}>*</Text>{' '}
+                <Text style={{ fontWeight: 'bold' }}>
+                  Bank account details must belong to the policyholder only. For
+                  minors, the payout will go to the policyholder. We may request
+                  proof of the child’s relationship to their parent or guardian
+                  (e.g., birth certificate) if required.
+                </Text>
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -1425,7 +1449,7 @@ const ClaimRequest = ({ navigation, route }: any) => {
                 {user_review?.paymentDetails?.payeeName}
               </Text>
             </View>
-            <View style={styles(theme).travel_detail_item}>
+            {/* <View style={styles(theme).travel_detail_item}>
               <Text
                 style={[
                   fontStyle(theme).headingSmall,
@@ -1454,7 +1478,7 @@ const ClaimRequest = ({ navigation, route }: any) => {
               >
                 {user_review?.paymentDetails?.payeeRelationship}
               </Text>
-            </View>
+            </View> */}
             <View style={styles(theme).travel_detail_item}>
               <Text
                 style={[

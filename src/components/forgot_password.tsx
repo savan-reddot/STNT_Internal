@@ -3,6 +3,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { TextInput, useTheme } from 'react-native-paper';
 import { metrics } from '../utils/metrics';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '../utils/toastConfig';
 import {
   useForgot_passwordMutation,
   useVerify_otpMutation,
@@ -55,7 +57,8 @@ const ForgotPassword = ({
         );
       } else {
         showErrorToast(
-          response?.data?.message || 'Verification failed. Please try again.',
+          response?.error?.data?.errorMessage ||
+            'Verification failed. Please try again.',
           'Error !!',
         );
       }
@@ -106,7 +109,6 @@ const ForgotPassword = ({
       animationIn="slideInUp"
       animationOut="slideOutDown"
       backdropOpacity={0.3}
-      coverScreen={false}
     >
       <View style={styles(theme).contentContainer}>
         <ScreenLoader visible={isForgotLoading || isVerifyLoading} />
@@ -194,10 +196,11 @@ const ForgotPassword = ({
         )}
 
         <UButton
-          style={{ flex: 0 }}
+          style={{ flex: 0, marginTop: 15 }}
           title={isOtpSent ? 'Verify' : 'Submit'}
           onPress={() => handleSubmit()}
         />
+        <Toast config={toastConfig} />
       </View>
     </Modal>
   );
