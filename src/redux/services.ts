@@ -279,6 +279,12 @@ export const apiClient = createApi({
         body: formData,
       }),
     }),
+    delete_draft: builder.mutation({
+      query: (id: string | number) => ({
+        url: `website/claim-request/delete/draft/${id}`,
+        method: 'DELETE',
+      }),
+    }),
     apply_referral_code: builder.mutation({
       query: (request: any) => ({
         url: 'apply-referral-code',
@@ -369,4 +375,5 @@ export const {
   useLazyPreferred_merchantsQuery,
   useReferral_code_usersMutation,
   useLazyGetAllWarrantyAndExclusionsQuery,
+  useDelete_draftMutation,
 } = apiClient;

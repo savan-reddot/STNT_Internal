@@ -1,4 +1,5 @@
 import {
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -12,6 +13,7 @@ import {
   useClaim_request_submitMutation,
   useLazyRequest_reviewQuery,
   useUpload_signatureMutation,
+  useDelete_draftMutation,
 } from '../../redux/services';
 import { Screens } from '../../common/screens';
 import fontStyle from '../../styles/fontStyle';
@@ -36,6 +38,7 @@ const ClaimDetails = ({ route, navigation }: any) => {
     useClaim_request_submitMutation();
   const [upload_signature, { isLoading: isSignatureUploading }] =
     useUpload_signatureMutation();
+  const [delete_draft, { isLoading: isDeleting }] = useDelete_draftMutation();
   const [user_review, setUser_Review] = useState<any>();
   const [isDeclare, setIsDeclare] = useState(false);
   const [isFinalDeclare, setIsFinalDeclare] = useState(false);
@@ -267,6 +270,37 @@ const ClaimDetails = ({ route, navigation }: any) => {
     }
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Claim',
+      'Are you sure you want to delete this claim?',
+      [
+        {
+          text: 'No',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const resp = await delete_draft(claimRequestId);
+            // console.log('resp_delete ------> ', resp);
+            if (resp && resp?.data && resp?.data?.status) {
+              showSuccessToast(
+                resp?.data?.message || 'Claim deleted successfully',
+              );
+              navigation.pop();
+            } else {
+              showErrorToast(resp?.data?.message || 'Failed to delete claim');
+            }
+          },
+        },
+      ],
+      { cancelable: false },
+    );
+  };
+
   const submit_claim_request = async (signature_url: string) => {
     const request = {
       claimRequestId: user_review?.id,
@@ -287,7 +321,8 @@ const ClaimDetails = ({ route, navigation }: any) => {
     }
   };
 
-  const isLoad = isLoading || isClaimSubmitLoading || isSignatureUploading;
+  const isLoad =
+    isLoading || isClaimSubmitLoading || isSignatureUploading || isDeleting;
 
   return (
     <AppLayout
@@ -295,9 +330,19 @@ const ClaimDetails = ({ route, navigation }: any) => {
       onBackPress={() => navigation.pop()}
       right={[
         <View>
-          <Text></Text>
+          {isDraft && (
+            <TouchableOpacity onPress={handleDelete}>
+              <Icon
+                name="delete"
+                size={24}
+                color={'#fff'}
+                style={{ marginRight: metrics.baseMargin }}
+              />
+            </TouchableOpacity>
+          )}
         </View>,
       ]}
+      titleExtraStyle={{ marginLeft: isDraft ? 40 : 0 }}
     >
       <View
         style={[

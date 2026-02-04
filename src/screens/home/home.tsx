@@ -110,10 +110,10 @@ const Home = ({ navigation }: any) => {
     try {
       const updateNeeded = await VersionCheck.needUpdate();
       if (updateNeeded.isNeeded) {
-        setUpdateInfo(updateNeeded);
         setTimeout(() => {
-          setShowUpdateModal(updateNeeded.isNeeded);
-        }, 500);
+          setShowUpdateModal(true);
+        }, 1000);
+        setUpdateInfo(updateNeeded);
       } else {
         console.log(
           'App is up to date. Current:',

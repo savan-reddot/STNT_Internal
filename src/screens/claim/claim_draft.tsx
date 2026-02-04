@@ -7,7 +7,13 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import AppLayout from '../../components/safeareawrapper';
 import { getRandomPastelColor, globalStyle } from '../../utils/globalStyles';
 import { MD3Theme, useTheme } from 'react-native-paper';
@@ -29,6 +35,7 @@ import UIDSelection from '../../components/uid_selection';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import moment from 'moment';
 import { ca } from 'react-native-paper-dates';
+import { useFocusEffect } from '@react-navigation/native';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -91,9 +98,14 @@ const DraftClaims = ({ navigation }: any) => {
     }
   };
 
-  useEffect(() => {
-    getUserMeta();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getUserMeta();
+      return () => {
+        // console.log('Screen is unfocused ❌');
+      };
+    }, []),
+  );
 
   const list_data = useMemo(() => claims, [claims]);
 
