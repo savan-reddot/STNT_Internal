@@ -71,7 +71,10 @@ export interface PolicyFormData {
   }>;
 
   // Notice & Declaration
-  pdpaConsent: boolean;
+  residingInSingapore: boolean;
+  purchasingBeforeTrip: boolean;
+  notTravelingAgainstAdvice: boolean;
+  acknowledgePrivacyNotice: boolean;
   notDischargedWithin30Days: boolean;
   confirmInformationAccurate: boolean;
 

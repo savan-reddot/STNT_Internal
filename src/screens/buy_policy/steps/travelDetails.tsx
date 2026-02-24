@@ -179,6 +179,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
   >('modal');
 
   const selectedDestination = watch('destination');
+  const departureDate = watch('departureDate');
   const selectedPlan = watch('umrahCoveragePlan');
   const adults = watch('adults') || 0;
   const children = watch('children') || 0;
@@ -283,7 +284,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
       setValue('countryOfTravel', '');
     }
     setPreviousDestination(selectedDestination || '');
-  }, [selectedDestination, previousDestination, setValue]);
+  }, [selectedDestination, previousDestination, setValue, preSelectedPlan]);
 
   const normalizeString = (value?: string) =>
     (value || '').trim().toLowerCase();
@@ -333,7 +334,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
   // Fetch pricing for all plans when plans are loaded (only once)
   useEffect(() => {
     const fetchAllPricing = async () => {
-      if (umrahCoverageOptions.length > 0 && !hasFetchedPricing) {
+      if (umrahCoverageOptions.length > 0) {
         try {
           // Fetch all pricings at once
           const resp = await planPricing(0);
@@ -351,20 +352,42 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
 
               if (planPricings.length > 0) {
                 // Filter ADULT and CHILD pricing
-                const adultPricing = planPricings.find(
-                  (p: any) => p.age_band === 'ADULT' || p.age_band === 'adult',
-                );
-                const childPricing = planPricings.find(
-                  (p: any) => p.age_band === 'CHILD' || p.age_band === 'child',
+                const checkDateRange = (p: any) => {
+                  if (!departureDate || !p.start_date || !p.end_date)
+                    return true;
+                  const depDate = new Date(departureDate);
+                  const startDate = new Date(p.start_date);
+                  const endDate = new Date(p.end_date);
+                  if (
+                    isNaN(depDate.getTime()) ||
+                    isNaN(startDate.getTime()) ||
+                    isNaN(endDate.getTime())
+                  )
+                    return true;
+                  depDate.setHours(0, 0, 0, 0);
+                  startDate.setHours(0, 0, 0, 0);
+                  endDate.setHours(0, 0, 0, 0);
+                  return depDate >= startDate && depDate <= endDate;
+                };
+
+                const adultPricing = planPricings.find((p: any) =>
+                  // (p.age_band === 'ADULT' || p.age_band === 'adult') &&
+                  checkDateRange(p),
                 );
 
-                if (adultPricing && childPricing) {
+                if (adultPricing) {
                   const maxDays = plan.trip_days_cap || 0;
-                  const adultPrice = adultPricing.base_premium;
-                  const childPrice = childPricing.base_premium;
-                  const extraPerDay =
-                    adultPricing.per_extra_day_rate ||
-                    childPricing.per_extra_day_rate;
+                  const adultPrice = adultPricing?.pricing_details.find(
+                    (item: any) => item.age_band === 'ADULT',
+                  )?.base_premium;
+
+                  const childPrice = adultPricing?.pricing_details.find(
+                    (item: any) => item.age_band === 'CHILD',
+                  )?.base_premium;
+
+                  const extraPerDay = adultPricing?.pricing_details.find(
+                    (item: any) => item.age_band === 'ADULT',
+                  )?.per_extra_day_rate;
 
                   // Generate pricing string
                   const pricingString = `Duration of Travel: CHILD - Up to ${maxDays} days (Below 18 years old): $${childPrice.toFixed(
@@ -380,7 +403,7 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                     maxDays,
                     pricingString,
                     adultPricingRaw: adultPricing,
-                    childPricingRaw: childPricing,
+                    childPricingRaw: adultPricing,
                   };
                 }
               }
@@ -395,7 +418,13 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
       }
     };
     fetchAllPricing();
-  }, [umrahCoverageOptions, selectedPlan, hasFetchedPricing, planPricing]);
+  }, [
+    umrahCoverageOptions,
+    selectedPlan,
+    hasFetchedPricing,
+    planPricing,
+    departureDate,
+  ]);
 
   // Update pricing when plan, adults, children, or days change
   useEffect(() => {

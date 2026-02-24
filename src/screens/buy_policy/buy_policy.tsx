@@ -149,7 +149,10 @@ const BuyPolicy = ({ navigation, route }: any) => {
         ? [{ flight_number: '123', departure_date: '25/11/2025' }]
         : [],
       customers: [],
-      pdpaConsent: __DEV__ ? true : false,
+      residingInSingapore: __DEV__ ? true : false,
+      purchasingBeforeTrip: __DEV__ ? true : false,
+      notTravelingAgainstAdvice: __DEV__ ? true : false,
+      acknowledgePrivacyNotice: __DEV__ ? true : false,
       notDischargedWithin30Days: __DEV__ ? true : false,
       confirmInformationAccurate: __DEV__ ? true : false,
       referralCode: '',
@@ -278,7 +281,10 @@ const BuyPolicy = ({ navigation, route }: any) => {
         return customerResult;
       case 3: // Notice & Declaration
         const noticeFields: (keyof PolicyFormData)[] = [
-          'pdpaConsent',
+          'residingInSingapore',
+          'purchasingBeforeTrip',
+          'notTravelingAgainstAdvice',
+          'acknowledgePrivacyNotice',
           'notDischargedWithin30Days',
           'confirmInformationAccurate',
         ];
@@ -670,7 +676,10 @@ const BuyPolicy = ({ navigation, route }: any) => {
       customer_information: customerInformation,
       is_info_correct: data.confirmInformationAccurate,
       is_not_discharged_from_hospital: data.notDischargedWithin30Days,
-      is_pdpa_consent_accepted: data.pdpaConsent,
+      is_residing_in_singapore: data.residingInSingapore,
+      is_purchasing_before_trip: data.purchasingBeforeTrip,
+      is_not_traveling_against_advice: data.notTravelingAgainstAdvice,
+      is_pdpa_consent_accepted: data.acknowledgePrivacyNotice,
       payment_details: {
         orderCreationId: paymentData?.orderCreationId,
         razorpayPaymentId: paymentData?.razorpayPaymentId,
