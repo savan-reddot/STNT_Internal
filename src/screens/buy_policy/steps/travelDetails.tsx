@@ -25,6 +25,7 @@ import { globalStyle } from '../../../utils/globalStyles';
 import { PolicyFormData } from '../types';
 import KeyboardAwareContainer from '../components/KeyboardAwareContainer';
 import { format, parse } from 'date-fns';
+import moment from 'moment';
 import {
   useLazyCountriesQuery,
   useLazyGetplansQuery,
@@ -350,29 +351,81 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                 (p: any) => p.plan_id === plan.id,
               );
 
+              // console.log('planPricings', planPricings);
               if (planPricings.length > 0) {
                 // Filter ADULT and CHILD pricing
-                const checkDateRange = (p: any) => {
-                  if (!departureDate || !p.start_date || !p.end_date)
-                    return true;
-                  const depDate = new Date(departureDate);
-                  const startDate = new Date(p.start_date);
-                  const endDate = new Date(p.end_date);
-                  if (
-                    isNaN(depDate.getTime()) ||
-                    isNaN(startDate.getTime()) ||
-                    isNaN(endDate.getTime())
-                  )
-                    return true;
-                  depDate.setHours(0, 0, 0, 0);
-                  startDate.setHours(0, 0, 0, 0);
-                  endDate.setHours(0, 0, 0, 0);
-                  return depDate >= startDate && depDate <= endDate;
+                const getApplicablePricing = (
+                  pricing_arr: any[],
+                  check_date = moment(),
+                ) => {
+                  if (!pricing_arr.length) return null;
+
+                  const today = moment(check_date);
+
+                  const datedPricings = pricing_arr.filter(
+                    (p: any) => p.start_date && p.end_date,
+                  );
+
+                  if (!datedPricings.length) {
+                    // No dates at all → fallback
+                    return pricing_arr[0];
+                  }
+
+                  // 1️⃣ Pricing that contains check_date
+                  const activePricing = pricing_arr.find((p: any) => {
+                    if (!p.start_date || !p.end_date) return false;
+
+                    return check_date.isBetween(
+                      moment(p.start_date),
+                      moment(p.end_date),
+                      'day',
+                      '[]',
+                    );
+                  });
+
+                  if (activePricing) return activePricing;
+
+                  // 2️⃣ Find latest past period
+                  const pastPeriods = datedPricings
+                    .filter((p: any) => moment(p.end_date).isBefore(today))
+                    .sort((a: any, b: any) =>
+                      moment(b.end_date).diff(moment(a.end_date)),
+                    );
+
+                  if (pastPeriods.length) {
+                    const latestPast = pastPeriods[0];
+
+                    return pricing_arr.find(
+                      (p: any) =>
+                        p.start_date === latestPast.start_date &&
+                        p.end_date === latestPast.end_date,
+                    );
+                  }
+
+                  // 3️⃣ If no past → find earliest future period
+                  const futurePeriods = datedPricings
+                    .filter((p: any) => moment(p.start_date).isAfter(today))
+                    .sort((a: any, b: any) =>
+                      moment(a.start_date).diff(moment(b.start_date)),
+                    );
+
+                  if (futurePeriods.length) {
+                    const earliestFuture = futurePeriods[0];
+
+                    return pricing_arr.find(
+                      (p: any) =>
+                        p.start_date === earliestFuture.start_date &&
+                        p.end_date === earliestFuture.end_date,
+                    );
+                  }
+
+                  // 4️⃣ Final fallback
+                  return pricing_arr[0];
                 };
 
-                const adultPricing = planPricings.find((p: any) =>
-                  // (p.age_band === 'ADULT' || p.age_band === 'adult') &&
-                  checkDateRange(p),
+                let adultPricing = getApplicablePricing(
+                  planPricings,
+                  departureDate ? moment(departureDate) : moment(),
                 );
 
                 if (adultPricing) {
@@ -402,13 +455,18 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                     extraPerDay,
                     maxDays,
                     pricingString,
-                    adultPricingRaw: adultPricing,
-                    childPricingRaw: adultPricing,
+                    adultPricingRaw: adultPricing?.pricing_details.find(
+                      (item: any) => item?.age_band === 'ADULT',
+                    ),
+                    childPricingRaw: adultPricing?.pricing_details.find(
+                      (item: any) => item?.age_band === 'CHILD',
+                    ),
                   };
                 }
               }
             });
 
+            // console.log('pricingMap', pricingMap);
             setPlanPricingData(pricingMap);
             setHasFetchedPricing(true);
           }

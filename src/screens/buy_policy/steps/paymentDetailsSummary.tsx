@@ -53,14 +53,9 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
   );
 
   const adultFee =
-    values?.planAdultPricing?.pricing_details.find(
-      (item: any) => item.age_band === 'ADULT',
-    )?.base_premium * (values.adults || 0);
-
+    values?.planAdultPricing?.base_premium * (values.adults || 0);
   const childFee =
-    values?.planChildPricing?.pricing_details.find(
-      (item: any) => item.age_band === 'CHILD',
-    )?.base_premium * (values.children || 0);
+    values?.planChildPricing?.base_premium * (values.children || 0);
 
   return (
     <ScrollView
