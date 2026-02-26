@@ -31,6 +31,7 @@ import PlanSelection from '../screens/buy_policy/plan_selection';
 import PolicyHistory from '../screens/policies/policy_history';
 import Benefits from '../screens/policies/benefits';
 import Exclusions from '../screens/policies/exclusions';
+import DocumentVault from '../screens/document_vault/document_vault';
 
 const Stack = createStackNavigator();
 
@@ -76,6 +77,7 @@ const MainStack = () => {
       <Stack.Screen name={Screens.PolicyHistory} component={PolicyHistory} />
       <Stack.Screen name={Screens.Benefits} component={Benefits} />
       <Stack.Screen name={Screens.Exclusions} component={Exclusions} />
+      <Stack.Screen name={Screens.DocumentVault} component={DocumentVault} />
     </Stack.Navigator>
   );
 };

@@ -283,13 +283,14 @@ I need some help.
       bgColor: '#FFF8E8',
       onPress: () => navigation.navigate(Screens.PreferredMerchants),
     },
-    // {
-    //   id: 6,
-    //   title: 'Vault',
-    //   icon: 'lock-closed-outline',
-    //   iconColor: '#5A67F2',
-    //   bgColor: '#F1F3FF',
-    // },
+    {
+      id: 6,
+      title: 'Vault',
+      icon: 'lock-closed-outline',
+      iconColor: '#5A67F2',
+      bgColor: '#F1F3FF',
+      onPress: () => navigation.navigate(Screens.DocumentVault),
+    },
   ];
 
   return (
@@ -512,10 +513,10 @@ I need some help.
               <TouchableOpacity
                 style={[
                   styles(theme).serviceCard,
-                  { opacity: index === 5 ? 0.5 : 1 },
+                  // { opacity: index === 5 ? 0.5 : 1 },
                 ]}
                 onPress={item?.onPress}
-                disabled={index === 5}
+                // disabled={index === 5}
               >
                 <View
                   style={[

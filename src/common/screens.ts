@@ -29,4 +29,5 @@ export const Screens = {
   Benefits: 'Benefits',
   Exclusions: 'Exclusions',
   ResetPassword: 'ResetPassword',
+  DocumentVault: 'DocumentVault',
 } as const;
