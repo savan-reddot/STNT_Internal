@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,43 +6,86 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  Modal,
+  TextInput,
+  ActivityIndicator,
+  Image,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { launchCamera } from 'react-native-image-picker';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import DocumentScanner from 'react-native-document-scanner-plugin';
+import { pick, types, keepLocalCopy } from '@react-native-documents/picker';
+import { requestAppPermission } from '../../utils/permissions';
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
+import {
+  useDocument_vault_uploadMutation,
+  useCreate_document_vaultMutation,
+  useLazyGet_all_documentsQuery,
+} from '../../redux/services';
 import AppLayout from '../../components/safeareawrapper';
-
-const TABS = ['ALL', 'IDENTITY', 'TRAVEL', 'MEDICAL'];
-
-const DUMMY_FILES = [
-  {
-    id: 1,
-    name: 'PASSPORT_AHMED.PDF',
-    date: '12 JAN 2024',
-    size: '2.4 MB',
-    isPdf: true,
-  },
-  {
-    id: 2,
-    name: 'UMRAH_VISA_APPRO...',
-    date: '15 JAN 2024',
-    size: '1.1 MB',
-    isPdf: true,
-  },
-  {
-    id: 3,
-    name: 'VACCINATION_CERT....',
-    date: '20 DEC 2023',
-    size: '3.5 MB',
-    isPdf: true,
-  },
-];
 
 const DocumentVault = ({ navigation }: any) => {
   const { top } = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('ALL');
+
+  const [getAllDocuments, { isLoading: isListLoading }] =
+    useLazyGet_all_documentsQuery();
+  const [uploadDocumentVault, { isLoading: isUploading }] =
+    useDocument_vault_uploadMutation();
+  const [createDocumentVault, { isLoading: isCreating }] =
+    useCreate_document_vaultMutation();
+
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [dynamicTabs, setDynamicTabs] = useState<string[]>(['ALL']);
+
+  // Modal states
+  const [showTypeModal, setShowTypeModal] = useState(false);
+  const [uploadedDocData, setUploadedDocData] = useState<any>(null);
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [otherType, setOtherType] = useState<string>('');
+
+  // Preview states
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<any>(null);
+
+  const docTypes = [
+    'identity',
+    'travel',
+    'medical',
+    'ticket',
+    'finance',
+    'other',
+  ];
+
+  const fetchDocuments = React.useCallback(async () => {
+    try {
+      const res = await getAllDocuments({}).unwrap();
+      if (res?.success && res?.data?.rows) {
+        const docs = res.data.rows;
+        setDocuments(docs);
+
+        // Build dynamic tabs from tags
+        const allTags = new Set(['ALL']);
+        docs.forEach((doc: any) => {
+          if (doc.tags && Array.isArray(doc.tags)) {
+            doc.tags.forEach((tag: string) => {
+              allTags.add(tag.toUpperCase());
+            });
+          }
+        });
+        setDynamicTabs(Array.from(allTags));
+      }
+    } catch (e) {
+      console.log('Fetch docs error', e);
+    }
+  }, [getAllDocuments]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -57,28 +100,160 @@ const DocumentVault = ({ navigation }: any) => {
   const handleScanPaper = async () => {
     const hasPermission = await requestCameraPermission();
     if (hasPermission) {
-      launchCamera(
-        {
-          mediaType: 'photo',
-          cameraType: 'back',
-          saveToPhotos: false,
-        },
-        response => {
-          console.log('Camera Response: ', response);
-          if (response.didCancel) {
-            console.log('User cancelled camera capture');
-          } else if (response.errorCode) {
-            console.log('Camera Error: ', response.errorMessage);
+      try {
+        const { scannedImages } = await DocumentScanner.scanDocument({
+          maxNumDocuments: 1,
+        });
+        console.log('scannedImages', scannedImages);
+        if (scannedImages && scannedImages.length > 0) {
+          const uri = scannedImages[0];
+          const formData = new FormData();
+          formData.append('file', {
+            uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+            type: 'image/jpeg',
+            name: `scan_${Date.now()}.jpg`,
+          });
+
+          const uploadRes = await uploadDocumentVault(formData).unwrap();
+          console.log('uploadRes', uploadRes);
+          if (uploadRes?.status) {
+            setUploadedDocData(uploadRes.data);
+            setSelectedType('');
+            setOtherType('');
+            setShowTypeModal(true);
           } else {
-            console.log('Camera Response: ', response);
-            // Handle the captured photo if needed
+            showErrorToast('Upload failed.');
           }
-        },
-      );
+        }
+      } catch (e) {
+        console.log('Scanner error:', e);
+      }
     } else {
-      console.log('Camera permission denied');
+      showErrorToast('Camera permission denied');
     }
   };
+
+  const handleUploadFile = async () => {
+    try {
+      const hasPermission = await requestAppPermission('document');
+      if (!hasPermission) {
+        showErrorToast('File access permission denied');
+        return;
+      }
+
+      const files = await pick({
+        type: [types.pdf, types.images],
+        allowMultiple: false,
+      });
+
+      if (!files || files.length === 0) {
+        return;
+      }
+
+      const [file] = files;
+      if (!file || !file.uri) {
+        showErrorToast('Could not retrieve file details');
+        return;
+      }
+
+      const maxSize = 4.5 * 1024 * 1024;
+      if (file.size && file.size > maxSize) {
+        showErrorToast('File is too large (max 4.5MB)');
+        return;
+      }
+
+      let localUri = file.uri;
+      try {
+        const [local] = await keepLocalCopy({
+          files: [{ uri: file.uri, fileName: file.name || '' }],
+          destination: 'documentDirectory',
+        });
+        if (local && 'localUri' in local) {
+          localUri = local.localUri;
+        } else if (local && 'sourceUri' in local) {
+          localUri = local.sourceUri;
+        }
+      } catch (copyError) {
+        console.warn('Failed to copy file locally:', copyError);
+      }
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri:
+          Platform.OS === 'android'
+            ? localUri
+            : localUri.replace('file://', ''),
+        type: file.type || 'application/pdf',
+        name: file.name || `file_${Date.now()}`,
+      });
+
+      const uploadRes = await uploadDocumentVault(formData).unwrap();
+      if (uploadRes?.status) {
+        setUploadedDocData(uploadRes.data);
+        setSelectedType('');
+        setOtherType('');
+        setShowTypeModal(true);
+      } else {
+        showErrorToast('Upload failed.');
+      }
+    } catch (e: any) {
+      console.log('Document picker error:', e);
+    }
+  };
+
+  const handleCreateDocument = async () => {
+    if (!selectedType) {
+      showErrorToast('Please select a document type');
+      return;
+    }
+    const finalType = selectedType === 'other' ? otherType : selectedType;
+    if (selectedType === 'other' && !finalType.trim()) {
+      showErrorToast('Please enter document type');
+      return;
+    }
+
+    try {
+      const payload = {
+        document_url: uploadedDocData.document_url,
+        document_name: uploadedDocData.filename,
+        tags: [finalType],
+      };
+      const res = await createDocumentVault(payload).unwrap();
+      console.log('createDocumentVault==>', res);
+      if (res?.success) {
+        showSuccessToast('Document uploaded successfully');
+        setShowTypeModal(false);
+        fetchDocuments(); // Refresh the list
+      } else {
+        showErrorToast('Failed to save document info');
+      }
+    } catch (e) {
+      console.log('Create doc error:', e);
+      showErrorToast('An error occurred');
+    }
+  };
+
+  const handlePreview = (file: any) => {
+    if (!file.document_url) {
+      showErrorToast('Document URL not found');
+      return;
+    }
+    const urlStr = String(file.document_url).toLowerCase();
+    if (urlStr.includes('.pdf')) {
+      Linking.openURL(file.document_url).catch(() => {
+        showErrorToast('Could not open PDF');
+      });
+    } else {
+      setPreviewDoc(file);
+      setPreviewModalVisible(true);
+    }
+  };
+
+  const filteredDocuments = documents.filter(doc => {
+    if (activeTab === 'ALL') return true;
+    if (!doc.tags || !Array.isArray(doc.tags)) return false;
+    return doc.tags.map((t: string) => t.toUpperCase()).includes(activeTab);
+  });
 
   return (
     <AppLayout title={'Document Vault'} onBackPress={() => navigation.goBack()}>
@@ -115,6 +290,7 @@ const DocumentVault = ({ navigation }: any) => {
 
             <TouchableOpacity
               style={[styles.actionCard, styles.actionCardUpload]}
+              onPress={handleUploadFile}
             >
               <View style={styles.actionIconUploadBox}>
                 <Icon name="cloud-upload-outline" size={28} color="#1E293B" />
@@ -126,7 +302,7 @@ const DocumentVault = ({ navigation }: any) => {
           {/* TABS */}
           <View style={styles.tabsRow}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {TABS.map((tab, index) => {
+              {dynamicTabs.map((tab, index) => {
                 const isActive = activeTab === tab;
                 return (
                   <TouchableOpacity
@@ -152,38 +328,193 @@ const DocumentVault = ({ navigation }: any) => {
           <View style={styles.recentFilesSection}>
             <Text style={styles.recentFilesTitle}>RECENT FILES</Text>
 
-            {DUMMY_FILES.map(file => (
-              <View key={file.id} style={styles.fileCard}>
-                <View style={styles.fileIconBox}>
-                  <MaterialCommunityIcons
-                    name="file-document-outline"
-                    size={24}
-                    color="#64748B"
-                  />
-                  <View style={styles.checkBadge}>
+            {isListLoading ? (
+              <ActivityIndicator
+                size="large"
+                color="#0E7A68"
+                style={{ marginTop: 20 }}
+              />
+            ) : filteredDocuments.length > 0 ? (
+              filteredDocuments.map((file: any) => (
+                <TouchableOpacity
+                  key={file.id}
+                  style={styles.fileCard}
+                  onPress={() => handlePreview(file)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.fileIconBox}>
                     <MaterialCommunityIcons
-                      name="check-circle"
-                      size={16}
-                      color="#10B981"
+                      name="file-document-outline"
+                      size={24}
+                      color="#64748B"
                     />
+                    <View style={styles.checkBadge}>
+                      <MaterialCommunityIcons
+                        name="check-circle"
+                        size={16}
+                        color="#10B981"
+                      />
+                    </View>
                   </View>
-                </View>
 
-                <View style={styles.fileDetails}>
-                  <Text style={styles.fileName}>{file.name}</Text>
-                  <Text style={styles.fileMeta}>
-                    {file.date} • {file.size}
-                  </Text>
-                </View>
+                  <View style={styles.fileDetails}>
+                    <Text style={styles.fileName}>{file.document_name}</Text>
+                    <Text style={styles.fileMeta}>
+                      {new Date(file.createdAt || Date.now())
+                        .toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                        .toUpperCase()}
+                      • {file.tags?.join(', ')?.toUpperCase()}
+                    </Text>
+                  </View>
 
-                <TouchableOpacity style={styles.downloadButton}>
-                  <Icon name="download-outline" size={20} color="#64748B" />
+                  <TouchableOpacity
+                    style={styles.downloadButton}
+                    onPress={() => {
+                      if (file.document_url) {
+                        Linking.openURL(file.document_url).catch(() => {
+                          showErrorToast('Could not download document');
+                        });
+                      }
+                    }}
+                  >
+                    <Icon name="download-outline" size={20} color="#64748B" />
+                  </TouchableOpacity>
                 </TouchableOpacity>
-              </View>
-            ))}
+              ))
+            ) : (
+              <Text
+                style={{ textAlign: 'center', color: '#94A3B8', marginTop: 20 }}
+              >
+                No documents found
+              </Text>
+            )}
           </View>
         </ScrollView>
       </View>
+
+      {/* OVERLAYS FOR LOADING / MODALS */}
+      {isUploading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text style={styles.loadingText}>Uploading document...</Text>
+        </View>
+      )}
+
+      {/* TYPE SELECTION MODAL */}
+      <Modal
+        visible={showTypeModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowTypeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>File Details</Text>
+              <TouchableOpacity onPress={() => setShowTypeModal(false)}>
+                <Icon name="close" size={24} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.fileNameText}>
+              Filename:{' '}
+              <Text style={{ fontWeight: '700', color: '#1E293B' }}>
+                {uploadedDocData?.filename}
+              </Text>
+            </Text>
+
+            <Text style={styles.selectTypeLabel}>Select Document Type:</Text>
+
+            <View style={styles.typesGrid}>
+              {docTypes.map(type => {
+                const isSelected = selectedType === type;
+                return (
+                  <TouchableOpacity
+                    key={type}
+                    style={[
+                      styles.typeOption,
+                      isSelected && styles.typeOptionSelected,
+                    ]}
+                    onPress={() => setSelectedType(type)}
+                  >
+                    <Text
+                      style={[
+                        styles.typeOptionText,
+                        isSelected && styles.typeOptionTextSelected,
+                      ]}
+                    >
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {selectedType === 'other' && (
+              <TextInput
+                style={styles.otherInput}
+                placeholder="Enter document type..."
+                placeholderTextColor="#94A3B8"
+                value={otherType}
+                onChangeText={setOtherType}
+              />
+            )}
+
+            <TouchableOpacity
+              style={[styles.modalUploadButton, isCreating && { opacity: 0.7 }]}
+              onPress={handleCreateDocument}
+              disabled={isCreating}
+            >
+              {isCreating ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.modalUploadButtonText}>Save Details</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* PREVIEW MODAL */}
+      <Modal
+        visible={previewModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPreviewModalVisible(false)}
+      >
+        <View style={styles.previewContainer}>
+          <View
+            style={[
+              styles.previewHeader,
+              { paddingTop: Platform.OS === 'ios' ? top : 16 },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.closePreviewBtn}
+              onPress={() => setPreviewModalVisible(false)}
+            >
+              <Icon name="close" size={28} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.previewTitle} numberOfLines={1}>
+              {previewDoc?.document_name || 'Document Preview'}
+            </Text>
+            <View style={{ width: 40 }} />
+          </View>
+          <View style={styles.previewImageContainer}>
+            {previewDoc?.document_url && (
+              <Image
+                source={{ uri: previewDoc.document_url }}
+                style={styles.previewImage}
+                resizeMode="contain"
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </AppLayout>
   );
 };
@@ -296,7 +627,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: '#fff',
-    marginRight: 12,
+    marginRight: 5,
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
@@ -371,6 +702,139 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999,
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+  fileNameText: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 24,
+  },
+  selectTypeLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 12,
+  },
+  typesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+  },
+  typeOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    marginRight: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  typeOptionSelected: {
+    backgroundColor: '#0E7A68',
+    borderColor: '#0E7A68',
+  },
+  typeOptionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  typeOptionTextSelected: {
+    color: '#fff',
+  },
+  otherInput: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    color: '#1E293B',
+    marginBottom: 16,
+    backgroundColor: '#F8FAFC',
+  },
+  modalUploadButton: {
+    backgroundColor: '#0F172A',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  modalUploadButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  previewContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    backgroundColor: '#000',
+  },
+  closePreviewBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+  },
+  previewImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
   },
 });
 

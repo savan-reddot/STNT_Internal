@@ -326,6 +326,23 @@ export const apiClient = createApi({
     getAllWarrantyAndExclusions: builder.query({
       query: () => `mobile-data/warranty-and-exclusions`,
     }),
+    document_vault_upload: builder.mutation({
+      query: (formData: FormData) => ({
+        url: 'mobile-data/document-vault/upload',
+        method: 'POST',
+        body: formData,
+      }),
+    }),
+    create_document_vault: builder.mutation({
+      query: (request: any) => ({
+        url: 'mobile-data/document-vault',
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    get_all_documents: builder.query({
+      query: () => 'mobile-data/document-vault',
+    }),
   }),
 });
 
@@ -376,4 +393,7 @@ export const {
   useReferral_code_usersMutation,
   useLazyGetAllWarrantyAndExclusionsQuery,
   useDelete_draftMutation,
+  useDocument_vault_uploadMutation,
+  useCreate_document_vaultMutation,
+  useLazyGet_all_documentsQuery,
 } = apiClient;
