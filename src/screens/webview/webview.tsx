@@ -5,7 +5,7 @@ import AppLayout from '../../components/safeareawrapper';
 import { useTheme } from 'react-native-paper';
 
 const WebViewScreen = ({ route, navigation }: any) => {
-  const { url } = route.params;
+  const { url, title = '' } = route.params;
   const theme = useTheme();
 
   // Fix for Android PDF preview issue
@@ -19,7 +19,7 @@ const WebViewScreen = ({ route, navigation }: any) => {
   };
 
   return (
-    <AppLayout title="" onBackPress={() => navigation.pop()}>
+    <AppLayout title={title} onBackPress={() => navigation.pop()}>
       <View
         style={[styles.container, { backgroundColor: theme.colors.background }]}
       >

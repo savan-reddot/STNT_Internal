@@ -9,15 +9,14 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
-  Image,
   Linking,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import DocumentScanner from 'react-native-document-scanner-plugin';
 import { pick, types, keepLocalCopy } from '@react-native-documents/picker';
+import RNImageToPdf from 'react-native-image-to-pdf';
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 import {
   useDocument_vault_uploadMutation,
@@ -25,9 +24,9 @@ import {
   useLazyGet_all_documentsQuery,
 } from '../../redux/services';
 import AppLayout from '../../components/safeareawrapper';
+import { Screens } from '../../common/screens';
 
 const DocumentVault = ({ navigation }: any) => {
-  const { top } = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('ALL');
 
   const [getAllDocuments, { isLoading: isListLoading }] =
@@ -45,10 +44,6 @@ const DocumentVault = ({ navigation }: any) => {
   const [uploadedDocData, setUploadedDocData] = useState<any>(null);
   const [selectedType, setSelectedType] = useState<string>('');
   const [otherType, setOtherType] = useState<string>('');
-
-  // Preview states
-  const [previewModalVisible, setPreviewModalVisible] = useState(false);
-  const [previewDoc, setPreviewDoc] = useState<any>(null);
 
   const docTypes = [
     'identity',
@@ -100,28 +95,42 @@ const DocumentVault = ({ navigation }: any) => {
     const hasPermission = await requestCameraPermission();
     if (hasPermission) {
       try {
-        const { scannedImages } = await DocumentScanner.scanDocument({
-          maxNumDocuments: 1,
-        });
+        const { scannedImages } = await DocumentScanner.scanDocument();
         console.log('scannedImages', scannedImages);
         if (scannedImages && scannedImages.length > 0) {
-          const uri = scannedImages[0];
-          const formData = new FormData();
-          formData.append('file', {
-            uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
-            type: 'image/jpeg',
-            name: `scan_${Date.now()}.jpg`,
-          });
+          try {
+            const options = {
+              imagePaths: scannedImages.map(img => img.replace('file://', '')),
+              name: `scan_${Date.now()}`,
+              quality: 0.8,
+            };
 
-          const uploadRes = await uploadDocumentVault(formData).unwrap();
-          console.log('uploadRes', uploadRes);
-          if (uploadRes?.status) {
-            setUploadedDocData(uploadRes.data);
-            setSelectedType('');
-            setOtherType('');
-            setShowTypeModal(true);
-          } else {
-            showErrorToast('Upload failed.');
+            const pdf = await RNImageToPdf.createPDFbyImages(options);
+            console.log('pdf output', pdf);
+
+            const formData = new FormData();
+            formData.append('file', {
+              uri:
+                Platform.OS === 'android'
+                  ? `file://${pdf.filePath}`
+                  : pdf.filePath,
+              type: 'application/pdf',
+              name: `scan_${Date.now()}.pdf`,
+            });
+
+            const uploadRes = await uploadDocumentVault(formData).unwrap();
+            console.log('uploadRes', uploadRes);
+            if (uploadRes?.status) {
+              setUploadedDocData(uploadRes.data);
+              setSelectedType('');
+              setOtherType('');
+              setShowTypeModal(true);
+            } else {
+              showErrorToast('Upload failed.');
+            }
+          } catch (pdfErr) {
+            console.log('PDF Conversion error:', pdfErr);
+            showErrorToast('Failed to generate PDF from scan');
           }
         }
       } catch (e: any) {
@@ -171,17 +180,45 @@ const DocumentVault = ({ navigation }: any) => {
         console.warn('Failed to copy file locally:', copyError);
       }
 
+      let uploadUri = localUri;
+      let uploadType = file.type || 'application/pdf';
+      let uploadName = file.name || `file_${Date.now()}.pdf`;
+
+      if (file.type && file.type.startsWith('image/')) {
+        try {
+          const baseName = file.name
+            ? file.name.replace(/\.[^/.]+$/, '')
+            : `file_${Date.now()}`;
+          const options = {
+            imagePaths: [localUri.replace('file://', '')],
+            name: baseName,
+            quality: 0.8,
+          };
+          const pdf = await RNImageToPdf.createPDFbyImages(options);
+
+          uploadUri =
+            Platform.OS === 'android' ? `file://${pdf.filePath}` : pdf.filePath;
+          uploadType = 'application/pdf';
+          uploadName = `${baseName}.pdf`;
+        } catch (pdfErr) {
+          console.log('PDF Conversion error in Picker:', pdfErr);
+          showErrorToast('Failed to generate PDF from image');
+          return;
+        }
+      }
+
       const formData = new FormData();
       formData.append('file', {
         uri:
           Platform.OS === 'android'
-            ? localUri
-            : localUri.replace('file://', ''),
-        type: file.type || 'application/pdf',
-        name: file.name || `file_${Date.now()}`,
+            ? uploadUri
+            : uploadUri.replace('file://', ''),
+        type: uploadType,
+        name: uploadName,
       });
 
       const uploadRes = await uploadDocumentVault(formData).unwrap();
+      console.log('uploadRes', uploadRes);
       if (uploadRes?.status) {
         setUploadedDocData(uploadRes.data);
         setSelectedType('');
@@ -224,22 +261,6 @@ const DocumentVault = ({ navigation }: any) => {
     } catch (e) {
       console.log('Create doc error:', e);
       showErrorToast('An error occurred');
-    }
-  };
-
-  const handlePreview = (file: any) => {
-    if (!file.document_url) {
-      showErrorToast('Document URL not found');
-      return;
-    }
-    const urlStr = String(file.document_url).toLowerCase();
-    if (urlStr.includes('.pdf')) {
-      Linking.openURL(file.document_url).catch(() => {
-        showErrorToast('Could not open PDF');
-      });
-    } else {
-      setPreviewDoc(file);
-      setPreviewModalVisible(true);
     }
   };
 
@@ -333,8 +354,12 @@ const DocumentVault = ({ navigation }: any) => {
                 <TouchableOpacity
                   key={file.id}
                   style={styles.fileCard}
-                  onPress={() => handlePreview(file)}
-                  activeOpacity={0.7}
+                  onPress={() =>
+                    navigation.navigate(Screens.WebView, {
+                      url: file?.document_url,
+                      title: file?.document_name,
+                    })
+                  }
                 >
                   <View style={styles.fileIconBox}>
                     <MaterialCommunityIcons
@@ -469,43 +494,6 @@ const DocumentVault = ({ navigation }: any) => {
                 <Text style={styles.modalUploadButtonText}>Save Details</Text>
               )}
             </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* PREVIEW MODAL */}
-      <Modal
-        visible={previewModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setPreviewModalVisible(false)}
-      >
-        <View style={styles.previewContainer}>
-          <View
-            style={[
-              styles.previewHeader,
-              { paddingTop: Platform.OS === 'ios' ? top : 16 },
-            ]}
-          >
-            <TouchableOpacity
-              style={styles.closePreviewBtn}
-              onPress={() => setPreviewModalVisible(false)}
-            >
-              <Icon name="close" size={28} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.previewTitle} numberOfLines={1}>
-              {previewDoc?.document_name || 'Document Preview'}
-            </Text>
-            <View style={{ width: 40 }} />
-          </View>
-          <View style={styles.previewImageContainer}>
-            {previewDoc?.document_url && (
-              <Image
-                source={{ uri: previewDoc.document_url }}
-                style={styles.previewImage}
-                resizeMode="contain"
-              />
-            )}
           </View>
         </View>
       </Modal>
@@ -793,42 +781,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     fontWeight: '700',
-  },
-  previewContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  previewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    backgroundColor: '#000',
-  },
-  closePreviewBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  previewTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
-  },
-  previewImageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
   },
 });
 
