@@ -24,9 +24,12 @@ import {
   useLazyGet_all_documentsQuery,
 } from '../../redux/services';
 import AppLayout from '../../components/safeareawrapper';
+import { useTheme, MD3Theme } from 'react-native-paper';
 import { Screens } from '../../common/screens';
 
 const DocumentVault = ({ navigation }: any) => {
+  const theme = useTheme();
+  const styles = React.useMemo(() => getStyles(theme), [theme]);
   const [activeTab, setActiveTab] = useState('ALL');
 
   const [getAllDocuments, { isLoading: isListLoading }] =
@@ -298,7 +301,7 @@ const DocumentVault = ({ navigation }: any) => {
               onPress={handleScanPaper}
             >
               <View style={styles.actionIconUpload}>
-                <Icon name="camera-outline" size={28} color="#fff" />
+                <Icon name="camera-outline" size={28} color={theme.dark ? '#1E293B' : '#fff'} />
               </View>
               <Text style={styles.actionTitleScan}>SCAN PAPER</Text>
             </TouchableOpacity>
@@ -308,7 +311,11 @@ const DocumentVault = ({ navigation }: any) => {
               onPress={handleUploadFile}
             >
               <View style={styles.actionIconUploadBox}>
-                <Icon name="cloud-upload-outline" size={28} color="#1E293B" />
+                <Icon
+                  name="cloud-upload-outline"
+                  size={28}
+                  color={theme.dark ? '#94A3B8' : '#1E293B'}
+                />
               </View>
               <Text style={styles.actionTitleUpload}>UPLOAD FILE</Text>
             </TouchableOpacity>
@@ -406,7 +413,11 @@ const DocumentVault = ({ navigation }: any) => {
               ))
             ) : (
               <Text
-                style={{ textAlign: 'center', color: '#94A3B8', marginTop: 20 }}
+                style={{
+                  textAlign: 'center',
+                  color: theme.dark ? '#94A3B8' : '#94A3B8',
+                  marginTop: 20,
+                }}
               >
                 No documents found
               </Text>
@@ -441,7 +452,12 @@ const DocumentVault = ({ navigation }: any) => {
 
             <Text style={styles.fileNameText}>
               Filename:{' '}
-              <Text style={{ fontWeight: '700', color: '#1E293B' }}>
+              <Text
+                style={{
+                  fontWeight: '700',
+                  color: theme.dark ? '#F8FAFC' : '#1E293B',
+                }}
+              >
                 {uploadedDocData?.filename}
               </Text>
             </Text>
@@ -501,287 +517,290 @@ const DocumentVault = ({ navigation }: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  contentContainer: {
-    padding: 20,
-  },
-  banner: {
-    backgroundColor: '#E8FBF4',
-    borderRadius: 20,
-    padding: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  bannerIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: 'rgba(14, 122, 104, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  bannerTextContainer: {
-    flex: 1,
-  },
-  bannerTitle: {
-    color: '#1E293B',
-    fontSize: 14,
-    fontWeight: '800',
-    marginBottom: 6,
-  },
-  bannerSubtitle: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '600',
-    lineHeight: 16,
-    letterSpacing: 0.5,
-  },
-  actionCardsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  actionCard: {
-    flex: 1,
-    borderRadius: 28,
-    padding: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    aspectRatio: 1,
-  },
-  actionCardScan: {
-    backgroundColor: '#0F172A',
-    marginRight: 8,
-  },
-  actionCardUpload: {
-    backgroundColor: '#fff',
-    marginLeft: 8,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  actionIconUpload: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  actionIconUploadBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  actionTitleScan: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  actionTitleUpload: {
-    color: '#1E293B',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  tabsRow: {
-    flexDirection: 'row',
-    marginBottom: 32,
-  },
-  tabButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    marginRight: 5,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  tabButtonActive: {
-    backgroundColor: '#0E7A68',
-    borderColor: '#0E7A68',
-  },
-  tabText: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  tabTextActive: {
-    color: '#fff',
-  },
-  recentFilesSection: {
-    flex: 1,
-  },
-  recentFilesTitle: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    marginBottom: 16,
-    marginLeft: 4,
-  },
-  fileCard: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  fileIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  checkBadge: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-  },
-  fileDetails: {
-    flex: 1,
-  },
-  fileName: {
-    color: '#1E293B',
-    fontSize: 14,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  fileMeta: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  downloadButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 999,
-  },
-  loadingText: {
-    color: '#fff',
-    marginTop: 12,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1E293B',
-  },
-  fileNameText: {
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: 24,
-  },
-  selectTypeLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 12,
-  },
-  typesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 16,
-  },
-  typeOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: '#F1F5F9',
-    marginRight: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  typeOptionSelected: {
-    backgroundColor: '#0E7A68',
-    borderColor: '#0E7A68',
-  },
-  typeOptionText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  typeOptionTextSelected: {
-    color: '#fff',
-  },
-  otherInput: {
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 14,
-    color: '#1E293B',
-    marginBottom: 16,
-    backgroundColor: '#F8FAFC',
-  },
-  modalUploadButton: {
-    backgroundColor: '#0F172A',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  modalUploadButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-});
+const getStyles = (theme: MD3Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.dark ? theme.colors.background : '#F8FAFC',
+    },
+    contentContainer: {
+      padding: 20,
+    },
+    banner: {
+      backgroundColor: theme.dark ? 'rgba(14, 122, 104, 0.05)' : '#E8FBF4',
+      borderRadius: 20,
+      padding: 24,
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 24,
+      borderWidth: 1,
+      borderColor: theme.dark ? 'rgba(14, 122, 104, 0.4)' : 'transparent',
+    },
+    bannerIconContainer: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: theme.dark ? 'rgba(14, 122, 104, 0.2)' : 'rgba(14, 122, 104, 0.1)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 16,
+    },
+    bannerTextContainer: {
+      flex: 1,
+    },
+    bannerTitle: {
+      color: theme.dark ? '#fff' : '#1E293B',
+      fontSize: 14,
+      fontWeight: '800',
+      marginBottom: 6,
+    },
+    bannerSubtitle: {
+      color: theme.dark ? '#94A3B8' : '#64748B',
+      fontSize: 11,
+      fontWeight: '600',
+      lineHeight: 16,
+      letterSpacing: 0.5,
+    },
+    actionCardsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 24,
+    },
+    actionCard: {
+      flex: 1,
+      borderRadius: 28,
+      padding: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      aspectRatio: 1,
+    },
+    actionCardScan: {
+      backgroundColor: theme.dark ? '#fff' : '#0F172A',
+      marginRight: 8,
+    },
+    actionCardUpload: {
+      backgroundColor: theme.dark ? '#1E293B' : '#fff',
+      marginLeft: 8,
+      borderWidth: theme.dark ? 0 : 1,
+      borderColor: theme.dark ? 'transparent' : '#F1F5F9',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.05,
+      shadowRadius: 10,
+      elevation: 2,
+    },
+    actionIconUpload: {
+      width: 64,
+      height: 64,
+      borderRadius: 20,
+      backgroundColor: theme.dark ? '#F1F5F9' : 'rgba(255,255,255,0.1)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 16,
+    },
+    actionIconUploadBox: {
+      width: 64,
+      height: 64,
+      borderRadius: 20,
+      backgroundColor: theme.dark ? 'rgba(255,255,255,0.05)' : '#F8FAFC',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 16,
+    },
+    actionTitleScan: {
+      color: theme.dark ? '#1E293B' : '#fff',
+      fontSize: 13,
+      fontWeight: '800',
+      letterSpacing: 0.5,
+    },
+    actionTitleUpload: {
+      color: theme.dark ? '#fff' : '#1E293B',
+      fontSize: 13,
+      fontWeight: '800',
+      letterSpacing: 0.5,
+    },
+    tabsRow: {
+      flexDirection: 'row',
+      marginBottom: 32,
+    },
+    tabButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 20,
+      backgroundColor: theme.dark ? '#fff' : '#fff',
+      marginRight: 5,
+      borderWidth: 1,
+      borderColor: theme.dark ? '#fff' : '#F1F5F9',
+    },
+    tabButtonActive: {
+      backgroundColor: '#0E7A68',
+      borderColor: '#0E7A68',
+    },
+    tabText: {
+      color: '#94A3B8',
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
+    tabTextActive: {
+      color: '#fff',
+    },
+    recentFilesSection: {
+      flex: 1,
+    },
+    recentFilesTitle: {
+      color: '#94A3B8',
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 1.5,
+      marginBottom: 16,
+      marginLeft: 4,
+    },
+    fileCard: {
+      backgroundColor: theme.dark ? '#1E293B' : '#fff',
+      borderRadius: 20,
+      padding: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+      borderWidth: theme.dark ? 0 : 1,
+      borderColor: theme.dark ? 'transparent' : '#F1F5F9',
+    },
+    fileIconBox: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: theme.dark ? 'rgba(255,255,255,0.05)' : '#F8FAFC',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 16,
+    },
+    checkBadge: {
+      position: 'absolute',
+      bottom: -4,
+      right: -4,
+      backgroundColor: theme.dark ? '#1E293B' : '#fff',
+      borderRadius: 10,
+    },
+    fileDetails: {
+      flex: 1,
+    },
+    fileName: {
+      color: theme.dark ? '#F8FAFC' : '#1E293B',
+      fontSize: 14,
+      fontWeight: '800',
+      marginBottom: 4,
+    },
+    fileMeta: {
+      color: '#94A3B8',
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    downloadButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: theme.dark ? 'rgba(255,255,255,0.05)' : '#F8FAFC',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    loadingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 999,
+    },
+    loadingText: {
+      color: '#fff',
+      marginTop: 12,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: theme.dark ? '#1E293B' : '#fff',
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      padding: 24,
+      paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '800',
+      color: theme.dark ? '#F8FAFC' : '#1E293B',
+    },
+    fileNameText: {
+      fontSize: 14,
+      color: theme.dark ? '#94A3B8' : '#64748B',
+      marginBottom: 24,
+    },
+    selectTypeLabel: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: theme.dark ? '#F8FAFC' : '#1E293B',
+      marginBottom: 12,
+    },
+    typesGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      marginBottom: 16,
+    },
+    typeOption: {
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 20,
+      backgroundColor: theme.dark ? '#334155' : '#F1F5F9',
+      marginRight: 10,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: theme.dark ? '#334155' : '#F1F5F9',
+    },
+    typeOptionSelected: {
+      backgroundColor: '#0E7A68',
+      borderColor: '#0E7A68',
+    },
+    typeOptionText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.dark ? '#94A3B8' : '#64748B',
+    },
+    typeOptionTextSelected: {
+      color: '#fff',
+    },
+    otherInput: {
+      borderWidth: 1,
+      borderColor: theme.dark ? '#334155' : '#E2E8F0',
+      borderRadius: 12,
+      padding: 12,
+      fontSize: 14,
+      color: theme.dark ? '#F8FAFC' : '#1E293B',
+      marginBottom: 16,
+      backgroundColor: theme.dark ? theme.colors.background : '#F8FAFC',
+    },
+    modalUploadButton: {
+      backgroundColor: theme.dark ? '#334155' : '#0F172A',
+      borderRadius: 12,
+      padding: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 8,
+    },
+    modalUploadButtonText: {
+      color: '#fff',
+      fontSize: 15,
+      fontWeight: '700',
+    },
+  });
 
 export default DocumentVault;
