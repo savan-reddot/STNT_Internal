@@ -18,7 +18,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import DocumentScanner from 'react-native-document-scanner-plugin';
 import { pick, types, keepLocalCopy } from '@react-native-documents/picker';
-import { requestAppPermission } from '../../utils/permissions';
 import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
 import {
   useDocument_vault_uploadMutation,
@@ -125,7 +124,8 @@ const DocumentVault = ({ navigation }: any) => {
             showErrorToast('Upload failed.');
           }
         }
-      } catch (e) {
+      } catch (e: any) {
+        showErrorToast(e?.data?.errorMessage || 'Upload failed try again.');
         console.log('Scanner error:', e);
       }
     } else {
@@ -135,12 +135,6 @@ const DocumentVault = ({ navigation }: any) => {
 
   const handleUploadFile = async () => {
     try {
-      const hasPermission = await requestAppPermission('document');
-      if (!hasPermission) {
-        showErrorToast('File access permission denied');
-        return;
-      }
-
       const files = await pick({
         type: [types.pdf, types.images],
         allowMultiple: false,
