@@ -20,6 +20,9 @@ import { useAppSelector } from './src/redux/hooks';
 import { getTheme } from './src/redux/reducer';
 import { useDeepLink } from './src/hooks/useDeepLink';
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+
 const AppContent = () => {
   const scheme = useColorScheme();
   const storedTheme = useAppSelector(getTheme);
@@ -37,13 +40,15 @@ const AppContent = () => {
       }}
     >
       <PaperProvider theme={activeTheme}>
-        <NavigationContainer
-          ref={navigationRef}
-          linking={linking} // Use the linking object returned by the hook
-        >
-          <MainStack />
-          <Toast config={toastConfig} />
-        </NavigationContainer>
+        <BottomSheetModalProvider>
+          <NavigationContainer
+            ref={navigationRef}
+            linking={linking} // Use the linking object returned by the hook
+          >
+            <MainStack />
+            <Toast config={toastConfig} />
+          </NavigationContainer>
+        </BottomSheetModalProvider>
       </PaperProvider>
     </View>
   );
@@ -51,13 +56,15 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <SafeAreaProvider>
-          <AppContent />
-        </SafeAreaProvider>
-      </PersistGate>
-    </Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <SafeAreaProvider>
+            <AppContent />
+          </SafeAreaProvider>
+        </PersistGate>
+      </Provider>
+    </GestureHandlerRootView>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,9 @@ import {
 } from 'react-native';
 import TypeSelectionModal from '../../components/document_vault/TypeSelectionModal';
 import EditNameModal from '../../components/document_vault/EditNameModal';
+import NativeActionSheet, {
+  NativeActionSheetRef,
+} from '../../components/common/NativeActionSheet';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
@@ -35,6 +38,7 @@ import { useTheme, MD3Theme } from 'react-native-paper';
 import { Screens } from '../../common/screens';
 
 const DocumentVault = ({ navigation }: any) => {
+  const actionSheetRef = React.useRef<NativeActionSheetRef>(null);
   const theme = useTheme();
   const styles = React.useMemo(() => getStyles(theme), [theme]);
   const [activeTab, setActiveTab] = useState('ALL');
@@ -338,6 +342,7 @@ const DocumentVault = ({ navigation }: any) => {
   };
 
   const showFileActions = (file: any) => {
+    setSelectedFile(file); // Store selected file for Android bottom sheet
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -353,50 +358,56 @@ const DocumentVault = ({ navigation }: any) => {
         },
         buttonIndex => {
           if (buttonIndex === 1) {
-            if (file.document_url) {
-              Linking.openURL(file.document_url).catch(() => {
-                showErrorToast('Could not download document');
-              });
-            }
+            handleDownload(file);
           } else if (buttonIndex === 2) {
-            setEditingDoc(file);
-            setEditName(file.document_name);
-            setShowEditModal(true);
+            handleEdit(file);
           } else if (buttonIndex === 3) {
             handleDeleteFile(file.id);
           }
         },
       );
     } else {
-      // For Android, use Alert as a simple native menu
-      Alert.alert(file.document_name, 'Choose an action', [
-        {
-          text: 'Download',
-          onPress: () => {
-            if (file.document_url) {
-              Linking.openURL(file.document_url).catch(() => {
-                showErrorToast('Could not download document');
-              });
-            }
-          },
-        },
-        {
-          text: 'Edit Name',
-          onPress: () => {
-            setEditingDoc(file);
-            setEditName(file.document_name);
-            setShowEditModal(true);
-          },
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => handleDeleteFile(file.id),
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
+      actionSheetRef.current?.present();
     }
   };
+
+  const handleDownload = (file: any) => {
+    if (file.document_url) {
+      Linking.openURL(file.document_url).catch(() => {
+        showErrorToast('Could not download document');
+      });
+    }
+  };
+
+  const handleEdit = (file: any) => {
+    setEditingDoc(file);
+    setEditName(file.document_name);
+    setShowEditModal(true);
+  };
+
+  const [selectedFile, setSelectedFile] = useState<any>(null);
+
+  const androidActionOptions = useMemo(() => {
+    if (!selectedFile) return [];
+    return [
+      {
+        label: 'Download Document',
+        icon: 'download-outline',
+        onPress: () => handleDownload(selectedFile),
+      },
+      {
+        label: 'Edit Name',
+        icon: 'pencil-outline',
+        onPress: () => handleEdit(selectedFile),
+      },
+      {
+        label: 'Delete Document',
+        icon: 'trash-outline',
+        onPress: () => handleDeleteFile(selectedFile.id),
+        destructive: true,
+      },
+    ];
+  }, [selectedFile]);
 
   const filteredDocuments = documents.filter(doc => {
     if (activeTab === 'ALL') return true;
@@ -589,6 +600,12 @@ const DocumentVault = ({ navigation }: any) => {
         onNameChange={setEditName}
         onUpdate={handleUpdateDocument}
         isUpdating={isUpdatingName}
+      />
+
+      <NativeActionSheet
+        ref={actionSheetRef}
+        title={selectedFile?.document_name}
+        options={androidActionOptions}
       />
     </AppLayout>
   );
