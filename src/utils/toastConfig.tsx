@@ -1,5 +1,6 @@
+import { Text } from '../components/common';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 import { metrics } from './metrics';
 

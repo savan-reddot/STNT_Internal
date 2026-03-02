@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import React, { useState } from 'react';
 import { globalStyle } from '../../utils/globalStyles';
-import { MD3Theme, TextInput, useTheme, Text } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import AppLayout from '../../components/safeareawrapper';
 import fontStyle from '../../styles/fontStyle';
 import { metrics } from '../../utils/metrics';
@@ -32,6 +32,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 import ForgotPassword from '../../components/forgot_password';
+import { Text, TextInput } from '../../components/common';
 
 const Login = ({ navigation }: any) => {
   const theme = useTheme();

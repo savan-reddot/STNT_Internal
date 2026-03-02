@@ -1,9 +1,9 @@
+import { Text } from '../../../components/common';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
-  Linking,
+  Linking
 } from 'react-native';
 import React from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';

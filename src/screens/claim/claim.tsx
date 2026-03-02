@@ -1,11 +1,11 @@
+import { Text } from '../../components/common';
 import {
   Alert,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from 'react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';

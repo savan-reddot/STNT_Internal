@@ -1,3 +1,4 @@
+import { Text } from './common';
 import React, {
   forwardRef,
   use,
@@ -6,7 +7,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Dropdown } from 'react-native-element-dropdown';
 import Modal from 'react-native-modal';
@@ -129,6 +130,10 @@ const UIDSelection = ({
           containerStyle={styles(theme).dropdownContainer}
           itemTextStyle={styles(theme).dropdownItemText}
           activeColor={theme.dark ? '#374151' : '#E6EBF1'} // active color for dark mode
+          selectedTextProps={{
+            allowFontScaling: false,
+            maxFontSizeMultiplier: 1,
+          }}
         />
       </View>
     </Modal>

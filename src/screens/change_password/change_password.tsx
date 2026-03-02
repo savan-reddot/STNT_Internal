@@ -1,12 +1,12 @@
+import { Text, TextInput } from '../../components/common';
 import {
   Keyboard,
   StyleSheet,
-  Text,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import React, { useState } from 'react';
-import { MD3Theme, TextInput, useTheme } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import { Controller, useForm } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import AppLayout from '../../components/safeareawrapper';

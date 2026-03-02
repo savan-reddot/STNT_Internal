@@ -1,6 +1,6 @@
+import { Text, TextInput } from '../../../components/common';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   Modal,
@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import {
   Control,
   Controller,
@@ -987,6 +987,10 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                 itemTextStyle={styles(theme).dropdownItemText}
                 activeColor={theme.dark ? '#374151' : '#E6EBF1'}
                 disable={false}
+                selectedTextProps={{
+                  allowFontScaling: false,
+                  maxFontSizeMultiplier: 1,
+                }}
               />
               {errors.destination && (
                 <Text style={styles(theme).errorText}>
@@ -1029,6 +1033,10 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
                 itemTextStyle={styles(theme).dropdownItemText}
                 activeColor={theme.dark ? '#374151' : '#E6EBF1'}
                 disable={!selectedDestination}
+                selectedTextProps={{
+                  allowFontScaling: false,
+                  maxFontSizeMultiplier: 1,
+                }}
               />
               {errors.umrahCoveragePlan && (
                 <Text style={styles(theme).errorText}>

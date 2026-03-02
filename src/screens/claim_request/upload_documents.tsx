@@ -1,12 +1,12 @@
+import { Text } from '../../components/common';
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   FlatList,
   StyleSheet,
   Image,
-  Alert,
+  Alert
 } from 'react-native';
 import { pick, types, keepLocalCopy } from '@react-native-documents/picker';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';

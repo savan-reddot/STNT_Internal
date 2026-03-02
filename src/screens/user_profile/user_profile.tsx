@@ -1,9 +1,9 @@
+import { Text, TextInput } from '../../components/common';
 import {
   Alert,
   ImageBackground,
   Keyboard,
   StyleSheet,
-  Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
@@ -12,7 +12,7 @@ import React, { useCallback, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';
 import { globalStyle } from '../../utils/globalStyles';
 import { metrics } from '../../utils/metrics';
-import { MD3Theme, TextInput, useTheme } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import {
   getUser,
@@ -123,8 +123,13 @@ const UserProfile = ({ navigation }: any) => {
           availableUids: resp?.data?.data?.availableUids,
         }),
       );
-      await AsyncStorage.setItem('@user', JSON.stringify(resp?.data?.data?.user));
-      const passportResp = await passportById({ uidNo: resp?.data?.data?.latestUid });
+      await AsyncStorage.setItem(
+        '@user',
+        JSON.stringify(resp?.data?.data?.user),
+      );
+      const passportResp = await passportById({
+        uidNo: resp?.data?.data?.latestUid,
+      });
       console.log('passportById Response get profile : ', passportResp);
       if (passportResp?.data?.status) {
         const { data } = passportResp?.data;
@@ -137,19 +142,21 @@ const UserProfile = ({ navigation }: any) => {
           });
         } else {
           showErrorToast('Passport Not Found !!', 'Warning');
-          isFromSaveButton && verifyUser({
+          isFromSaveButton &&
+            verifyUser({
+              user: resp?.data?.data?.user,
+              latestUid: resp?.data?.data?.latestUid,
+              availableUids: resp?.data?.data?.availableUids,
+            });
+        }
+      } else {
+        showErrorToast('Passport Not Found !!', 'Warning');
+        isFromSaveButton &&
+          verifyUser({
             user: resp?.data?.data?.user,
             latestUid: resp?.data?.data?.latestUid,
             availableUids: resp?.data?.data?.availableUids,
           });
-        }
-      } else {
-        showErrorToast('Passport Not Found !!', 'Warning');
-        isFromSaveButton && verifyUser({
-          user: resp?.data?.data?.user,
-          latestUid: resp?.data?.data?.latestUid,
-          availableUids: resp?.data?.data?.availableUids,
-        });
       }
     }
   };
@@ -170,7 +177,7 @@ const UserProfile = ({ navigation }: any) => {
         routes: [{ name: Screens.BottomTab }],
       });
     } else {
-      await AsyncStorage.setItem('webtoken', "");
+      await AsyncStorage.setItem('webtoken', '');
       dispatch(setWebToken(null));
       navigation.reset({
         index: 0,
@@ -232,7 +239,7 @@ const UserProfile = ({ navigation }: any) => {
         Alert.alert(
           'Permission Required',
           'Please grant file access permission to upload documents.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
         return;
       }
@@ -250,7 +257,10 @@ const UserProfile = ({ navigation }: any) => {
       const [file] = files; // destructure single file
 
       if (!file || !file.uri) {
-        Alert.alert('Error', 'Failed to get file information. Please try again.');
+        Alert.alert(
+          'Error',
+          'Failed to get file information. Please try again.',
+        );
         return;
       }
 
@@ -260,7 +270,7 @@ const UserProfile = ({ navigation }: any) => {
         Alert.alert(
           'File Too Large',
           'The selected file is larger than 4.5 MB. Please choose a smaller file.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
         return;
       }
@@ -279,7 +289,10 @@ const UserProfile = ({ navigation }: any) => {
           localUri = local.sourceUri;
         }
       } catch (copyError) {
-        console.warn('Failed to copy file locally, using original URI:', copyError);
+        console.warn(
+          'Failed to copy file locally, using original URI:',
+          copyError,
+        );
         // Continue with original URI if local copy fails
       }
 
@@ -293,7 +306,6 @@ const UserProfile = ({ navigation }: any) => {
 
       setIsSelectionVisible(false);
       console.log('Document added successfully:', file.name);
-
     } catch (err: any) {
       console.log('Document picker error:', err);
     }

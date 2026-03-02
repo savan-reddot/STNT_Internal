@@ -1,17 +1,17 @@
+import { Text } from '../../components/common';
 import {
   Dimensions,
   FlatList,
   Image,
   Linking,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   AppState,
   ScrollView,
   ImageBackground,
   Modal,
-  Pressable,
+  Pressable
 } from 'react-native';
 import React, { useCallback, useState, useEffect } from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';

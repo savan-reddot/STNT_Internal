@@ -1,6 +1,7 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text, TextInput } from '../../../components/common';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import React, { useEffect } from 'react';
-import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import {
   Control,
   Controller,
@@ -273,6 +274,10 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
                 containerStyle={styles(theme).dropdownContainer}
                 itemTextStyle={styles(theme).dropdownItemText}
                 activeColor={theme.dark ? '#374151' : '#E6EBF1'}
+                selectedTextProps={{
+                  allowFontScaling: false,
+                  maxFontSizeMultiplier: 1,
+                }}
               />
               {errors.customers?.[index]?.nationality && (
                 <Text style={styles(theme).errorText}>
@@ -305,6 +310,10 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
                 containerStyle={styles(theme).dropdownContainer}
                 itemTextStyle={styles(theme).dropdownItemText}
                 activeColor={theme.dark ? '#374151' : '#E6EBF1'}
+                selectedTextProps={{
+                  allowFontScaling: false,
+                  maxFontSizeMultiplier: 1,
+                }}
               />
               {errors.customers?.[index]?.gender && (
                 <Text style={styles(theme).errorText}>
@@ -378,6 +387,10 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
                     containerStyle={styles(theme).dropdownContainer}
                     itemTextStyle={styles(theme).dropdownItemText}
                     activeColor={theme.dark ? '#374151' : '#E6EBF1'}
+                    selectedTextProps={{
+                      allowFontScaling: false,
+                      maxFontSizeMultiplier: 1,
+                    }}
                   />
                   {errors.customers?.[index]?.visaType && (
                     <Text style={styles(theme).errorText}>

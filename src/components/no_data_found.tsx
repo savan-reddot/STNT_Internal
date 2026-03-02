@@ -1,5 +1,6 @@
+import { Text } from './common';
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { useTheme } from 'react-native-paper';
 
 interface NoDataFoundProps {

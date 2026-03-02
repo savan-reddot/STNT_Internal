@@ -1,10 +1,10 @@
+import { Text } from '../../components/common';
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
-  ScrollView,
+  ScrollView
 } from 'react-native';
 import AppLayout from '../../components/safeareawrapper';
 import { MD3Theme, useTheme } from 'react-native-paper';

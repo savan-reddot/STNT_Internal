@@ -1,14 +1,13 @@
+import { Text, TextInput } from '../common';
 import React from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   Modal,
-  TextInput,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet,
+  StyleSheet
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme, MD3Theme } from 'react-native-paper';

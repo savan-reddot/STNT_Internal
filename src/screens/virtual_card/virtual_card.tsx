@@ -1,14 +1,18 @@
+import { Text } from '../../components/common';
 import {
   Animated,
   Easing,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useRef, useState } from 'react';
+import {
+  useFocusEffect } from '@react-navigation/native';
+import React,
+  { useCallback,
+  useRef,
+  useState } from 'react';
 import ScreenGuard from 'react-native-screenguard';
 import AppLayout from '../../components/safeareawrapper';
 import { useLazyUser_metaQuery } from '../../redux/services';
@@ -20,12 +24,15 @@ import { useTheme } from 'react-native-paper';
 
 const VirtualCard = () => {
   const theme = useTheme();
-  const [metaData, setMetaData] = useState<any>(null);
-  const [user_meta, { isLoading }] = useLazyUser_metaQuery();
+  const [metaData,
+  setMetaData] = useState<any>(null);
+  const [user_meta,
+  { isLoading }] = useLazyUser_metaQuery();
 
   /** Flip animation */
   const flipAnim = useRef(new Animated.Value(0)).current;
-  const [flipped, setFlipped] = useState(false);
+  const [flipped,
+  setFlipped] = useState(false);
 
   const init = async () => {
     const webToken = await AsyncStorage.getItem('webtoken');
@@ -42,29 +49,35 @@ const VirtualCard = () => {
       init();
       ScreenGuard.register({
         backgroundColor: '#000',
-        timeAfterResume: 1000,
-      });
+  timeAfterResume: 1000,
+  });
       return () => ScreenGuard.unregister();
-    }, []),
+    },
+  []),
   );
 
   const flipCard = () => {
-    Animated.timing(flipAnim, {
+    Animated.timing(flipAnim,
+  {
       toValue: flipped ? 0 : 180,
-      duration: 500,
-      easing: Easing.inOut(Easing.ease),
-      useNativeDriver: true,
-    }).start(() => setFlipped(!flipped));
+  duration: 500,
+  easing: Easing.inOut(Easing.ease),
+  useNativeDriver: true,
+  }).start(() => setFlipped(!flipped));
   };
 
   const frontRotate = flipAnim.interpolate({
-    inputRange: [0, 180],
-    outputRange: ['0deg', '180deg'],
+    inputRange: [0,
+  180],
+  outputRange: ['0deg',
+  '180deg'],
   });
 
   const backRotate = flipAnim.interpolate({
-    inputRange: [0, 180],
-    outputRange: ['180deg', '360deg'],
+    inputRange: [0,
+  180],
+  outputRange: ['180deg',
+  '360deg'],
   });
 
   if (isLoading) {
@@ -76,8 +89,8 @@ const VirtualCard = () => {
       <View
         style={[
           styles.noDataFoundContainer,
-          { backgroundColor: theme.colors.background },
-        ]}
+  { backgroundColor: theme.colors.background },
+  ]}
       >
         <NoDataFound
           title="No Virtual Card Found"
@@ -96,7 +109,8 @@ const VirtualCard = () => {
           <View style={styles.cardWrapper}>
             {/* FRONT – DETAILS */}
             <Animated.View
-              style={[styles.card, { transform: [{ rotateY: frontRotate }] }]}
+              style={[styles.card,
+  { transform: [{ rotateY: frontRotate }] }]}
             >
               <View style={styles.frontCard}>
                 {/* Header */}
@@ -155,12 +169,14 @@ const VirtualCard = () => {
 
                 <View style={styles.row}>
                   <Text style={styles.label}>Valid Until</Text>
-                  <Text style={[styles.value, { color: '#2e7d32' }]}>
+                  <Text style={[styles.value,
+  { color: '#2e7d32' }]}>
                     {details?.policyExpirationData}
                   </Text>
                 </View>
 
-                <Text style={[styles.tapBack, { textAlign: 'center' }]}>
+                <Text style={[styles.tapBack,
+  { textAlign: 'center' }]}>
                   TAP TO VIEW BACK
                 </Text>
               </View>
@@ -170,9 +186,9 @@ const VirtualCard = () => {
             <Animated.View
               style={[
                 styles.card,
-                styles.backCard,
-                { transform: [{ rotateY: backRotate }] },
-              ]}
+  styles.backCard,
+  { transform: [{ rotateY: backRotate }] },
+  ]}
             >
               <View style={styles.backInner}>
                 <Text style={styles.encryptedText}>ENCRYPTED E-CARD</Text>
@@ -202,123 +218,139 @@ export default VirtualCard;
 const styles = StyleSheet.create({
   cardWrapper: {
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  shadowColor: '#000',
+  shadowOffset: { width: 0,
+  height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+  elevation: 5,
   },
   card: {
     width: '100%',
-    borderRadius: 28,
-    backfaceVisibility: 'hidden',
+  borderRadius: 28,
+  backfaceVisibility: 'hidden',
   },
-  backCard: { position: 'absolute', top: 0 },
+  backCard: { position: 'absolute',
+  top: 0 },
   frontCard: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 28,
-    padding: 20,
+  backgroundColor: '#fff',
+  borderRadius: 28,
+  padding: 20,
   },
-  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  headerRow: { flexDirection: 'row',
+  alignItems: 'center' },
   logoBox: {
     width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#3fa26a',
-    marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+  height: 40,
+  borderRadius: 12,
+  backgroundColor: '#3fa26a',
+  marginRight: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
   },
   logoText: {
     color: '#ffffff',
-    fontWeight: '700',
+  fontWeight: '700',
   },
-  orgName: { fontWeight: '700', fontSize: 14 },
-  subTitle: { fontSize: 12, color: '#3fa26a' },
+  orgName: { fontWeight: '700',
+  fontSize: 14 },
+  subTitle: { fontSize: 12,
+  color: '#3fa26a' },
   avatar: {
     marginTop: 24,
-    alignSelf: 'center',
-    width: 90,
-    height: 90,
-    borderRadius: 24,
-    backgroundColor: '#245b4f',
-    alignItems: 'center',
-    justifyContent: 'center',
+  alignSelf: 'center',
+  width: 90,
+  height: 90,
+  borderRadius: 24,
+  backgroundColor: '#245b4f',
+  alignItems: 'center',
+  justifyContent: 'center',
   },
-  avatarText: { fontSize: 32, color: '#fff', fontWeight: '700' },
+  avatarText: { fontSize: 32,
+  color: '#fff',
+  fontWeight: '700' },
   fullName: {
     marginTop: 16,
-    textAlign: 'center',
-    fontSize: 20,
-    fontWeight: '700',
+  textAlign: 'center',
+  fontSize: 20,
+  fontWeight: '700',
   },
-  nationality: { textAlign: 'center', color: '#888' },
+  nationality: { textAlign: 'center',
+  color: '#888' },
   statusBadge: {
     marginTop: 14,
-    alignSelf: 'center',
-    backgroundColor: '#e8f5ee',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
+  alignSelf: 'center',
+  backgroundColor: '#e8f5ee',
+  paddingHorizontal: 16,
+  paddingVertical: 6,
+  borderRadius: 20,
   },
-  statusText: { color: '#2e7d32', fontWeight: '600' },
-  divider: { height: 1, backgroundColor: '#eee', marginVertical: 18 },
+  statusText: { color: '#2e7d32',
+  fontWeight: '600' },
+  divider: { height: 1,
+  backgroundColor: '#eee',
+  marginVertical: 18 },
   row: { marginBottom: 10 },
-  label: { fontSize: 12, color: '#888' },
-  value: { fontSize: 15, fontWeight: '600' },
+  label: { fontSize: 12,
+  color: '#888' },
+  value: { fontSize: 15,
+  fontWeight: '600' },
   backInner: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 28,
-    alignItems: 'center',
-    padding: 24,
+  backgroundColor: '#fff',
+  borderRadius: 28,
+  alignItems: 'center',
+  padding: 24,
   },
-  encryptedText: { marginTop: 10, color: '#999', fontWeight: '600' },
+  encryptedText: { marginTop: 10,
+  color: '#999',
+  fontWeight: '600' },
   qrBox: {
     marginTop: 30,
-    padding: 20,
-    borderRadius: 24,
-    backgroundColor: '#fafafa',
+  padding: 20,
+  borderRadius: 24,
+  backgroundColor: '#fafafa',
   },
   securityTitle: {
     marginTop: 20,
-    fontSize: 18,
-    fontWeight: '700',
+  fontSize: 18,
+  fontWeight: '700',
   },
   securityDesc: {
     marginTop: 8,
-    textAlign: 'center',
-    color: '#888',
-    fontSize: 13,
+  textAlign: 'center',
+  color: '#888',
+  fontSize: 13,
   },
   tapBack: {
     marginTop: 20,
-    color: '#bbb',
-    fontWeight: '600',
+  color: '#bbb',
+  fontWeight: '600',
   },
   noDataFoundContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  justifyContent: 'center',
+  alignItems: 'center',
   },
-});
+  });
 
 // Old Code
 
 // import {
 //   Animated,
-//   Easing,
-//   ImageBackground,
-//   Linking,
-//   Modal,
-//   Pressable,
-//   ScrollView,
-//   StyleSheet,
-//   Text,
-//   TouchableOpacity,
-//   View,
-// } from 'react-native';
+  //   Easing,
+  //   ImageBackground,
+  //   Linking,
+  //   Modal,
+  //   Pressable,
+  //   ScrollView,
+  //   StyleSheet,
+  //   Text,
+  //   TouchableOpacity,
+  //   View,
+  //
+} from 'react-native';
 // import { useFocusEffect } from '@react-navigation/native';
 // import React, { useCallback, useRef, useState } from 'react';
 // import ScreenGuard from 'react-native-screenguard';

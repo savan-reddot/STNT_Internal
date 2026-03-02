@@ -6,7 +6,7 @@ import {
   View,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { MD3Theme, TextInput, useTheme, Text } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import AppLayout from '../../components/safeareawrapper';
 import { globalStyle } from '../../utils/globalStyles';
 import { metrics } from '../../utils/metrics';
@@ -16,6 +16,7 @@ import { useResetPasswordConfirmMutation } from '../../redux/services';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 import { Screens } from '../../common/screens';
 import ScreenLoader from '../../components/loader';
+import { Text, TextInput } from '../../components/common';
 
 const ResetPassword = ({ navigation, route }: any) => {
   const theme = useTheme();

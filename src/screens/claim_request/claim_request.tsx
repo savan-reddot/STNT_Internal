@@ -1,10 +1,10 @@
+import { Text, TextInput } from '../../components/common';
 import {
   Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -17,7 +17,7 @@ import React, {
 } from 'react';
 import AppLayout from '../../components/safeareawrapper';
 import { getRandomPastelColor, globalStyle } from '../../utils/globalStyles';
-import { Checkbox, MD3Theme, TextInput, useTheme } from 'react-native-paper';
+import { Checkbox, MD3Theme, useTheme } from 'react-native-paper';
 import { metrics } from '../../utils/metrics';
 import fontStyle from '../../styles/fontStyle';
 import {
@@ -599,6 +599,10 @@ const ClaimRequest = ({ navigation, route }: any) => {
                 selectedTextStyle={{ color: theme.colors.onSurface }}
                 value={payment_option}
                 onChange={handlePaymentOption}
+                selectedTextProps={{
+                  allowFontScaling: false,
+                  maxFontSizeMultiplier: 1,
+                }}
               />
             </View>
 
@@ -645,6 +649,10 @@ const ClaimRequest = ({ navigation, route }: any) => {
                     selectedTextStyle={{ color: theme.colors.onSurface }}
                     value={payee_relationship}
                     onChange={handleRelationship}
+                    selectedTextProps={{
+                      allowFontScaling: false,
+                      maxFontSizeMultiplier: 1,
+                    }}
                   />
                 </View>
                 {payee_relationship == 'other' && (
@@ -691,6 +699,10 @@ const ClaimRequest = ({ navigation, route }: any) => {
                     selectedTextStyle={{ color: theme.colors.onSurface }}
                     value={selected_bank}
                     onChange={handleBankSelect}
+                    selectedTextProps={{
+                      allowFontScaling: false,
+                      maxFontSizeMultiplier: 1,
+                    }}
                   />
                 </View>
                 <View style={{ marginTop: metrics.baseMargin }}>

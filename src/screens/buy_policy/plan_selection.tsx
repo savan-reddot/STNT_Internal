@@ -1,11 +1,11 @@
+import { Text } from '../../components/common';
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Linking,
+  Linking
 } from 'react-native';
 import { useTheme, MD3Theme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';

@@ -1,14 +1,14 @@
+import { Text, TextInput } from '../../components/common';
 import {
   Keyboard,
   Pressable,
   StyleSheet,
-  Text,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import React, { useState } from 'react';
 import { globalStyle } from '../../utils/globalStyles';
-import { MD3Theme, TextInput, useTheme } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import AppLayout from '../../components/safeareawrapper';
 import fontStyle from '../../styles/fontStyle';
 import { metrics } from '../../utils/metrics';

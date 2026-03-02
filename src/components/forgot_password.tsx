@@ -1,7 +1,8 @@
+import { Text } from './common';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Modal from 'react-native-modal';
-import { TextInput, useTheme } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 import { metrics } from '../utils/metrics';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '../utils/toastConfig';
@@ -15,6 +16,7 @@ import UButton from './custombutton';
 import ScreenLoader from './loader';
 import { useNavigation } from '@react-navigation/native';
 import { Screens } from '../common/screens';
+import { TextInput } from './common';
 
 interface ForgotPasswordProps {
   isVisible: boolean;

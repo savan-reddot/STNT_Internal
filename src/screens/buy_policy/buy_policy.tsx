@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { Text } from '../../components/common';
+import { View, StyleSheet, Alert } from 'react-native';
 import React, { useState } from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import { useForm } from 'react-hook-form';

@@ -1,12 +1,12 @@
+import { Text } from './common';
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   StyleProp,
   ViewStyle,
-  TextStyle,
+  TextStyle
 } from 'react-native';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

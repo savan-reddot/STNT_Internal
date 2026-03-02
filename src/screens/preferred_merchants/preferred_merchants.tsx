@@ -1,3 +1,4 @@
+import { Text } from '../../components/common';
 import {
   FlatList,
   Image,
@@ -6,7 +7,6 @@ import {
   Platform,
   PermissionsAndroid,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -269,6 +269,10 @@ const PreferredMerchants = ({ navigation }: any) => {
           resizeMode="contain"
         />
       )}
+      selectedTextProps={{
+        allowFontScaling: false,
+        maxFontSizeMultiplier: 1,
+      }}
       renderItem={item => (
         <View style={styles(theme).dropdownItem}>
           <Text

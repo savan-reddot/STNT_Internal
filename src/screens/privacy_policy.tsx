@@ -1,4 +1,5 @@
-import { View, Text, ScrollView } from 'react-native';
+import { Text } from '../components/common';
+import { View, ScrollView } from 'react-native';
 import React from 'react';
 import AppLayout from '../components/safeareawrapper';
 import { globalStyle } from '../utils/globalStyles';

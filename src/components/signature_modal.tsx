@@ -1,5 +1,6 @@
+import { Text } from './common';
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import SignatureScreen from 'react-native-signature-canvas';
 import { metrics } from '../utils/metrics';
 import { MD3Theme, useTheme } from 'react-native-paper';

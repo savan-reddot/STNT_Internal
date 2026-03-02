@@ -1,5 +1,6 @@
+import { Text } from '../../../components/common';
 import React from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import { ScrollView, View, StyleSheet } from 'react-native';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import { UseFormWatch } from 'react-hook-form';
 import fontStyle from '../../../styles/fontStyle';

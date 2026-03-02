@@ -1,3 +1,4 @@
+import { Text } from '../../components/common';
 import {
   Alert,
   Image,
@@ -5,12 +6,11 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MD3Theme, TextInput, useTheme } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import AppLayout from '../../components/safeareawrapper';
 import { globalStyle } from '../../utils/globalStyles';
 import { metrics } from '../../utils/metrics';
@@ -678,6 +678,10 @@ const AddNewClaim = ({ navigation }: any) => {
                   selectedCountry: item.value,
                 });
               }}
+              selectedTextProps={{
+                allowFontScaling: false,
+                maxFontSizeMultiplier: 1,
+              }}
             />
 
             <Text style={[fontStyle(theme).headingSmall, { marginLeft: 0 }]}>
@@ -702,6 +706,10 @@ const AddNewClaim = ({ navigation }: any) => {
                   ...claim_skeleton,
                   selectedCategory: item.value,
                 });
+              }}
+              selectedTextProps={{
+                allowFontScaling: false,
+                maxFontSizeMultiplier: 1,
               }}
             />
             <View style={{ flexGrow: 1 }} />

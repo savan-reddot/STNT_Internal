@@ -1,11 +1,11 @@
+import { Text } from './';
 import React, { useCallback, useMemo, forwardRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ActionSheetIOS,
-  Platform,
+  Platform
 } from 'react-native';
 import {
   BottomSheetModal,

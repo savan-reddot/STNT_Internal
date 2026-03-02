@@ -1,5 +1,6 @@
+import { Text } from '../components/common';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import React from 'react';
 import ResetPassword from '../screens/login/reset_password';
 import Login from '../screens/login/login';

@@ -1,4 +1,5 @@
-import { Animated, Image, StyleSheet, Text, View } from 'react-native';
+import { Text } from '../components/common';
+import { Animated, Image, StyleSheet, View } from 'react-native';
 import React, { useEffect, useRef } from 'react';
 import { globalStyle } from '../utils/globalStyles';
 import { useTheme } from 'react-native-paper';

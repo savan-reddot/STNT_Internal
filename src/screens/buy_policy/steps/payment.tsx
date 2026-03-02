@@ -1,12 +1,12 @@
+import { Text, TextInput } from '../../../components/common';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
+  ActivityIndicator
 } from 'react-native';
 import React, { useState } from 'react';
-import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import { UseFormWatch } from 'react-hook-form';
 import RazorpayCheckout from 'react-native-razorpay';
 import { RAZORPAY_KEY_ID } from '@env';

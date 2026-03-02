@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   Platform,
   Modal,
-  TextInput,
   ActivityIndicator,
   Linking,
   Alert,
   KeyboardAvoidingView,
   ActionSheetIOS,
 } from 'react-native';
+import { Text } from '../../components/common';
 import TypeSelectionModal from '../../components/document_vault/TypeSelectionModal';
 import EditNameModal from '../../components/document_vault/EditNameModal';
 import NativeActionSheet, {

@@ -1,9 +1,9 @@
+import { Text } from '../../components/common';
 import {
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';

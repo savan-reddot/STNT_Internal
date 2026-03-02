@@ -1,11 +1,11 @@
+import { Text } from '../components/common';
 import {
   Animated,
   FlatList,
   Image,
   StyleSheet,
-  Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import React, { useRef, useState } from 'react';
 import { metrics } from '../utils/metrics';

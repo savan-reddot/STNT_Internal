@@ -1,5 +1,6 @@
+import { Text } from '../../components/common';
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import AppLayout from '../../components/safeareawrapper';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';

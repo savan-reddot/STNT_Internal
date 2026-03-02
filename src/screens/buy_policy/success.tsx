@@ -1,5 +1,6 @@
+import { Text } from '../../components/common';
 import React from 'react';
-import { Image, StyleSheet, View, Text } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import AppLayout from '../../components/safeareawrapper';
 import { useTheme } from 'react-native-paper';
 import { globalStyle } from '../../utils/globalStyles';

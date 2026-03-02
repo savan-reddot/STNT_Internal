@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, ScrollView, Linking } from 'react-native';
+import { Text, TextInput } from '../../../components/common';
+import { View, StyleSheet, ScrollView, Linking } from 'react-native';
 import React, { useState } from 'react';
-import { MD3Theme, useTheme, TextInput } from 'react-native-paper';
+import { MD3Theme, useTheme } from 'react-native-paper';
 import {
   Control,
   Controller,
@@ -146,6 +147,11 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 containerStyle={styles(theme).dropdownContainer}
                 itemTextStyle={styles(theme).dropdownItemText}
                 activeColor={theme.dark ? '#374151' : '#E6EBF1'} // Dark grey for dark mode, light grey for light
+                // 🔥 Disable scaling here
+                selectedTextProps={{
+                  allowFontScaling: false,
+                  maxFontSizeMultiplier: 1,
+                }}
               />
               {errors.travellingSaudiWith && (
                 <Text style={styles(theme).errorText}>

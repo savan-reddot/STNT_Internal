@@ -1,8 +1,9 @@
+import { Text, TextInput } from './common';
 import React from 'react';
-import { View, Text, Switch, StyleSheet } from 'react-native';
+import { View, Switch, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { TextInput, useTheme } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 import { metrics } from '../utils/metrics';
 import { globalStyle } from '../utils/globalStyles';
 import fontStyle from '../styles/fontStyle';

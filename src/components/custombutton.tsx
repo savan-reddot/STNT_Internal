@@ -1,11 +1,11 @@
+import { Text } from './common';
 import {
   Pressable,
   StyleProp,
   StyleSheet,
-  Text,
   TextStyle,
   View,
-  ViewStyle,
+  ViewStyle
 } from 'react-native';
 import React from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';

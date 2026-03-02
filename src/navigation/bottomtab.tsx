@@ -18,7 +18,11 @@ const BottomTab = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }: any) => {
+        // 🔥 Disable font scaling for tab labels
+        tabBarAllowFontScaling: false,
+        // 🔥 Disable header title scaling (future safe)
+        headerTitleAllowFontScaling: false,
+        tabBarIcon: ({ focused, color, size }) => {
           let iconName: string;
 
           switch (route.name) {

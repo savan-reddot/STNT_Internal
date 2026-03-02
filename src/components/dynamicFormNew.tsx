@@ -7,10 +7,8 @@ import React, {
 } from 'react';
 import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import {
-  TextInput,
   Button,
   Switch,
-  Text,
   Provider as PaperProvider,
   useTheme,
   MD3Theme,
@@ -26,6 +24,7 @@ import { format } from 'date-fns';
 import UButton from './custombutton';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Text, TextInput } from './common';
 
 const mapType = (val: any) => {
   if (val === 'string') return 'text';
@@ -45,7 +44,10 @@ const generateFormSchema = (obj: any): any[] => {
 
     if (typeof value === 'object' && !Array.isArray(value)) {
       // Check if it has a 'status' property (boolean field)
-      if (Object.keys(value).includes('status') && typeof value.status === 'string') {
+      if (
+        Object.keys(value).includes('status') &&
+        typeof value.status === 'string'
+      ) {
         // Extract all nested fields (excluding 'status')
         const nestedFields = { ...value };
         delete nestedFields.status;
@@ -78,7 +80,8 @@ const generateFormSchema = (obj: any): any[] => {
       }
     } else if (Array.isArray(value)) {
       // Handle array fields - assume first element defines the structure
-      const arrayItemSchema = value.length > 0 ? generateFormSchema(value[0]) : [];
+      const arrayItemSchema =
+        value.length > 0 ? generateFormSchema(value[0]) : [];
       schema.push({
         title: key,
         type: 'array',
@@ -224,7 +227,9 @@ const DynamicFormNew = forwardRef(
         } else if (field.type === 'array') {
           // Handle array data for edit mode
           const arrayData = val || [];
-          result[key] = arrayData.map((item: any) => mapEditValuesToForm(field.itemSchema, item));
+          result[key] = arrayData.map((item: any) =>
+            mapEditValuesToForm(field.itemSchema, item),
+          );
         } else if (field.type === 'boolean') {
           // boolean with optional nested group
           result[key] = val?.status ?? false;
@@ -267,7 +272,10 @@ const DynamicFormNew = forwardRef(
         } else if (type === 'number' && value) {
           // Handle currency formatting for purchase price
           if (fieldTitle?.toLowerCase().includes('price')) {
-            const numericValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]/g, '')) : value;
+            const numericValue =
+              typeof value === 'string'
+                ? parseFloat(value.replace(/[^0-9.-]/g, ''))
+                : value;
             return `$${numericValue}`;
           }
           return typeof value === 'string' ? value : String(value);
@@ -282,19 +290,28 @@ const DynamicFormNew = forwardRef(
           const groupData: any = {};
           field.fields.forEach((subField: any) => {
             const value = data?.[key]?.[subField.title];
-            groupData[subField.title] = formatValue(value, subField.type, subField.title);
+            groupData[subField.title] = formatValue(
+              value,
+              subField.type,
+              subField.title,
+            );
           });
           output[key] = groupData;
         } else if (field.type === 'array') {
           const arrayData = data[key] || [];
-          output[key] = arrayData.map((item: any) => transformData(item, field.itemSchema));
+          output[key] = arrayData.map((item: any) =>
+            transformData(item, field.itemSchema),
+          );
         } else if (field.type === 'boolean') {
           output[key] = { status: !!data[key] };
 
           if (data[key] && field.nested) {
             const nestedKey = field.nested.title;
             const nestedData = data[nestedKey] || {};
-            output[key][nestedKey] = transformData(nestedData, field.nested.fields);
+            output[key][nestedKey] = transformData(
+              nestedData,
+              field.nested.fields,
+            );
           }
         } else {
           output[key] = formatValue(data[key], field.type, field.title);
@@ -331,13 +348,8 @@ const DynamicFormNew = forwardRef(
       return (
         <View key={name} style={styles(theme).parent_view}>
           <View style={styles(theme).listHeader}>
-            <Text style={styles(theme).listTitle}>
-              {field.title}
-            </Text>
-            <TouchableOpacity
-              onPress={addItem}
-              style={styles(theme).addButton}
-            >
+            <Text style={styles(theme).listTitle}>{field.title}</Text>
+            <TouchableOpacity onPress={addItem} style={styles(theme).addButton}>
               <Icon name="add" size={24} color="white" />
             </TouchableOpacity>
           </View>
@@ -345,9 +357,7 @@ const DynamicFormNew = forwardRef(
           {value.map((item: any, index: number) => (
             <View key={index} style={styles(theme).itemCard}>
               <View style={styles(theme).itemHeader}>
-                <Text style={styles(theme).itemTitle}>
-                  Item {index + 1}
-                </Text>
+                <Text style={styles(theme).itemTitle}>Item {index + 1}</Text>
                 {index > 0 && (
                   <TouchableOpacity
                     onPress={() => removeItem(index)}
@@ -444,7 +454,10 @@ const DynamicFormNew = forwardRef(
                 <TouchableOpacity
                   activeOpacity={0.85}
                   onPress={() =>
-                    setVisiblePickers((prev: any) => ({ ...prev, [name]: true }))
+                    setVisiblePickers((prev: any) => ({
+                      ...prev,
+                      [name]: true,
+                    }))
                   }
                 >
                   <TextInput
@@ -531,8 +544,9 @@ const DynamicFormNew = forwardRef(
                 const isPM = hours >= 12;
                 const formatted = `${(hours % 12 || 12)
                   .toString()
-                  .padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${isPM ? 'PM' : 'AM'
-                  }`;
+                  .padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${
+                  isPM ? 'PM' : 'AM'
+                }`;
                 setValue(name, `${hours}:${minutes}`);
                 closePicker(name);
               }}
@@ -590,7 +604,9 @@ const DynamicFormNew = forwardRef(
                 )}
               />
             </View>
-            {watch(name) && field.nested && field.nested.fields &&
+            {watch(name) &&
+              field.nested &&
+              field.nested.fields &&
               field.nested.fields.map((nestedField: any) =>
                 renderField(nestedField, field.nested.title),
               )}
@@ -658,8 +674,8 @@ const DynamicFormNew = forwardRef(
                 isEdit
                   ? 'Update'
                   : claim_form && claim_form?.length - 1 > form_index
-                    ? 'Next'
-                    : 'Submit'
+                  ? 'Next'
+                  : 'Submit'
               }
               onPress={handleSubmit(onSubmit)}
               style={{ marginBottom: metrics.doubleMargin * 3 }}
@@ -677,7 +693,7 @@ const styles = (theme: MD3Theme) =>
   StyleSheet.create({
     parent_view: {
       margin: metrics.baseMargin,
-      marginHorizontal: 0
+      marginHorizontal: 0,
     },
     keyboard_container: {
       backgroundColor: theme.colors.background,

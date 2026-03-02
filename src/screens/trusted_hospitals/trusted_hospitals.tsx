@@ -1,13 +1,13 @@
+import { Text } from '../../components/common';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Linking,
   Platform,
   Image,
-  FlatList,
+  FlatList
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import AppLayout from '../../components/safeareawrapper';

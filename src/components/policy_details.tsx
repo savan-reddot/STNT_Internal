@@ -1,3 +1,4 @@
+import { Text } from './common';
 import React, {
   forwardRef,
   use,
@@ -9,9 +10,8 @@ import React, {
 import {
   Linking,
   StyleSheet,
-  Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Dropdown } from 'react-native-element-dropdown';
