@@ -10,7 +10,12 @@ import {
   TextInput,
   ActivityIndicator,
   Linking,
+  Alert,
+  KeyboardAvoidingView,
+  ActionSheetIOS,
 } from 'react-native';
+import TypeSelectionModal from '../../components/document_vault/TypeSelectionModal';
+import EditNameModal from '../../components/document_vault/EditNameModal';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
@@ -22,6 +27,8 @@ import {
   useDocument_vault_uploadMutation,
   useCreate_document_vaultMutation,
   useLazyGet_all_documentsQuery,
+  useDelete_document_vaultMutation,
+  useUpdate_document_vaultMutation,
 } from '../../redux/services';
 import AppLayout from '../../components/safeareawrapper';
 import { useTheme, MD3Theme } from 'react-native-paper';
@@ -38,13 +45,20 @@ const DocumentVault = ({ navigation }: any) => {
     useDocument_vault_uploadMutation();
   const [createDocumentVault, { isLoading: isCreating }] =
     useCreate_document_vaultMutation();
+  const [deleteDocument, { isLoading: isDeleting }] =
+    useDelete_document_vaultMutation();
+  const [updateDocument, { isLoading: isUpdatingName }] =
+    useUpdate_document_vaultMutation();
 
   const [documents, setDocuments] = useState<any[]>([]);
   const [dynamicTabs, setDynamicTabs] = useState<string[]>(['ALL']);
 
   // Modal states
   const [showTypeModal, setShowTypeModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [uploadedDocData, setUploadedDocData] = useState<any>(null);
+  const [editingDoc, setEditingDoc] = useState<any>(null);
+  const [editName, setEditName] = useState('');
   const [selectedType, setSelectedType] = useState<string>('');
   const [otherType, setOtherType] = useState<string>('');
 
@@ -267,6 +281,123 @@ const DocumentVault = ({ navigation }: any) => {
     }
   };
 
+  const handleDeleteFile = (id: string | number) => {
+    Alert.alert(
+      'Delete Document',
+      'Are you sure you want to delete this document?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const res = await deleteDocument(id).unwrap();
+              if (res?.success) {
+                showSuccessToast('Document deleted successfully');
+                fetchDocuments();
+              } else {
+                showErrorToast('Failed to delete document');
+              }
+            } catch (e) {
+              console.log('Delete doc error:', e);
+              showErrorToast('An error occurred');
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleUpdateDocument = async () => {
+    if (!editName.trim()) {
+      showErrorToast('Please enter document name');
+      return;
+    }
+    try {
+      const payload = {
+        document_url: editingDoc.document_url,
+        document_name: editName,
+        tags: editingDoc.tags,
+      };
+      const res = await updateDocument({
+        request: payload,
+        id: editingDoc.id,
+      }).unwrap();
+      if (res?.success) {
+        showSuccessToast('Document updated successfully');
+        setShowEditModal(false);
+        fetchDocuments();
+      } else {
+        showErrorToast('Failed to update document');
+      }
+    } catch (e) {
+      console.log('Update doc error:', e);
+      showErrorToast('An error occurred');
+    }
+  };
+
+  const showFileActions = (file: any) => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [
+            'Cancel',
+            'Download Document',
+            'Edit Name',
+            'Delete Document',
+          ],
+          destructiveButtonIndex: 3,
+          cancelButtonIndex: 0,
+          title: file.document_name,
+        },
+        buttonIndex => {
+          if (buttonIndex === 1) {
+            if (file.document_url) {
+              Linking.openURL(file.document_url).catch(() => {
+                showErrorToast('Could not download document');
+              });
+            }
+          } else if (buttonIndex === 2) {
+            setEditingDoc(file);
+            setEditName(file.document_name);
+            setShowEditModal(true);
+          } else if (buttonIndex === 3) {
+            handleDeleteFile(file.id);
+          }
+        },
+      );
+    } else {
+      // For Android, use Alert as a simple native menu
+      Alert.alert(file.document_name, 'Choose an action', [
+        {
+          text: 'Download',
+          onPress: () => {
+            if (file.document_url) {
+              Linking.openURL(file.document_url).catch(() => {
+                showErrorToast('Could not download document');
+              });
+            }
+          },
+        },
+        {
+          text: 'Edit Name',
+          onPress: () => {
+            setEditingDoc(file);
+            setEditName(file.document_name);
+            setShowEditModal(true);
+          },
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => handleDeleteFile(file.id),
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    }
+  };
+
   const filteredDocuments = documents.filter(doc => {
     if (activeTab === 'ALL') return true;
     if (!doc.tags || !Array.isArray(doc.tags)) return false;
@@ -301,7 +432,11 @@ const DocumentVault = ({ navigation }: any) => {
               onPress={handleScanPaper}
             >
               <View style={styles.actionIconUpload}>
-                <Icon name="camera-outline" size={28} color={theme.dark ? '#1E293B' : '#fff'} />
+                <Icon
+                  name="camera-outline"
+                  size={28}
+                  color={theme.dark ? '#1E293B' : '#fff'}
+                />
               </View>
               <Text style={styles.actionTitleScan}>SCAN PAPER</Text>
             </TouchableOpacity>
@@ -399,15 +534,13 @@ const DocumentVault = ({ navigation }: any) => {
 
                   <TouchableOpacity
                     style={styles.downloadButton}
-                    onPress={() => {
-                      if (file.document_url) {
-                        Linking.openURL(file.document_url).catch(() => {
-                          showErrorToast('Could not download document');
-                        });
-                      }
-                    }}
+                    onPress={() => showFileActions(file)}
                   >
-                    <Icon name="download-outline" size={20} color="#64748B" />
+                    <MaterialCommunityIcons
+                      name="dots-vertical"
+                      size={24}
+                      color="#64748B"
+                    />
                   </TouchableOpacity>
                 </TouchableOpacity>
               ))
@@ -427,92 +560,36 @@ const DocumentVault = ({ navigation }: any) => {
       </View>
 
       {/* OVERLAYS FOR LOADING / MODALS */}
-      {isUploading && (
+      {(isUploading || isDeleting) && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#ffffff" />
-          <Text style={styles.loadingText}>Uploading document...</Text>
+          <Text style={styles.loadingText}>
+            {isUploading ? 'Uploading document...' : 'Deleting document...'}
+          </Text>
         </View>
       )}
 
-      {/* TYPE SELECTION MODAL */}
-      <Modal
+      <TypeSelectionModal
         visible={showTypeModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowTypeModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>File Details</Text>
-              <TouchableOpacity onPress={() => setShowTypeModal(false)}>
-                <Icon name="close" size={24} color="#64748B" />
-              </TouchableOpacity>
-            </View>
+        onClose={() => setShowTypeModal(false)}
+        uploadedDocData={uploadedDocData}
+        docTypes={docTypes}
+        selectedType={selectedType}
+        onSelectType={setSelectedType}
+        otherType={otherType}
+        onOtherTypeChange={setOtherType}
+        onSave={handleCreateDocument}
+        isSaving={isCreating}
+      />
 
-            <Text style={styles.fileNameText}>
-              Filename:{' '}
-              <Text
-                style={{
-                  fontWeight: '700',
-                  color: theme.dark ? '#F8FAFC' : '#1E293B',
-                }}
-              >
-                {uploadedDocData?.filename}
-              </Text>
-            </Text>
-
-            <Text style={styles.selectTypeLabel}>Select Document Type:</Text>
-
-            <View style={styles.typesGrid}>
-              {docTypes.map(type => {
-                const isSelected = selectedType === type;
-                return (
-                  <TouchableOpacity
-                    key={type}
-                    style={[
-                      styles.typeOption,
-                      isSelected && styles.typeOptionSelected,
-                    ]}
-                    onPress={() => setSelectedType(type)}
-                  >
-                    <Text
-                      style={[
-                        styles.typeOptionText,
-                        isSelected && styles.typeOptionTextSelected,
-                      ]}
-                    >
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {selectedType === 'other' && (
-              <TextInput
-                style={styles.otherInput}
-                placeholder="Enter document type..."
-                placeholderTextColor="#94A3B8"
-                value={otherType}
-                onChangeText={setOtherType}
-              />
-            )}
-
-            <TouchableOpacity
-              style={[styles.modalUploadButton, isCreating && { opacity: 0.7 }]}
-              onPress={handleCreateDocument}
-              disabled={isCreating}
-            >
-              {isCreating ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.modalUploadButtonText}>Save Details</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <EditNameModal
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        editName={editName}
+        onNameChange={setEditName}
+        onUpdate={handleUpdateDocument}
+        isUpdating={isUpdatingName}
+      />
     </AppLayout>
   );
 };
@@ -540,7 +617,9 @@ const getStyles = (theme: MD3Theme) =>
       width: 48,
       height: 48,
       borderRadius: 12,
-      backgroundColor: theme.dark ? 'rgba(14, 122, 104, 0.2)' : 'rgba(14, 122, 104, 0.1)',
+      backgroundColor: theme.dark
+        ? 'rgba(14, 122, 104, 0.2)'
+        : 'rgba(14, 122, 104, 0.1)',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 16,
@@ -716,85 +795,6 @@ const getStyles = (theme: MD3Theme) =>
       marginTop: 12,
       fontSize: 16,
       fontWeight: '600',
-    },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'flex-end',
-    },
-    modalContent: {
-      backgroundColor: theme.dark ? '#1E293B' : '#fff',
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
-      padding: 24,
-      paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-    },
-    modalHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 16,
-    },
-    modalTitle: {
-      fontSize: 18,
-      fontWeight: '800',
-      color: theme.dark ? '#F8FAFC' : '#1E293B',
-    },
-    fileNameText: {
-      fontSize: 14,
-      color: theme.dark ? '#94A3B8' : '#64748B',
-      marginBottom: 24,
-    },
-    selectTypeLabel: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: theme.dark ? '#F8FAFC' : '#1E293B',
-      marginBottom: 12,
-    },
-    typesGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      marginBottom: 16,
-    },
-    typeOption: {
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 20,
-      backgroundColor: theme.dark ? '#334155' : '#F1F5F9',
-      marginRight: 10,
-      marginBottom: 10,
-      borderWidth: 1,
-      borderColor: theme.dark ? '#334155' : '#F1F5F9',
-    },
-    typeOptionSelected: {
-      backgroundColor: '#0E7A68',
-      borderColor: '#0E7A68',
-    },
-    typeOptionText: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.dark ? '#94A3B8' : '#64748B',
-    },
-    typeOptionTextSelected: {
-      color: '#fff',
-    },
-    otherInput: {
-      borderWidth: 1,
-      borderColor: theme.dark ? '#334155' : '#E2E8F0',
-      borderRadius: 12,
-      padding: 12,
-      fontSize: 14,
-      color: theme.dark ? '#F8FAFC' : '#1E293B',
-      marginBottom: 16,
-      backgroundColor: theme.dark ? theme.colors.background : '#F8FAFC',
-    },
-    modalUploadButton: {
-      backgroundColor: theme.dark ? '#334155' : '#0F172A',
-      borderRadius: 12,
-      padding: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 8,
     },
     modalUploadButtonText: {
       color: '#fff',

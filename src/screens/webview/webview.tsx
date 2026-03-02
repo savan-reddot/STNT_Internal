@@ -1,8 +1,15 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Platform,
+  Share,
+  TouchableOpacity,
+} from 'react-native';
 import { WebView } from 'react-native-webview';
 import AppLayout from '../../components/safeareawrapper';
 import { useTheme } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const WebViewScreen = ({ route, navigation }: any) => {
   const { url, title = '' } = route.params;
@@ -18,8 +25,27 @@ const WebViewScreen = ({ route, navigation }: any) => {
     return url;
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Check out this document: ${title}\n${url}`,
+        url: url, // iOS only
+      });
+    } catch (error) {
+      console.log('Share error:', error);
+    }
+  };
+
   return (
-    <AppLayout title={title} onBackPress={() => navigation.pop()}>
+    <AppLayout
+      title={title}
+      onBackPress={() => navigation.pop()}
+      right={
+        <TouchableOpacity onPress={handleShare} style={{ marginRight: 15 }}>
+          <Icon name="share-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      }
+    >
       <View
         style={[styles.container, { backgroundColor: theme.colors.background }]}
       >

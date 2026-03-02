@@ -343,6 +343,19 @@ export const apiClient = createApi({
     get_all_documents: builder.query({
       query: () => 'mobile-data/document-vault',
     }),
+    delete_document_vault: builder.mutation({
+      query: (id: string | number) => ({
+        url: `mobile-data/document-vault/${id}`,
+        method: 'DELETE',
+      }),
+    }),
+    update_document_vault: builder.mutation({
+      query: ({ request, id }) => ({
+        url: `mobile-data/document-vault/${id}`,
+        method: 'PUT',
+        body: request,
+      }),
+    }),
   }),
 });
 
@@ -396,4 +409,6 @@ export const {
   useDocument_vault_uploadMutation,
   useCreate_document_vaultMutation,
   useLazyGet_all_documentsQuery,
+  useDelete_document_vaultMutation,
+  useUpdate_document_vaultMutation,
 } = apiClient;
