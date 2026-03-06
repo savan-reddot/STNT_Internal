@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet
+  StyleSheet,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme, MD3Theme } from 'react-native-paper';
@@ -68,7 +68,7 @@ const TypeSelectionModal: React.FC<TypeSelectionModalProps> = ({
                   color: theme.dark ? '#F8FAFC' : '#1E293B',
                 }}
               >
-                {uploadedDocData?.filename}
+                {decodeURIComponent(uploadedDocData?.filename)}
               </Text>
             </Text>
 

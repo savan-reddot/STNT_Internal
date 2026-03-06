@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet
+  StyleSheet,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme, MD3Theme } from 'react-native-paper';
@@ -19,6 +19,8 @@ interface EditNameModalProps {
   onNameChange: (text: string) => void;
   onUpdate: () => void;
   isUpdating: boolean;
+  title?: string;
+  submitText?: string;
 }
 
 const EditNameModal: React.FC<EditNameModalProps> = ({
@@ -28,6 +30,8 @@ const EditNameModal: React.FC<EditNameModalProps> = ({
   onNameChange,
   onUpdate,
   isUpdating,
+  title = 'Edit Document Name',
+  submitText = 'Update Name',
 }) => {
   const theme = useTheme();
   const styles = React.useMemo(() => getStyles(theme), [theme]);
@@ -46,7 +50,7 @@ const EditNameModal: React.FC<EditNameModalProps> = ({
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Document Name</Text>
+              <Text style={styles.modalTitle}>{title}</Text>
               <TouchableOpacity onPress={onClose}>
                 <Icon name="close" size={24} color="#64748B" />
               </TouchableOpacity>
@@ -69,7 +73,7 @@ const EditNameModal: React.FC<EditNameModalProps> = ({
               {isUpdating ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={styles.modalUploadButtonText}>Update Name</Text>
+                <Text style={styles.modalUploadButtonText}>{submitText}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -114,7 +118,6 @@ const getStyles = (theme: MD3Theme) =>
       borderWidth: 1,
       borderColor: theme.dark ? '#334155' : '#E2E8F0',
       borderRadius: 12,
-      padding: 12,
       fontSize: 14,
       color: theme.dark ? '#F8FAFC' : '#1E293B',
       marginBottom: 16,

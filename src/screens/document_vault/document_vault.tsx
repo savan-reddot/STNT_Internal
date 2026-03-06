@@ -64,6 +64,7 @@ const DocumentVault = ({ navigation }: any) => {
   const [editName, setEditName] = useState('');
   const [selectedType, setSelectedType] = useState<string>('');
   const [otherType, setOtherType] = useState<string>('');
+  const [pendingFile, setPendingFile] = useState<any>(null);
 
   const docTypes = [
     'identity',
@@ -128,26 +129,16 @@ const DocumentVault = ({ navigation }: any) => {
             const pdf = await RNImageToPdf.createPDFbyImages(options);
             console.log('pdf output', pdf);
 
-            const formData = new FormData();
-            formData.append('file', {
+            setPendingFile({
               uri:
                 Platform.OS === 'android'
                   ? `file://${pdf.filePath}`
                   : pdf.filePath,
               type: 'application/pdf',
-              name: `scan_${Date.now()}.pdf`,
             });
-
-            const uploadRes = await uploadDocumentVault(formData).unwrap();
-            console.log('uploadRes', uploadRes);
-            if (uploadRes?.status) {
-              setUploadedDocData(uploadRes.data);
-              setSelectedType('');
-              setOtherType('');
-              setShowTypeModal(true);
-            } else {
-              showErrorToast('Upload failed.');
-            }
+            setEditName(''); // blank as requested
+            setEditingDoc(null);
+            setShowEditModal(true);
           } catch (pdfErr) {
             console.log('PDF Conversion error:', pdfErr);
             showErrorToast('Failed to generate PDF from scan');
@@ -202,13 +193,12 @@ const DocumentVault = ({ navigation }: any) => {
 
       let uploadUri = localUri;
       let uploadType = file.type || 'application/pdf';
-      let uploadName = file.name || `file_${Date.now()}.pdf`;
+      const baseName = file.name
+        ? file.name.replace(/\.[^/.]+$/, '')
+        : `file_${Date.now()}`;
 
       if (file.type && file.type.startsWith('image/')) {
         try {
-          const baseName = file.name
-            ? file.name.replace(/\.[^/.]+$/, '')
-            : `file_${Date.now()}`;
           const options = {
             imagePaths: [localUri.replace('file://', '')],
             name: baseName,
@@ -219,7 +209,6 @@ const DocumentVault = ({ navigation }: any) => {
           uploadUri =
             Platform.OS === 'android' ? `file://${pdf.filePath}` : pdf.filePath;
           uploadType = 'application/pdf';
-          uploadName = `${baseName}.pdf`;
         } catch (pdfErr) {
           console.log('PDF Conversion error in Picker:', pdfErr);
           showErrorToast('Failed to generate PDF from image');
@@ -227,26 +216,13 @@ const DocumentVault = ({ navigation }: any) => {
         }
       }
 
-      const formData = new FormData();
-      formData.append('file', {
-        uri:
-          Platform.OS === 'android'
-            ? uploadUri
-            : uploadUri.replace('file://', ''),
+      setPendingFile({
+        uri: uploadUri,
         type: uploadType,
-        name: uploadName,
       });
-
-      const uploadRes = await uploadDocumentVault(formData).unwrap();
-      console.log('uploadRes', uploadRes);
-      if (uploadRes?.status) {
-        setUploadedDocData(uploadRes.data);
-        setSelectedType('');
-        setOtherType('');
-        setShowTypeModal(true);
-      } else {
-        showErrorToast('Upload failed.');
-      }
+      setEditName(baseName);
+      setEditingDoc(null);
+      setShowEditModal(true);
     } catch (e: any) {
       console.log('Document picker error:', e);
     }
@@ -340,6 +316,42 @@ const DocumentVault = ({ navigation }: any) => {
     }
   };
 
+  const handleUploadNamedFile = async () => {
+    if (!editName.trim()) {
+      showErrorToast('Please enter document name');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('file', {
+        uri:
+          Platform.OS === 'android'
+            ? pendingFile.uri
+            : pendingFile.uri.replace('file://', ''),
+        type: pendingFile.type,
+        name: editName.toLowerCase().endsWith('.pdf')
+          ? editName
+          : `${editName}.pdf`,
+      });
+
+      const uploadRes = await uploadDocumentVault(formData).unwrap();
+      console.log('uploadRes', uploadRes);
+      if (uploadRes?.status) {
+        setUploadedDocData(uploadRes.data);
+        setSelectedType('');
+        setOtherType('');
+        setShowEditModal(false);
+        setShowTypeModal(true);
+      } else {
+        showErrorToast('Upload failed.');
+      }
+    } catch (e: any) {
+      showErrorToast(e?.data?.errorMessage || 'Upload failed try again.');
+      console.log('Upload error:', e);
+    }
+  };
+
   const showFileActions = (file: any) => {
     setSelectedFile(file); // Store selected file for Android bottom sheet
     if (Platform.OS === 'ios') {
@@ -353,7 +365,7 @@ const DocumentVault = ({ navigation }: any) => {
           ],
           destructiveButtonIndex: 3,
           cancelButtonIndex: 0,
-          title: file.document_name,
+          title: decodeURIComponent(file.document_name),
         },
         buttonIndex => {
           if (buttonIndex === 1) {
@@ -380,7 +392,7 @@ const DocumentVault = ({ navigation }: any) => {
 
   const handleEdit = (file: any) => {
     setEditingDoc(file);
-    setEditName(file.document_name);
+    setEditName(decodeURIComponent(file.document_name));
     setShowEditModal(true);
   };
 
@@ -509,7 +521,7 @@ const DocumentVault = ({ navigation }: any) => {
                   onPress={() =>
                     navigation.navigate(Screens.WebView, {
                       url: file?.document_url,
-                      title: file?.document_name,
+                      title: decodeURIComponent(file?.document_name),
                     })
                   }
                 >
@@ -529,7 +541,9 @@ const DocumentVault = ({ navigation }: any) => {
                   </View>
 
                   <View style={styles.fileDetails}>
-                    <Text style={styles.fileName}>{file.document_name}</Text>
+                    <Text style={styles.fileName}>
+                      {decodeURIComponent(file.document_name)}
+                    </Text>
                     <Text style={styles.fileMeta}>
                       {new Date(file.createdAt || Date.now())
                         .toLocaleDateString('en-GB', {
@@ -597,13 +611,19 @@ const DocumentVault = ({ navigation }: any) => {
         onClose={() => setShowEditModal(false)}
         editName={editName}
         onNameChange={setEditName}
-        onUpdate={handleUpdateDocument}
-        isUpdating={isUpdatingName}
+        onUpdate={editingDoc ? handleUpdateDocument : handleUploadNamedFile}
+        isUpdating={editingDoc ? isUpdatingName : isUploading}
+        title={editingDoc ? 'Edit Document Name' : 'Name Your Document'}
+        submitText={editingDoc ? 'Update Name' : 'Continue'}
       />
 
       <NativeActionSheet
         ref={actionSheetRef}
-        title={selectedFile?.document_name}
+        title={
+          selectedFile?.document_name
+            ? decodeURIComponent(selectedFile.document_name)
+            : ''
+        }
         options={androidActionOptions}
       />
     </AppLayout>
