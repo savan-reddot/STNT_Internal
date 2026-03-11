@@ -278,6 +278,35 @@ const QiblaPrayers = ({ navigation }: any) => {
               >
                 <Text style={styles(theme).directionText}>W</Text>
               </View>
+ 
+              {/* Kaaba Icon at Qibla Position */}
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 90 + 68 * Math.sin(((qiblaBearing - 90) * Math.PI) / 180) - 16,
+                  left: 90 + 68 * Math.cos(((qiblaBearing - 90) * Math.PI) / 180) - 16,
+                }}
+              >
+                <Svg height="32" width="32" viewBox="0 0 32 32">
+                  {/* Circular base for clarity */}
+                  <Circle cx="16" cy="16" r="16" fill="#FFFFFF" />
+                  <Circle cx="16" cy="16" r="15" fill="#F3F4F6" />
+                  
+                  {/* Kaaba 3D Isometric Body */}
+                  {/* Front-left side */}
+                  <Path d="M7 11 L16 15 L16 26 L7 22 Z" fill="#111827" />
+                  {/* Front-right side */}
+                  <Path d="M16 15 L25 11 L25 22 L16 26 Z" fill="#000000" />
+                  {/* Top surface */}
+                  <Path d="M7 11 L16 7 L25 11 L16 15 Z" fill="#374151" />
+                  
+                  {/* Horizontal Golden Band (Kiswah) wrapping around */}
+                  <Path d="M7 14 L16 18 L25 14 L25 16 L16 20 L7 16 Z" fill="#F59E0B" />
+                  
+                  {/* Small door detail */}
+                  <Path d="M18 19 L21 17.5 V23.5 L18 25 Z" fill="#F59E0B" opacity={0.7} />
+                </Svg>
+              </View>
 
               <Animated.View
                 style={[styles(theme).needleWrapper, animatedNeedleStyle]}
