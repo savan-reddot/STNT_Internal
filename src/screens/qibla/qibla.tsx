@@ -13,7 +13,7 @@ import {
   calculateDistance,
   formatDistance,
 } from '../../utils/locationUtils';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import Svg, { Path, Circle } from 'react-native-svg';
 import CompassHeading from 'react-native-compass-heading';
 import Animated, {
@@ -45,6 +45,7 @@ const QiblaPrayers = ({ navigation }: any) => {
   const [distanceToMecca, setDistanceToMecca] = useState<number>(0);
   const [currentPrayer, setCurrentPrayer] = useState<string>('');
   const [locationName, setLocationName] = useState<string>('MECCA, SA');
+  const [locationTz, setLocationTz] = useState<string>('Asia/Riyadh');
 
   // High-precision heading for text update
   const [displayHeading, setDisplayHeading] = useState(0);
@@ -153,7 +154,9 @@ const QiblaPrayers = ({ navigation }: any) => {
         `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=4`,
       );
       setPrayerTimes(response?.data?.data?.timings);
-      determineCurrentPrayer(response?.data?.data?.timings);
+      const tz = response?.data?.data?.meta?.timezone || 'UTC';
+      setLocationTz(tz);
+      determineCurrentPrayer(response?.data?.data?.timings, tz);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching prayer times:', error);
@@ -161,13 +164,13 @@ const QiblaPrayers = ({ navigation }: any) => {
     }
   };
 
-  const determineCurrentPrayer = (timings: any) => {
+  const determineCurrentPrayer = (timings: any, tz: string) => {
     const now = moment();
     let current = '';
 
     const sortedPrayers = PRAYERS.map(p => ({
       name: p.name,
-      time: moment(timings[p.key], 'HH:mm'),
+      time: moment.tz(timings[p.key], 'HH:mm', tz).local(),
     })).sort((a, b) => a.time.diff(b.time));
 
     for (let i = 0; i < sortedPrayers.length; i++) {
@@ -305,7 +308,10 @@ const QiblaPrayers = ({ navigation }: any) => {
             PRAYERS.map((prayer, index) => {
               const isCurrent = currentPrayer === prayer.name;
               const time = prayerTimes[prayer.key]
-                ? moment(prayerTimes[prayer.key], 'HH:mm').format('hh:mm A')
+                ? moment
+                    .tz(prayerTimes[prayer.key], 'HH:mm', locationTz)
+                    .local()
+                    .format('hh:mm A')
                 : '--:--';
 
               return (
