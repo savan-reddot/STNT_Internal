@@ -197,7 +197,7 @@ const QiblaPrayers = ({ navigation }: any) => {
     const normalized = (bearing + 360) % 360;
     const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
     const index = Math.round(normalized / 45) % 8;
-    return `${Math.round(normalized)}° ${directions[index]}`;
+    return `${normalized.toFixed(1)}° ${directions[index]}`;
   };
 
   const animatedDialStyle = useAnimatedStyle(() => {
@@ -230,53 +230,66 @@ const QiblaPrayers = ({ navigation }: any) => {
 
           {/* Compass Section */}
           <View style={styles(theme).compassSection}>
-            <View style={styles(theme).compassContainer}>
-              <Animated.View
-                style={[styles(theme).compassDial, animatedDialStyle]}
-              >
-                <View
-                  style={[styles(theme).directionMark, styles(theme).northText]}
-                >
-                  <Text
-                    style={[styles(theme).directionText, { color: '#EF4444' }]}
-                  >
-                    N
-                  </Text>
-                </View>
-                <View
-                  style={[styles(theme).directionMark, styles(theme).eastText]}
-                >
-                  <Text style={styles(theme).directionText}>E</Text>
-                </View>
-                <View
-                  style={[styles(theme).directionMark, styles(theme).southText]}
-                >
-                  <Text style={styles(theme).directionText}>S</Text>
-                </View>
-                <View
-                  style={[styles(theme).directionMark, styles(theme).westText]}
-                >
-                  <Text style={styles(theme).directionText}>W</Text>
-                </View>
+            <Text style={styles(theme).qiblaDegreeLabel}>
+              Your Device's Angle To Qibla:{' '}
+              <Text style={styles(theme).qiblaDegreeValue}>
+                {Math.abs(
+                  Math.round(
+                    ((qiblaBearing - displayHeading + 180) % 360) - 180,
+                  ),
+                )}
+                °
+              </Text>
+            </Text>
+            <Text style={styles(theme).qiblaDegreeLabel}>
+              Qibla Angle:{' '}
+              <Text style={styles(theme).qiblaDegreeValue}>
+                {Math.round(qiblaBearing)}°
+              </Text>
+            </Text>
 
-                <Animated.View
-                  style={[styles(theme).needleWrapper, animatedNeedleStyle]}
+            <Animated.View
+              style={[styles(theme).compassDial, animatedDialStyle]}
+            >
+              <View
+                style={[styles(theme).directionMark, styles(theme).northText]}
+              >
+                <Text
+                  style={[styles(theme).directionText, { color: '#EF4444' }]}
                 >
-                  <Svg height="140" width="140" viewBox="0 0 100 100">
-                    <Path d="M50 10 L70 45 L50 38 L30 45 Z" fill="#10B981" />
-                    <Circle cx="50" cy="50" r="5" fill="#FFFFFF" />
-                  </Svg>
-                </Animated.View>
+                  N
+                </Text>
+              </View>
+              <View
+                style={[styles(theme).directionMark, styles(theme).eastText]}
+              >
+                <Text style={styles(theme).directionText}>E</Text>
+              </View>
+              <View
+                style={[styles(theme).directionMark, styles(theme).southText]}
+              >
+                <Text style={styles(theme).directionText}>S</Text>
+              </View>
+              <View
+                style={[styles(theme).directionMark, styles(theme).westText]}
+              >
+                <Text style={styles(theme).directionText}>W</Text>
+              </View>
+
+              <Animated.View
+                style={[styles(theme).needleWrapper, animatedNeedleStyle]}
+              >
+                <Svg height="140" width="140" viewBox="0 0 100 100">
+                  <Path d="M50 10 L70 45 L50 38 L30 45 Z" fill="#10B981" />
+                  <Circle cx="50" cy="50" r="5" fill="#FFFFFF" />
+                </Svg>
               </Animated.View>
-            </View>
+            </Animated.View>
 
             {/* Info Section below Compass but still inside Card */}
             <View style={styles(theme).infoSection}>
-              <Text style={styles(theme).bearingText}>
-                {getBearingString(displayHeading)}
-              </Text>
               <Text style={styles(theme).distanceText}>
-                MECCA • {formatDistance(distanceToMecca).toUpperCase()} AWAY
+                Distance from Qibla : {formatDistance(distanceToMecca)}
               </Text>
             </View>
           </View>
@@ -349,14 +362,14 @@ const styles = (theme: MD3Theme) =>
       alignItems: 'center',
     },
     qiblaCard: {
+      width: '90%',
       backgroundColor: '#111827',
       margin: 20,
       borderRadius: 40,
-      paddingVertical: 30,
-      paddingHorizontal: 20,
+      padding: 20,
       alignItems: 'center',
       aspectRatio: 1,
-      justifyContent: 'center', // Changed to center for overall alignment
+      justifyContent: 'center',
       alignSelf: 'center',
     },
     qiblaTitle: {
@@ -369,15 +382,6 @@ const styles = (theme: MD3Theme) =>
     compassSection: {
       alignItems: 'center',
       justifyContent: 'center',
-      width: '100%',
-    },
-    compassContainer: {
-      width: 180,
-      height: 180,
-      justifyContent: 'center',
-      alignItems: 'center',
-      alignSelf: 'center',
-      marginBottom: 20,
     },
     compassDial: {
       width: 180,
@@ -387,6 +391,7 @@ const styles = (theme: MD3Theme) =>
       borderColor: 'rgba(255, 255, 255, 0.1)',
       justifyContent: 'center',
       alignItems: 'center',
+      marginTop: 10,
     },
     directionMark: {
       position: 'absolute',
@@ -413,20 +418,23 @@ const styles = (theme: MD3Theme) =>
     },
     infoSection: {
       alignItems: 'center',
+      marginTop: 10,
     },
-    bearingText: {
+    qiblaDegreeLabel: {
       color: '#FFFFFF',
-      fontSize: 32,
+      fontSize: 14,
       fontFamily: Font_Bold,
-      textAlign: 'center',
+      marginBottom: 5,
+    },
+    qiblaDegreeValue: {
+      color: '#FFFFFF',
+      fontSize: 14,
     },
     distanceText: {
-      color: '#10B981',
-      fontSize: 12,
+      color: '#FFFFFF',
+      fontSize: 14,
       fontFamily: Font_Bold,
-      letterSpacing: 1,
       textAlign: 'center',
-      marginTop: 5,
     },
     prayerTimesHeader: {
       flexDirection: 'row',
