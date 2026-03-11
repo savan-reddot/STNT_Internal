@@ -24,6 +24,7 @@ setup_permissions([
   'Camera',
   'PhotoLibrary',
   'PhotoLibraryAddOnly',
+  'LocationWhenInUse',
 ])
 
 linkage = ENV['USE_FRAMEWORKS']

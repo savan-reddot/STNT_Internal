@@ -55,6 +55,16 @@ const data = [
       },
     ],
   },
+  {
+    title: 'Utilities',
+    actions: [
+      {
+        title: 'QIBLA & Prayers',
+        subtitle: 'TOOLS FOR PILGRIMS',
+        icon: require('../../../assets/images/profile.png'), // Placeholder or custom
+      },
+    ],
+  },
 ];
 
 const Profile = ({ navigation }: any) => {
@@ -87,6 +97,8 @@ const Profile = ({ navigation }: any) => {
         };
       case 'Change Password':
         return { bg: '#FFF3E0', color: '#F57C00', icon: 'lock-outline' };
+      case 'QIBLA & Prayers':
+        return { bg: '#ECFDF5', color: '#10B981', icon: 'compass-outline' };
       default:
         return { bg: '#F5F5F5', color: '#616161', icon: 'circle-outline' };
     }
@@ -124,6 +136,8 @@ const Profile = ({ navigation }: any) => {
       navigation.navigate(Screens.WebView, {
         url: 'https://claims.stntinternational.com/web/privacy-policy',
       });
+    } else if (item.title === 'QIBLA & Prayers') {
+      navigation.navigate(Screens.QiblaPrayers);
     }
   };
 
@@ -227,7 +241,7 @@ const Profile = ({ navigation }: any) => {
                     </Text>
                   ) : null}
                   <View style={styles(theme).sectionContainer}>
-                    {filteredActions.map((item, idx) => {
+                    {filteredActions.map((item: any, idx) => {
                       const { bg, color, icon } = getIconColorAndBg(item.title);
                       return (
                         <TouchableOpacity
@@ -243,9 +257,16 @@ const Profile = ({ navigation }: any) => {
                           >
                             <Icon name={icon} size={20} color={color} />
                           </View>
-                          <Text style={styles(theme).listItemText}>
-                            {item.title}
-                          </Text>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles(theme).listItemText}>
+                              {item.title.toUpperCase()}
+                            </Text>
+                            {item.subtitle ? (
+                              <Text style={styles(theme).listItemSubtitle}>
+                                {item.subtitle.toUpperCase()}
+                              </Text>
+                            ) : null}
+                          </View>
                           <Icon
                             name="chevron-right"
                             size={20}
@@ -400,11 +421,18 @@ const styles = (theme: MD3Theme) =>
       marginRight: 16,
     },
     listItemText: {
-      flex: 1,
       fontSize: 16,
       fontFamily: Font_Bold,
       color: theme.colors.onSurface,
-      fontWeight: '600',
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+    },
+    listItemSubtitle: {
+      fontSize: 10,
+      color: '#9CA3AF',
+      fontFamily: Font_Bold,
+      letterSpacing: 1,
+      marginTop: 2,
     },
     footer: {
       paddingHorizontal: metrics.doubleMargin,

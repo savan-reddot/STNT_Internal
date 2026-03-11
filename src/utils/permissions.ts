@@ -22,7 +22,7 @@ const showPermissionAlert = (message: string) => {
 };
 
 export const requestAppPermission = async (
-  type: 'camera' | 'gallery' | 'document',
+  type: 'camera' | 'gallery' | 'document' | 'location',
 ) => {
   if (Platform.OS === 'android') {
     if (type === 'camera') {
@@ -36,6 +36,17 @@ export const requestAppPermission = async (
         return false;
       }
       return reqCamera === RESULTS.GRANTED;
+    } else if (type === 'location') {
+      const location = await check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+      if (location === RESULTS.GRANTED) {
+        return true;
+      }
+      const reqLocation = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+      if (reqLocation === RESULTS.BLOCKED) {
+        showPermissionAlert('Please grant location permission to calculate Qibla direction.');
+        return false;
+      }
+      return reqLocation === RESULTS.GRANTED;
     } else if (type === 'gallery') {
       // For Android 13+ (API 33+), use READ_MEDIA_IMAGES
       // For Android 12 and below, use READ_EXTERNAL_STORAGE
@@ -104,6 +115,7 @@ export const requestAppPermission = async (
     let permission;
     if (type === 'camera') permission = PERMISSIONS.IOS.CAMERA;
     else if (type === 'gallery') permission = PERMISSIONS.IOS.PHOTO_LIBRARY;
+    else if (type === 'location') permission = PERMISSIONS.IOS.LOCATION_WHEN_IN_USE;
     else if (type === 'document') {
       // For document picker on iOS, we don't need specific permissions
       // The document picker handles its own access
@@ -121,6 +133,8 @@ export const requestAppPermission = async (
       const permissionMessage = 
         type === 'camera' 
           ? 'Please grant camera permission to take pictures.'
+          : type === 'location'
+          ? 'Please grant location permission to calculate Qibla direction.'
           : 'Please grant gallery permission to select images.';
       
       showPermissionAlert(permissionMessage);
@@ -140,6 +154,8 @@ export const requestAppPermission = async (
       const permissionMessage = 
         type === 'camera' 
           ? 'Please grant camera permission to take pictures.'
+          : type === 'location'
+          ? 'Please grant location permission to calculate Qibla direction.'
           : 'Please grant gallery permission to select images.';
       
       showPermissionAlert(permissionMessage);

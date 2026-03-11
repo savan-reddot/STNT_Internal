@@ -44,6 +44,22 @@ export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2
   return d;
 };
 
+export const calculateBearing = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const phi1 = deg2rad(lat1);
+  const phi2 = deg2rad(lat2);
+  const deltaLambda = deg2rad(lon2 - lon1);
+
+  const y = Math.sin(deltaLambda) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLambda);
+  const theta = Math.atan2(y, x);
+  const bearing = (rad2deg(theta) + 360) % 360; // range [0, 360]
+  return bearing;
+};
+
+const rad2deg = (rad: number) => {
+  return rad * (180 / Math.PI);
+};
+
 const deg2rad = (deg: number) => {
   return deg * (Math.PI / 180);
 };
