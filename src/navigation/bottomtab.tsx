@@ -1,3 +1,4 @@
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import Home from '../screens/home/home';
@@ -8,7 +9,9 @@ import { metrics } from '../utils/metrics';
 import Policies from '../screens/policies/policies';
 import { Font_Regular } from '../theme/fonts';
 import PreferredMerchants from '../screens/preferred_merchants/preferred_merchants';
+import QiblaPrayers from '../screens/qibla/qibla';
 import { useTheme } from 'react-native-paper';
+import { KaabaIcon } from '../components/common';
 
 const Tab = createBottomTabNavigator();
 
@@ -29,9 +32,8 @@ const BottomTab = () => {
             case Screens.Home:
               iconName = focused ? 'home' : 'home-outline';
               break;
-            case Screens.PreferredMerchants:
-              iconName = focused ? 'tag' : 'tag-outline';
-              break;
+            case Screens.QiblaPrayers:
+              return <KaabaIcon size={34} color={color} />;
             case Screens.Policies:
               iconName = focused ? 'shield-check' : 'shield-check-outline';
               break;
@@ -71,9 +73,9 @@ const BottomTab = () => {
     >
       <Tab.Screen name={Screens.Home} component={Home} />
       <Tab.Screen
-        name={Screens.PreferredMerchants}
-        component={PreferredMerchants}
-        options={{ tabBarLabel: 'Deals' }}
+        name={Screens.QiblaPrayers}
+        component={QiblaPrayers}
+        options={{ tabBarLabel: 'Qibla' }}
       />
       <Tab.Screen
         name={Screens.Policies}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import { Text } from '../../components/common';
+import { Text, KaabaIcon } from '../../components/common';
 import AppLayout from '../../components/safeareawrapper';
 import { useTheme, MD3Theme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -226,10 +226,15 @@ const QiblaPrayers = ({ navigation }: any) => {
   }
 
   return (
-    <AppLayout title="QIBLA & PRAYERS" onBackPress={() => navigation.pop()}>
+    <AppLayout title="QIBLA & PRAYERS">
       <ScrollView contentContainerStyle={styles(theme).container}>
         <View style={styles(theme).qiblaCard}>
-          <Text style={styles(theme).qiblaTitle}>QIBLA DIRECTION</Text>
+          <View style={styles(theme).iconView}>
+            <Text style={styles(theme).qiblaTitle}>QIBLA DIRECTION</Text>
+            <View style={styles(theme).qiblaIcon}>
+              <KaabaIcon size={28} />
+            </View>
+          </View>
 
           {/* Compass Section */}
           <View style={styles(theme).compassSection}>
@@ -277,35 +282,6 @@ const QiblaPrayers = ({ navigation }: any) => {
                 style={[styles(theme).directionMark, styles(theme).westText]}
               >
                 <Text style={styles(theme).directionText}>W</Text>
-              </View>
- 
-              {/* Kaaba Icon at Qibla Position */}
-              <View
-                style={{
-                  position: 'absolute',
-                  top: 90 + 68 * Math.sin(((qiblaBearing - 90) * Math.PI) / 180) - 16,
-                  left: 90 + 68 * Math.cos(((qiblaBearing - 90) * Math.PI) / 180) - 16,
-                }}
-              >
-                <Svg height="32" width="32" viewBox="0 0 32 32">
-                  {/* Circular base for clarity */}
-                  <Circle cx="16" cy="16" r="16" fill="#FFFFFF" />
-                  <Circle cx="16" cy="16" r="15" fill="#F3F4F6" />
-                  
-                  {/* Kaaba 3D Isometric Body */}
-                  {/* Front-left side */}
-                  <Path d="M7 11 L16 15 L16 26 L7 22 Z" fill="#111827" />
-                  {/* Front-right side */}
-                  <Path d="M16 15 L25 11 L25 22 L16 26 Z" fill="#000000" />
-                  {/* Top surface */}
-                  <Path d="M7 11 L16 7 L25 11 L16 15 Z" fill="#374151" />
-                  
-                  {/* Horizontal Golden Band (Kiswah) wrapping around */}
-                  <Path d="M7 14 L16 18 L25 14 L25 16 L16 20 L7 16 Z" fill="#F59E0B" />
-                  
-                  {/* Small door detail */}
-                  <Path d="M18 19 L21 17.5 V23.5 L18 25 Z" fill="#F59E0B" opacity={0.7} />
-                </Svg>
               </View>
 
               <Animated.View
@@ -407,12 +383,23 @@ const styles = (theme: MD3Theme) =>
       justifyContent: 'center',
       alignSelf: 'center',
     },
+    iconView: {
+      flexDirection: 'row',
+      gap: 10,
+      alignItems: 'center',
+      marginBottom: 5,
+    },
     qiblaTitle: {
       color: '#10B981',
       fontSize: 12,
       fontFamily: Font_Bold,
       letterSpacing: 2,
-      marginBottom: 20,
+      marginBottom: 10,
+    },
+    qiblaIcon: {
+      marginBottom: 10,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 30,
     },
     compassSection: {
       alignItems: 'center',

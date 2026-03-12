@@ -66,7 +66,10 @@ const deg2rad = (deg: number) => {
 
 export const formatDistance = (distanceKm: number) => {
   if (distanceKm < 1) {
-    return `${Math.round(distanceKm * 1000)} m`;
+    return `${Math.round(distanceKm * 1000).toLocaleString('en-US')} M`;
   }
-  return `${distanceKm.toFixed(1)} km`;
+  return `${distanceKm.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} KM`;
 };

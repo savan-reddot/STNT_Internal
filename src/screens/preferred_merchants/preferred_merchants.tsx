@@ -312,6 +312,7 @@ const PreferredMerchants = ({ navigation }: any) => {
       title="Merchants"
       right={renderCityDropdown()}
       titleExtraStyle={{ marginLeft: 70 }}
+      onBackPress={() => navigation.pop()}
     >
       <View style={{ flex: 1 }}>
         <Text style={styles(theme).instructionText}>
