@@ -156,7 +156,7 @@ export const schedulePrayerNotifications = async (
           {
             id: `prayer_main_${prayer.name.toLowerCase()}`,
             title: `Time for ${prayer.label}`,
-            body: `Success is found in your meeting with Allah. It's time for ${prayer.label} prayer.`,
+            body: `It's time for ${prayer.label}. Prepare yourself for prayer.`,
             android: {
               channelId: 'default',
               importance: AndroidImportance.HIGH,
