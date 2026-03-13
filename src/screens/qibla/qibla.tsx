@@ -4,25 +4,22 @@ import { Text, KaabaIcon } from '../../components/common';
 import AppLayout from '../../components/safeareawrapper';
 import { useTheme, MD3Theme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Checkbox, TextInput } from 'react-native-paper';
+import { Checkbox } from 'react-native-paper';
+import PrePrayerReminderModal from '../../components/pre_prayer_reminder_modal';
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
-import { 
-  getPrayerNotifications, 
-  getPrePrayerNotifications, 
+import {
+  getPrayerNotifications,
+  getPrePrayerNotifications,
   getPrePrayerMinutes,
   setPrayerNotifications,
   setPrePrayerNotifications,
-  setPrePrayerMinutes
+  setPrePrayerMinutes,
 } from '../../redux/reducer';
 import { Font_Bold } from '../../theme/fonts';
 import axios from 'axios';
 import Geolocation from 'react-native-geolocation-service';
 import { requestAppPermission } from '../../utils/permissions';
-import { 
-  getFCMToken, 
-  initNotifications, 
-  schedulePrayerNotifications 
-} from '../../utils/notificationUtils';
+import { schedulePrayerNotifications } from '../../utils/notificationUtils';
 import {
   calculateBearing,
   calculateDistance,
@@ -55,18 +52,14 @@ const QiblaPrayers = ({ navigation }: any) => {
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [prayerTimes, setPrayerTimes] = useState<any>(null);
-  const [location, setLocation] = useState<any>(null);
   const [qiblaBearing, setQiblaBearing] = useState<number>(0);
   const [distanceToMecca, setDistanceToMecca] = useState<number>(0);
   const [currentPrayer, setCurrentPrayer] = useState<string>('');
   const [locationName, setLocationName] = useState<string>('MECCA, SA');
   const [locationTz, setLocationTz] = useState<string>('Asia/Riyadh');
-
-  // High-precision heading for text update
   const [displayHeading, setDisplayHeading] = useState(0);
-
-  // Reanimated shared values for smooth movement
   const headingRotation = useSharedValue(0);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const prayerNotifications = useAppSelector(getPrayerNotifications);
   const prePrayerNotifications = useAppSelector(getPrePrayerNotifications);
@@ -106,10 +99,16 @@ const QiblaPrayers = ({ navigation }: any) => {
         locationTz,
         prayerNotifications,
         prePrayerNotifications,
-        prePrayerMinutes
+        prePrayerMinutes,
       );
     }
-  }, [prayerTimes, locationTz, prayerNotifications, prePrayerNotifications, prePrayerMinutes]);
+  }, [
+    prayerTimes,
+    locationTz,
+    prayerNotifications,
+    prePrayerNotifications,
+    prePrayerMinutes,
+  ]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -119,8 +118,6 @@ const QiblaPrayers = ({ navigation }: any) => {
         Geolocation.getCurrentPosition(
           async position => {
             const { latitude, longitude } = position.coords;
-            setLocation({ latitude, longitude });
-
             const bearing = calculateBearing(
               latitude,
               longitude,
@@ -226,13 +223,6 @@ const QiblaPrayers = ({ navigation }: any) => {
     }
 
     setCurrentPrayer(current);
-  };
-
-  const getBearingString = (bearing: number) => {
-    const normalized = (bearing + 360) % 360;
-    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-    const index = Math.round(normalized / 45) % 8;
-    return `${normalized.toFixed(1)}° ${directions[index]}`;
   };
 
   const animatedDialStyle = useAnimatedStyle(() => {
@@ -391,53 +381,70 @@ const QiblaPrayers = ({ navigation }: any) => {
         {/* NOTIFICATION SETTINGS SECTION */}
         <View style={styles(theme).settingsCard}>
           <Text style={styles(theme).settingsTitle}>PRAYER NOTIFICATIONS</Text>
-          
+
           <View style={styles(theme).settingItem}>
             <View style={{ flex: 1 }}>
-              <Text style={styles(theme).settingLabel}>Enable Prayer Alerts</Text>
-              <Text style={styles(theme).settingDescription}>Receive a beautiful reminder when it's time to pray.</Text>
+              <Text style={styles(theme).settingLabel}>
+                Enable Prayer Alerts
+              </Text>
+              <Text style={styles(theme).settingDescription}>
+                Receive a beautiful reminder when it's time to pray.
+              </Text>
             </View>
             <Checkbox.Android
               status={prayerNotifications ? 'checked' : 'unchecked'}
-              onPress={() => dispatch(setPrayerNotifications(!prayerNotifications))}
+              onPress={() =>
+                dispatch(setPrayerNotifications(!prayerNotifications))
+              }
               color="#10B981"
             />
           </View>
 
-          <View style={[styles(theme).settingItem, { borderTopWidth: 1, borderTopColor: theme.dark ? '#374151' : '#F3F4F6', paddingTop: 15 }]}>
+          <View
+            style={[
+              styles(theme).settingItem,
+              {
+                borderTopWidth: 1,
+                borderTopColor: theme.dark ? '#374151' : '#F3F4F6',
+                paddingTop: 15,
+              },
+            ]}
+          >
             <View style={{ flex: 1 }}>
-              <Text style={styles(theme).settingLabel}>Pre-Prayer Reminder</Text>
-              <Text style={styles(theme).settingDescription}>Get notified a few minutes before the prayer starts.</Text>
+              <Text style={styles(theme).settingLabel}>
+                Pre-Prayer Reminder
+              </Text>
+              <Text style={styles(theme).settingDescription}>
+                {prePrayerNotifications
+                  ? `Get notified every ${prePrayerMinutes} mins`
+                  : 'Get notified a few minutes before the prayer starts.'}
+              </Text>
             </View>
             <Checkbox.Android
               status={prePrayerNotifications ? 'checked' : 'unchecked'}
-              onPress={() => dispatch(setPrePrayerNotifications(!prePrayerNotifications))}
+              onPress={() => {
+                const newValue = !prePrayerNotifications;
+                if (newValue) {
+                  setIsModalVisible(true);
+                } else {
+                  dispatch(setPrePrayerNotifications(false));
+                }
+              }}
               color="#10B981"
             />
           </View>
-
-          {prePrayerNotifications && (
-            <Animated.View style={styles(theme).minutesContainer}>
-              <Text style={styles(theme).minutesLabel}>Notify me</Text>
-              <TextInput
-                mode="outlined"
-                value={prePrayerMinutes.toString()}
-                onChangeText={(text) => {
-                  const val = parseInt(text.replace(/[^0-9]/g, '')) || 0;
-                  dispatch(setPrePrayerMinutes(val));
-                }}
-                keyboardType="number-pad"
-                style={styles(theme).minutesInput}
-                outlineColor="#10B981"
-                activeOutlineColor="#10B981"
-                textColor={theme.colors.onSurface}
-                contentStyle={{ fontFamily: Font_Bold }}
-                dense
-              />
-              <Text style={styles(theme).minutesLabel}>minutes before</Text>
-            </Animated.View>
-          )}
         </View>
+
+        <PrePrayerReminderModal
+          isVisible={isModalVisible}
+          minutes={prePrayerMinutes}
+          onClose={() => setIsModalVisible(false)}
+          onSave={val => {
+            dispatch(setPrePrayerMinutes(val));
+            dispatch(setPrePrayerNotifications(true));
+            setIsModalVisible(false);
+          }}
+        />
       </ScrollView>
     </AppLayout>
   );
@@ -653,5 +660,9 @@ const styles = (theme: MD3Theme) =>
       width: 60,
       height: 40,
       backgroundColor: theme.colors.surface,
+    },
+    saveButton: {
+      backgroundColor: '#10B981',
+      borderRadius: 10,
     },
   });
