@@ -100,6 +100,8 @@ const PaymentOptions = [
   },
 ];
 
+const nricFinRegex = /^[STFGM]\d{7}[A-Z]$/;
+
 const ClaimRequest = ({ navigation, route }: any) => {
   const theme = useTheme();
   const [current, setCurrent] = useState(0);
@@ -422,6 +424,11 @@ const ClaimRequest = ({ navigation, route }: any) => {
 
         if (paynow_nric == '') {
           showErrorToast('Please enter PayNow registered NRIC/FIN !!');
+          return;
+        }
+
+        if (!nricFinRegex.test(paynow_nric)) {
+          showErrorToast('Please enter a valid NRIC/FIN !!');
           return;
         }
 

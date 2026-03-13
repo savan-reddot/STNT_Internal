@@ -392,14 +392,6 @@ const QiblaPrayers = ({ navigation }: any) => {
                 fetchPrayerTimes(coords.lat, coords.lon, item.value);
               }
             }}
-            renderLeftIcon={() => (
-              <Icon
-                style={styles(theme).dropdownIcon}
-                color="#10B981"
-                name="calculator"
-                size={20}
-              />
-            )}
             containerStyle={styles(theme).dropdownContainer}
             itemTextStyle={styles(theme).dropdownItemText}
           />
