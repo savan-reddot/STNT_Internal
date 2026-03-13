@@ -19,6 +19,7 @@ import { navigationRef } from './src/utils/navigationRef';
 import { useAppSelector } from './src/redux/hooks';
 import { getTheme } from './src/redux/reducer';
 import { useDeepLink } from './src/hooks/useDeepLink';
+import { initNotifications } from './src/utils/notificationUtils';
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
@@ -31,6 +32,18 @@ const AppContent = () => {
   const isDark = storedTheme ? storedTheme === 'dark' : scheme === 'dark';
   const activeTheme = isDark ? darkTheme : lightTheme;
   const linking = useDeepLink();
+
+  React.useEffect(() => {
+    let unsubscribe: any;
+    const setup = async () => {
+      unsubscribe = await initNotifications();
+    };
+    setup();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
   return (
     <View

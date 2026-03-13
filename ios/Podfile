@@ -37,6 +37,12 @@ end
 target 'umrah_traveller_new' do
   config = use_native_modules!
 
+  # Enable modular headers ONLY for Firebase and its dependencies to avoid breaking core modules
+  pod 'FirebaseCore', :modular_headers => true
+  pod 'FirebaseCoreInternal', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'FirebaseMessaging', :modular_headers => true
+
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
