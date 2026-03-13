@@ -14,6 +14,8 @@ import {
   setPrayerNotifications,
   setPrePrayerNotifications,
   setPrePrayerMinutes,
+  getPrayerMethod,
+  setPrayerMethod,
 } from '../../redux/reducer';
 import { Font_Bold } from '../../theme/fonts';
 import axios from 'axios';
@@ -28,6 +30,7 @@ import {
 import moment from 'moment-timezone';
 import Svg, { Path, Circle } from 'react-native-svg';
 import CompassHeading from 'react-native-compass-heading';
+import { Dropdown } from 'react-native-element-dropdown';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -48,6 +51,32 @@ const PRAYERS = [
   { name: 'ISHA', key: 'Isha', icon: 'moon-waning-crescent' },
 ];
 
+const CALC_METHODS = [
+  { label: '0 - Jafari / Shia Ithna-Ashari', value: 0 },
+  { label: '1 - University of Islamic Sciences, Karachi', value: 1 },
+  { label: '2 - Islamic Society of North America', value: 2 },
+  { label: '3 - Muslim World League', value: 3 },
+  { label: '4 - Umm Al-Qura University, Makkah', value: 4 },
+  { label: '5 - Egyptian General Authority of Survey', value: 5 },
+  { label: '7 - Institute of Geophysics, University of Tehran', value: 7 },
+  { label: '8 - Gulf Region', value: 8 },
+  { label: '9 - Kuwait', value: 9 },
+  { label: '10 - Qatar', value: 10 },
+  { label: '11 - Majlis Ugama Islam Singapura, Singapore', value: 11 },
+  { label: '12 - Union Organization islamic de France', value: 12 },
+  { label: '13 - Diyanet İşleri Başkanlığı, Turkey', value: 13 },
+  { label: '14 - Spiritual Administration of Muslims of Russia', value: 14 },
+  { label: '15 - Moonsighting Committee Worldwide', value: 15 },
+  { label: '16 - Dubai (experimental)', value: 16 },
+  { label: '17 - Jabatan Kemajuan Islam Malaysia (JAKIM)', value: 17 },
+  { label: '18 - Tunisia', value: 18 },
+  { label: '19 - Algeria', value: 19 },
+  { label: '20 - KEMENAG - Kementerian Agama RI', value: 20 },
+  { label: '21 - Morocco', value: 21 },
+  { label: '22 - Comunidade Islamica de Lisboa', value: 22 },
+  { label: '23 - Ministry of Awqaf, Jordan', value: 23 },
+];
+
 const QiblaPrayers = ({ navigation }: any) => {
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
@@ -60,6 +89,10 @@ const QiblaPrayers = ({ navigation }: any) => {
   const [displayHeading, setDisplayHeading] = useState(0);
   const headingRotation = useSharedValue(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const selectedMethod = useAppSelector(getPrayerMethod);
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
+    null,
+  );
 
   const prayerNotifications = useAppSelector(getPrayerNotifications);
   const prePrayerNotifications = useAppSelector(getPrePrayerNotifications);
@@ -137,20 +170,32 @@ const QiblaPrayers = ({ navigation }: any) => {
             // Fetch address/city name
             fetchLocationName(latitude, longitude);
 
+            setCoords({ lat: latitude, lon: longitude });
+
             // Fetch Local Prayer Times
-            await fetchPrayerTimes(latitude, longitude);
+            await fetchPrayerTimes(latitude, longitude, selectedMethod);
           },
           error => {
             console.error(error);
             // Fallback to Mecca
-            fetchPrayerTimes(MECCA_COORDS.lat, MECCA_COORDS.lon);
+            setCoords({ lat: MECCA_COORDS.lat, lon: MECCA_COORDS.lon });
+            fetchPrayerTimes(
+              MECCA_COORDS.lat,
+              MECCA_COORDS.lon,
+              selectedMethod,
+            );
             setLocationName('MECCA, SA');
           },
           { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
         );
       } else {
         // Fallback to Mecca
-        await fetchPrayerTimes(MECCA_COORDS.lat, MECCA_COORDS.lon);
+        setCoords({ lat: MECCA_COORDS.lat, lon: MECCA_COORDS.lon });
+        await fetchPrayerTimes(
+          MECCA_COORDS.lat,
+          MECCA_COORDS.lon,
+          selectedMethod,
+        );
         setLocationName('MECCA, SA');
       }
     } catch (error) {
@@ -177,10 +222,10 @@ const QiblaPrayers = ({ navigation }: any) => {
     }
   };
 
-  const fetchPrayerTimes = async (lat: number, lon: number) => {
+  const fetchPrayerTimes = async (lat: number, lon: number, method: number) => {
     try {
       const response = await axios.get(
-        `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=4`,
+        `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=${method}`,
       );
       setPrayerTimes(response?.data?.data?.timings);
       const tz = response?.data?.data?.meta?.timezone || 'UTC';
@@ -325,6 +370,41 @@ const QiblaPrayers = ({ navigation }: any) => {
           </View>
         </View>
 
+        <View style={styles(theme).methodCard}>
+          <Text style={styles(theme).methodLabel}>METHOD</Text>
+          <Dropdown
+            style={styles(theme).dropdown}
+            placeholderStyle={styles(theme).placeholderStyle}
+            selectedTextStyle={styles(theme).selectedTextStyle}
+            inputSearchStyle={styles(theme).inputSearchStyle}
+            iconStyle={styles(theme).iconStyle}
+            data={CALC_METHODS}
+            search
+            maxHeight={300}
+            labelField="label"
+            valueField="value"
+            placeholder="Select Method"
+            searchPlaceholder="Search method..."
+            value={selectedMethod}
+            onChange={item => {
+              dispatch(setPrayerMethod(item.value));
+              if (coords) {
+                fetchPrayerTimes(coords.lat, coords.lon, item.value);
+              }
+            }}
+            renderLeftIcon={() => (
+              <Icon
+                style={styles(theme).dropdownIcon}
+                color="#10B981"
+                name="calculator"
+                size={20}
+              />
+            )}
+            containerStyle={styles(theme).dropdownContainer}
+            itemTextStyle={styles(theme).dropdownItemText}
+          />
+        </View>
+
         <View style={styles(theme).prayerTimesHeader}>
           <Text style={styles(theme).sectionTitle}>PRAYER TIMES</Text>
           <Text style={styles(theme).locationText}>{locationName}</Text>
@@ -416,7 +496,7 @@ const QiblaPrayers = ({ navigation }: any) => {
               </Text>
               <Text style={styles(theme).settingDescription}>
                 {prePrayerNotifications
-                  ? `Get notified every ${prePrayerMinutes} mins`
+                  ? `Get notified ${prePrayerMinutes} mins before prayer start time.`
                   : 'Get notified a few minutes before the prayer starts.'}
               </Text>
             </View>
@@ -552,7 +632,7 @@ const styles = (theme: MD3Theme) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       paddingHorizontal: 25,
-      marginTop: 10,
+      marginTop: 20,
       marginBottom: 15,
     },
     sectionTitle: {
@@ -664,5 +744,63 @@ const styles = (theme: MD3Theme) =>
     saveButton: {
       backgroundColor: '#10B981',
       borderRadius: 10,
+    },
+    methodCard: {
+      backgroundColor: theme.colors.surface,
+      marginHorizontal: 20,
+      borderRadius: 30,
+      padding: 15,
+      marginTop: 5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
+    },
+    methodLabel: {
+      fontSize: 10,
+      fontFamily: Font_Bold,
+      color: '#9CA3AF',
+      letterSpacing: 1.5,
+      marginBottom: 10,
+      paddingLeft: 5,
+    },
+    dropdown: {
+      height: 50,
+      borderColor: theme.dark ? '#374151' : '#E5E7EB',
+      borderWidth: 1,
+      borderRadius: 15,
+      paddingHorizontal: 15,
+    },
+    dropdownIcon: {
+      marginRight: 10,
+    },
+    placeholderStyle: {
+      fontSize: 14,
+      color: '#9CA3AF',
+    },
+    selectedTextStyle: {
+      fontSize: 14,
+      color: theme.colors.onSurface,
+      fontFamily: Font_Bold,
+    },
+    iconStyle: {
+      width: 20,
+      height: 20,
+    },
+    inputSearchStyle: {
+      height: 40,
+      fontSize: 14,
+      borderRadius: 10,
+    },
+    dropdownContainer: {
+      borderRadius: 15,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.dark ? '#374151' : '#E5E7EB',
+    },
+    dropdownItemText: {
+      fontSize: 14,
+      color: theme.colors.onSurface,
     },
   });

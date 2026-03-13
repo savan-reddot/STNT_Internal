@@ -155,8 +155,8 @@ export const schedulePrayerNotifications = async (
         await notifee.createTriggerNotification(
           {
             id: `prayer_main_${prayer.name.toLowerCase()}`,
-            title: `Time for ${prayer.label}`,
-            body: `It's time for ${prayer.label}. Prepare yourself for prayer.`,
+            title: `${prayer.label} Prayer Starts Now`,
+            body: `The time for ${prayer.label} has arrived. Please begin your prayer.`,
             android: {
               channelId: 'default',
               importance: AndroidImportance.HIGH,
@@ -186,8 +186,8 @@ export const schedulePrayerNotifications = async (
           await notifee.createTriggerNotification(
             {
               id: `prayer_pre_${prayer.name.toLowerCase()}`,
-              title: `${prayer.label} in ${preMinutes} mins`,
-              body: `Reminder: ${prayer.label} is starting in ${preMinutes} minutes. Prepare yourself for prayer.`,
+              title: `Prepare for ${prayer.label}`,
+              body: `${prayer.label} is starting in ${preMinutes} mins. Take a moment to refresh your wudu and prepare your heart.`,
               android: {
                 channelId: 'default',
                 importance: AndroidImportance.HIGH,

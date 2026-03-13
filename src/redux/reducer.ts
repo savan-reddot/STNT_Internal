@@ -10,6 +10,7 @@ interface initialState {
   prayerNotifications: boolean;
   prePrayerNotifications: boolean;
   prePrayerMinutes: number;
+  prayerMethod: number;
 }
 
 const initialState: initialState = {
@@ -21,6 +22,7 @@ const initialState: initialState = {
   prayerNotifications: false,
   prePrayerNotifications: false,
   prePrayerMinutes: 10, // Default 10 mins
+  prayerMethod: 11, // Default 11
 };
 
 export const auth = createSlice({
@@ -51,6 +53,9 @@ export const auth = createSlice({
     setPrePrayerMinutes: (state, action) => {
       state.prePrayerMinutes = action.payload;
     },
+    setPrayerMethod: (state, action) => {
+      state.prayerMethod = action.payload;
+    },
     logout: (state) => {
       state.user = null;
       state.user_details = null;
@@ -70,7 +75,8 @@ export const {
   setPrayerNotifications,
   setPrePrayerNotifications,
   setPrePrayerMinutes,
-  logout 
+  setPrayerMethod,
+  logout,
 } = auth.actions;
 export default auth.reducer;
 
@@ -82,3 +88,4 @@ export const getTheme = (state: RootState) => state.auth.theme;
 export const getPrayerNotifications = (state: RootState) => state.auth.prayerNotifications;
 export const getPrePrayerNotifications = (state: RootState) => state.auth.prePrayerNotifications;
 export const getPrePrayerMinutes = (state: RootState) => state.auth.prePrayerMinutes;
+export const getPrayerMethod = (state: RootState) => state.auth.prayerMethod;
