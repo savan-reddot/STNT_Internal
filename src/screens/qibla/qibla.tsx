@@ -4,10 +4,25 @@ import { Text, KaabaIcon } from '../../components/common';
 import AppLayout from '../../components/safeareawrapper';
 import { useTheme, MD3Theme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Checkbox, TextInput } from 'react-native-paper';
+import { useAppSelector, useAppDispatch } from '../../redux/hooks';
+import { 
+  getPrayerNotifications, 
+  getPrePrayerNotifications, 
+  getPrePrayerMinutes,
+  setPrayerNotifications,
+  setPrePrayerNotifications,
+  setPrePrayerMinutes
+} from '../../redux/reducer';
 import { Font_Bold } from '../../theme/fonts';
 import axios from 'axios';
 import Geolocation from 'react-native-geolocation-service';
 import { requestAppPermission } from '../../utils/permissions';
+import { 
+  getFCMToken, 
+  initNotifications, 
+  schedulePrayerNotifications 
+} from '../../utils/notificationUtils';
 import {
   calculateBearing,
   calculateDistance,
@@ -53,6 +68,11 @@ const QiblaPrayers = ({ navigation }: any) => {
   // Reanimated shared values for smooth movement
   const headingRotation = useSharedValue(0);
 
+  const prayerNotifications = useAppSelector(getPrayerNotifications);
+  const prePrayerNotifications = useAppSelector(getPrePrayerNotifications);
+  const prePrayerMinutes = useAppSelector(getPrePrayerMinutes);
+  const dispatch = useAppDispatch();
+
   useEffect(() => {
     fetchData();
 
@@ -78,6 +98,18 @@ const QiblaPrayers = ({ navigation }: any) => {
       CompassHeading.stop();
     };
   }, []);
+
+  useEffect(() => {
+    if (prayerTimes && locationTz) {
+      schedulePrayerNotifications(
+        prayerTimes,
+        locationTz,
+        prayerNotifications,
+        prePrayerNotifications,
+        prePrayerMinutes
+      );
+    }
+  }, [prayerTimes, locationTz, prayerNotifications, prePrayerNotifications, prePrayerMinutes]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -355,6 +387,57 @@ const QiblaPrayers = ({ navigation }: any) => {
               );
             })}
         </View>
+
+        {/* NOTIFICATION SETTINGS SECTION */}
+        <View style={styles(theme).settingsCard}>
+          <Text style={styles(theme).settingsTitle}>PRAYER NOTIFICATIONS</Text>
+          
+          <View style={styles(theme).settingItem}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles(theme).settingLabel}>Enable Prayer Alerts</Text>
+              <Text style={styles(theme).settingDescription}>Receive a beautiful reminder when it's time to pray.</Text>
+            </View>
+            <Checkbox.Android
+              status={prayerNotifications ? 'checked' : 'unchecked'}
+              onPress={() => dispatch(setPrayerNotifications(!prayerNotifications))}
+              color="#10B981"
+            />
+          </View>
+
+          <View style={[styles(theme).settingItem, { borderTopWidth: 1, borderTopColor: theme.dark ? '#374151' : '#F3F4F6', paddingTop: 15 }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles(theme).settingLabel}>Pre-Prayer Reminder</Text>
+              <Text style={styles(theme).settingDescription}>Get notified a few minutes before the prayer starts.</Text>
+            </View>
+            <Checkbox.Android
+              status={prePrayerNotifications ? 'checked' : 'unchecked'}
+              onPress={() => dispatch(setPrePrayerNotifications(!prePrayerNotifications))}
+              color="#10B981"
+            />
+          </View>
+
+          {prePrayerNotifications && (
+            <Animated.View style={styles(theme).minutesContainer}>
+              <Text style={styles(theme).minutesLabel}>Notify me</Text>
+              <TextInput
+                mode="outlined"
+                value={prePrayerMinutes.toString()}
+                onChangeText={(text) => {
+                  const val = parseInt(text.replace(/[^0-9]/g, '')) || 0;
+                  dispatch(setPrePrayerMinutes(val));
+                }}
+                keyboardType="number-pad"
+                style={styles(theme).minutesInput}
+                outlineColor="#10B981"
+                activeOutlineColor="#10B981"
+                textColor={theme.colors.onSurface}
+                contentStyle={{ fontFamily: Font_Bold }}
+                dense
+              />
+              <Text style={styles(theme).minutesLabel}>minutes before</Text>
+            </Animated.View>
+          )}
+        </View>
       </ScrollView>
     </AppLayout>
   );
@@ -519,5 +602,56 @@ const styles = (theme: MD3Theme) =>
       fontSize: 14,
       fontFamily: Font_Bold,
       color: theme.colors.onSurface,
+    },
+    settingsCard: {
+      backgroundColor: theme.colors.surface,
+      marginHorizontal: 20,
+      marginTop: 20,
+      borderRadius: 30,
+      padding: 20,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
+    },
+    settingsTitle: {
+      fontSize: 12,
+      fontFamily: Font_Bold,
+      color: '#9CA3AF',
+      letterSpacing: 1.5,
+      marginBottom: 20,
+    },
+    settingItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+    },
+    settingLabel: {
+      fontSize: 14,
+      fontFamily: Font_Bold,
+      color: theme.colors.onSurface,
+    },
+    settingDescription: {
+      fontSize: 12,
+      color: '#9CA3AF',
+      marginTop: 2,
+    },
+    minutesContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 15,
+      paddingLeft: 5,
+    },
+    minutesLabel: {
+      fontSize: 13,
+      color: theme.colors.onSurface,
+      fontFamily: Font_Bold,
+    },
+    minutesInput: {
+      width: 60,
+      height: 40,
+      backgroundColor: theme.colors.surface,
     },
   });

@@ -1,6 +1,7 @@
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
-import notifee, { AndroidImportance } from '@notifee/react-native';
+import notifee, { AndroidImportance, TriggerType, RepeatFrequency } from '@notifee/react-native';
 import { Platform } from 'react-native';
+import moment from 'moment-timezone';
 
 export const requestUserPermission = async () => {
   const authStatus = await messaging().requestPermission();
@@ -103,4 +104,107 @@ export const initNotifications = async () => {
     });
 
   return unsubscribe;
+};
+
+export const schedulePrayerNotifications = async (
+  prayerTimes: any,
+  locationTz: string,
+  enableAlerts: boolean,
+  enablePreAlerts: boolean,
+  preMinutes: number
+) => {
+  try {
+    // 1. Cancel existing prayer notifications
+    const allNotifications = await notifee.getTriggerNotificationIds();
+    const prayerNotificationIds = allNotifications.filter(id => id.startsWith('prayer_'));
+    await notifee.cancelTriggerNotifications(prayerNotificationIds);
+
+    if (!enableAlerts && !enablePreAlerts) {
+      console.log('Prayer notifications disabled');
+      return;
+    }
+
+    const prayerKeys = [
+      { name: 'Fajr', label: 'Fajr' },
+      { name: 'Dhuhr', label: 'Dhuhr' },
+      { name: 'Asr', label: 'Asr' },
+      { name: 'Maghrib', label: 'Maghrib' },
+      { name: 'Isha', label: 'Isha' },
+    ];
+
+    for (const prayer of prayerKeys) {
+      const prayerTimeStr = prayerTimes[prayer.name];
+      if (!prayerTimeStr) continue;
+
+      // Parse time
+      const prayerMoment = moment.tz(prayerTimeStr, 'HH:mm', locationTz).local();
+      
+      // If time has passed today, schedule for tomorrow
+      if (prayerMoment.isBefore(moment())) {
+        prayerMoment.add(1, 'day');
+      }
+
+      // 1. Schedule MAIN Notification
+      if (enableAlerts) {
+        const trigger: any = {
+          type: TriggerType.TIMESTAMP,
+          timestamp: prayerMoment.valueOf(),
+          repeatFrequency: RepeatFrequency.DAILY,
+        };
+
+        await notifee.createTriggerNotification(
+          {
+            id: `prayer_main_${prayer.name.toLowerCase()}`,
+            title: `Time for ${prayer.label}`,
+            body: `Success is found in your meeting with Allah. It's time for ${prayer.label} prayer.`,
+            android: {
+              channelId: 'default',
+              importance: AndroidImportance.HIGH,
+              pressAction: { id: 'default' },
+            },
+            ios: {
+              critical: true,
+              sound: 'default',
+            },
+          },
+          trigger
+        );
+      }
+
+      // 2. Schedule PRE-PRAYER Notification
+      if (enablePreAlerts && preMinutes > 0) {
+        const preMoment = prayerMoment.clone().subtract(preMinutes, 'minutes');
+        
+        // Only schedule if the pre-time hasn't passed today
+        if (preMoment.isAfter(moment())) {
+          const preTrigger: any = {
+            type: TriggerType.TIMESTAMP,
+            timestamp: preMoment.valueOf(),
+            repeatFrequency: RepeatFrequency.DAILY,
+          };
+
+          await notifee.createTriggerNotification(
+            {
+              id: `prayer_pre_${prayer.name.toLowerCase()}`,
+              title: `${prayer.label} in ${preMinutes} mins`,
+              body: `Reminder: ${prayer.label} is starting in ${preMinutes} minutes. Prepare yourself for prayer.`,
+              android: {
+                channelId: 'default',
+                importance: AndroidImportance.HIGH,
+                pressAction: { id: 'default' },
+              },
+              ios: {
+                sound: 'default',
+              },
+            },
+            preTrigger
+          );
+        }
+      }
+    }
+
+    console.log('--- PRAYER NOTIFICATIONS SCHEDULED ---');
+  } catch (error) {
+    console.error('Error scheduling prayer notifications:', error);
+  }
 };
