@@ -984,20 +984,34 @@ const ClaimRequest = ({ navigation, route }: any) => {
                   {
                     fontSize: metrics.moderateScale(12),
                     fontWeight: '500',
-                    color: theme.colors.onSurfaceVariant,
+                    color: theme.colors.error,
                     fontFamily: Font_Regular,
                     fontStyle: 'italic',
                     lineHeight: 18,
                   },
                 ]}
               >
-                <Text style={{ fontWeight: 'bold' }}>*</Text>{' '}
+                📌{' '}
                 <Text style={{ fontWeight: 'bold' }}>
-                  Bank account details must belong to the policyholder only. For
-                  minors, the payout will go to the policyholder. We may request
-                  proof of the child’s relationship to their parent or guardian
-                  (e.g., birth certificate) if required.
+                  PLEASE NOTE: Failure in providing accurate bank account
+                  details will result in bank payment rejection and rejection
+                  charges will be incurred to you.
                 </Text>
+                {'\n\n'}* Bank account details{' '}
+                <Text style={{ textDecorationLine: 'underline' }}>
+                  must belong to the policyholder only
+                </Text>
+                . For minors, the payout will go to the policyholder. We may
+                request proof of the child’s relationship to their parent or
+                guardian (e.g., birth certificate) if required.
+                {'\n\n'}* Butiran akaun bank{' '}
+                <Text style={{ textDecorationLine: 'underline' }}>
+                  hendaklah atas nama pemegang polisi sahaja.
+                </Text>{' '}
+                Bagi tuntutan melibatkan kanak-kanak di bawah umur, pembayaran
+                akan dikreditkan kepada pemegang polisi. Pihak kami berhak
+                meminta bukti hubungan antara kanak-kanak dengan ibu bapa atau
+                penjaga (seperti sijil kelahiran) sekiranya perlu.
               </Text>
             </View>
           </View>

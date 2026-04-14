@@ -7,12 +7,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import {
-  Linking,
-  StyleSheet,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Dropdown } from 'react-native-element-dropdown';
 import Modal from 'react-native-modal';
@@ -49,12 +44,7 @@ const PolicyDetails = ({
   //   data && setPolicyData(data);
   // }, [data]);
 
-  const handlePress = () => {
-    const url =
-      'https://stntinternational.com/wp-content/uploads/2025/03/UMRAH-Policy-Wording_1447H.pdf';
-    // Linking.openURL(url).catch(err =>
-    //   console.error('Failed to open URL:', err),
-    // );
+  const handlePress = (url: string) => {
     // setPolicyData(null);
     onDismiss && onDismiss();
     navigation.navigate(Screens.WebView, { url: url });
@@ -219,7 +209,9 @@ const PolicyDetails = ({
           >
             Policy Wordings :
           </Text>
-          <TouchableOpacity onPress={() => handlePress()}>
+          <TouchableOpacity
+            onPress={() => handlePress(policyData?.policy_wording_url)}
+          >
             <Text
               style={[
                 styles(theme).title,
