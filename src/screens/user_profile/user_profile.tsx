@@ -125,7 +125,11 @@ const UserProfile = ({ navigation }: any) => {
       );
       await AsyncStorage.setItem(
         '@user',
-        JSON.stringify(resp?.data?.data?.user),
+        JSON.stringify({
+          ...resp?.data?.data?.user,
+          latestUid: resp?.data?.data?.latestUid,
+          availableUids: resp?.data?.data?.availableUids,
+        }),
       );
       const passportResp = await passportById({
         uidNo: resp?.data?.data?.latestUid,

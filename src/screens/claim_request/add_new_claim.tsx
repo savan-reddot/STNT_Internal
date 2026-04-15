@@ -345,8 +345,10 @@ const AddNewClaim = ({ navigation }: any) => {
           if (save_draft_resp?.data?.status) {
             // setClaim_Success(data);
             if (isDraft) {
-              navigation.pop(2);
-              return;
+              setTimeout(() => {
+                navigation.pop(2);
+                return;
+              }, 500);
             }
             setDraft(save_draft_resp?.data?.data);
           }
@@ -438,7 +440,7 @@ const AddNewClaim = ({ navigation }: any) => {
           claimCategoryId: claim_skeleton.selectedCategory,
           claimForm: request,
         };
-        console.log('submit claim : ', claim_request);
+        console.log('submit claim : 11', claim_request);
         const final_resp = await claim_form_submit_final_edit({
           request: claim_request,
           id: editClaim?.claimCategory?.claimForm?.id,
@@ -460,7 +462,7 @@ const AddNewClaim = ({ navigation }: any) => {
           claimCategoryId: claim_skeleton.selectedCategory,
           claimForm: request,
         };
-        console.log('submit claim : ', claim_request);
+        console.log('submit claim : 22', claim_request);
         const final_resp = await claim_form_submit_final(claim_request);
         if (final_resp?.data?.status) {
           console.log('Success : ', final_resp?.data);
@@ -475,7 +477,8 @@ const AddNewClaim = ({ navigation }: any) => {
               if (route?.params?.onGoBack) {
                 route?.params?.onGoBack(final_resp?.data?.data);
               }
-              navigation.goBack();
+              // navigation.goBack();
+              navigation.pop(3);
             }
           }
         } else {
@@ -489,7 +492,7 @@ const AddNewClaim = ({ navigation }: any) => {
           claimCategoryId: claim_skeleton.selectedCategory,
           claimForm: request,
         };
-        console.log('submit claim : ', claim_request);
+        console.log('submit claim : 33', claim_request);
         const final_resp = await claim_form_submit_final_edit({
           request: claim_request,
           id: editClaim?.claimCategory?.claimForm?.id,
@@ -512,7 +515,7 @@ const AddNewClaim = ({ navigation }: any) => {
             claimCategoryId: claim_skeleton.selectedCategory,
             claimForm: request,
           };
-          console.log('submit claim : ', claim_request);
+          console.log('submit claim : 44', claim_request);
           const final_resp = await claim_form_submit_final(claim_request);
           if (final_resp?.data?.status) {
             console.log('Success : ', final_resp?.data);

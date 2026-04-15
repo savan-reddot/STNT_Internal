@@ -522,13 +522,13 @@ const styles = (theme: MD3Theme) =>
   StyleSheet.create({
     container: {
       backgroundColor: theme.colors.background,
-      height: '95%',
+      height: '90%',
       borderTopEndRadius: metrics.baseRadius,
       borderTopLeftRadius: metrics.baseRadius,
     },
     modal: {
       justifyContent: 'flex-end',
-      // margin: 0,
+      margin: 0,
       marginHorizontal: 0,
       borderTopEndRadius: metrics.baseRadius,
       borderTopLeftRadius: metrics.baseRadius,

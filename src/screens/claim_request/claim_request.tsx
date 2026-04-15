@@ -1141,8 +1141,6 @@ const ClaimRequest = ({ navigation, route }: any) => {
     const scrollRef = useRef<ScrollView>(null);
     const [scrollY, setScrollY] = useState(0);
 
-    console.log('user_review -----> ', user_review);
-
     // restore scroll after state updates
     useEffect(() => {
       if (scrollRef.current) {
@@ -1190,9 +1188,16 @@ const ClaimRequest = ({ navigation, route }: any) => {
       };
       console.log('req_submit ------> ', request);
       const resp = await claim_request_submit(request);
-      console.log('resp ------> ', resp);
+      console.log('resp ------> 22', resp);
       if (resp && resp?.data && resp?.data?.status) {
         handleNext();
+      } else if (resp && resp?.error) {
+        const errorData = 'data' in resp.error ? resp.error.data : null;
+        const errorMessage =
+          errorData && typeof errorData === 'object' && 'message' in errorData
+            ? (errorData as any).message
+            : 'Failed to submit claim';
+        showErrorToast(errorMessage, 'Error !!');
       }
     };
     return (

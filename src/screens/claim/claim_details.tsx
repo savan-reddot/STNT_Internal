@@ -5,9 +5,9 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import {
   useClaim_request_submitMutation,
@@ -28,6 +28,7 @@ import moment from 'moment';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 import RNFS from 'react-native-fs';
 import { Font_Medium } from '../../theme/fonts';
+import { useFocusEffect } from '@react-navigation/native';
 
 const ClaimDetails = ({ route, navigation }: any) => {
   const theme = useTheme();
@@ -51,11 +52,14 @@ const ClaimDetails = ({ route, navigation }: any) => {
     );
   }
 
-  useEffect(() => {
-    if (claimRequestId) {
-      getUser(claimRequestId);
-    }
-  }, [claimRequestId]);
+  useFocusEffect(
+    useCallback(() => {
+      if (claimRequestId) {
+        getUser(claimRequestId);
+      }
+      return () => {};
+    }, [claimRequestId]),
+  );
 
   const getUser = async (claimRequestId: number) => {
     console.log('claimRequestId : ', claimRequestId);
@@ -318,6 +322,13 @@ const ClaimDetails = ({ route, navigation }: any) => {
     if (resp && resp?.data && resp?.data?.status) {
       showSuccessToast('Claim submitted successfully !!');
       navigation.pop(2);
+    } else if (resp && resp?.error) {
+      const errorData = 'data' in resp.error ? resp.error.data : null;
+      const errorMessage =
+        errorData && typeof errorData === 'object' && 'message' in errorData
+          ? (errorData as any).message
+          : 'Failed to submit claim';
+      showErrorToast(errorMessage, 'Error !!');
     }
   };
 
