@@ -1,4 +1,4 @@
-import { Text } from '../../components/common';
+import { Text, TextInput } from '../../components/common';
 import {
   Alert,
   Image,
@@ -14,7 +14,11 @@ import {
   useLazyRequest_reviewQuery,
   useUpload_signatureMutation,
   useDelete_draftMutation,
+  useLazyGet_addressQuery,
+  useCreate_addressMutation,
+  useUpdate_addressMutation,
 } from '../../redux/services';
+import Modal from 'react-native-modal';
 import { Screens } from '../../common/screens';
 import fontStyle from '../../styles/fontStyle';
 import { metrics } from '../../utils/metrics';
@@ -26,6 +30,8 @@ import UButton from '../../components/custombutton';
 import SignatureModal from '../../components/signature_modal';
 import moment from 'moment';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '../../utils/toastConfig';
 import RNFS from 'react-native-fs';
 import { Font_Medium } from '../../theme/fonts';
 import { useFocusEffect } from '@react-navigation/native';
@@ -40,11 +46,20 @@ const ClaimDetails = ({ route, navigation }: any) => {
   const [upload_signature, { isLoading: isSignatureUploading }] =
     useUpload_signatureMutation();
   const [delete_draft, { isLoading: isDeleting }] = useDelete_draftMutation();
+  const [get_address, { isLoading: isAddressChecking }] = useLazyGet_addressQuery();
+  const [create_address, { isLoading: isAddressCreating }] = useCreate_addressMutation();
+  const [update_address, { isLoading: isAddressUpdating }] = useUpdate_addressMutation();
+
   const [user_review, setUser_Review] = useState<any>();
   const [isDeclare, setIsDeclare] = useState(false);
   const [isFinalDeclare, setIsFinalDeclare] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
+
+  const [isAddressModalVisible, setIsAddressModalVisible] = useState(false);
+  const [addressPhone, setAddressPhone] = useState('');
+  const [addressEmail, setAddressEmail] = useState('');
+  const [addressData, setAddressData] = useState<any>(null);
 
   function isDateString(val: any) {
     return (
@@ -237,6 +252,33 @@ const ClaimDetails = ({ route, navigation }: any) => {
     },
   );
 
+  const proceed_signature_submission = async () => {
+    try {
+      const base64Data = signature!.replace(/^data:image\/png;base64,/, '');
+      const path = `${RNFS.DocumentDirectoryPath}/signature.png`;
+      await RNFS.writeFile(path, base64Data, 'base64');
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: 'file://' + path,
+        type: 'image/png',
+        name: 'signature.png',
+      });
+      console.log('req_sign ------> ', formData);
+      const resp_sign = await upload_signature(formData);
+      console.log('resp_sign ------> ', resp_sign);
+      if (resp_sign && resp_sign?.data && resp_sign?.data?.status) {
+        const { data } = resp_sign?.data;
+        if (data && data?.signature_url != '') {
+          submit_claim_request(data?.signature_url);
+        }
+      }
+    } catch (err: any) {
+      console.error('Signature upload error:', err);
+      showErrorToast('Failed to upload signature. Please try again.');
+    }
+  };
+
   const submit_signature = async () => {
     if (signature == null || signature == undefined) {
       showErrorToast('Please mark your signature first !!');
@@ -253,24 +295,73 @@ const ClaimDetails = ({ route, navigation }: any) => {
       return;
     }
 
-    const base64Data = signature.replace(/^data:image\/png;base64,/, '');
-    const path = `${RNFS.DocumentDirectoryPath}/signature.png`;
-    await RNFS.writeFile(path, base64Data, 'base64');
-
-    const formData = new FormData();
-    formData.append('file', {
-      uri: 'file://' + path,
-      type: 'image/png',
-      name: 'signature.png',
-    });
-    console.log('req_sign ------> ', formData);
-    const resp_sign = await upload_signature(formData);
-    console.log('resp_sign ------> ', resp_sign);
-    if (resp_sign && resp_sign?.data && resp_sign?.data?.status) {
-      const { data } = resp_sign?.data;
-      if (data && data?.signature_url != '') {
-        submit_claim_request(data?.signature_url);
+    try {
+      const response = await get_address(null).unwrap();
+      console.log('GET address response : ', response);
+      if (response && response.status) {
+        const data = response.data;
+        if (data && data.phoneNumber && data.emailAddress) {
+          await proceed_signature_submission();
+        } else {
+          setAddressData(data);
+          setAddressPhone(data?.phoneNumber || '');
+          setAddressEmail(data?.emailAddress || '');
+          setIsAddressModalVisible(true);
+        }
+      } else {
+        showErrorToast('Failed to check address details. Please try again.');
       }
+    } catch (err: any) {
+      console.error('Error fetching address:', err);
+      showErrorToast('An error occurred while checking address details.');
+    }
+  };
+
+  const handleAddressSubmit = async () => {
+    if (addressPhone.trim() === '') {
+      showErrorToast('Please enter your phone number.', 'Error !!');
+      return;
+    }
+
+    if (addressEmail.trim() === '') {
+      showErrorToast('Please enter your email address.', 'Error !!');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(addressEmail.trim())) {
+      showErrorToast('Please enter a valid email address.', 'Error !!');
+      return;
+    }
+
+    const requestBody = {
+      phoneNumber: addressPhone.trim(),
+      emailAddress: addressEmail.trim(),
+    };
+
+    try {
+      let response;
+      if (addressData === null) {
+        response = await create_address(requestBody).unwrap();
+        console.log('POST address response : ', response);
+      } else {
+        response = await update_address(requestBody).unwrap();
+        console.log('PUT address response : ', response);
+      }
+
+      if (response && (response.success || response.status)) {
+        showSuccessToast(response.message || 'Address saved successfully');
+        setIsAddressModalVisible(false);
+        await proceed_signature_submission();
+      } else {
+        const errorMessage = response?.message || 'Failed to save address details.';
+        showErrorToast(errorMessage, 'Error !!');
+      }
+    } catch (err: any) {
+      console.error('Save address error:', err);
+      const errMessage =
+        err?.data?.message || err?.message || 'An error occurred while saving address.';
+      showErrorToast(errMessage, 'Error !!');
     }
   };
 
@@ -333,7 +424,13 @@ const ClaimDetails = ({ route, navigation }: any) => {
   };
 
   const isLoad =
-    isLoading || isClaimSubmitLoading || isSignatureUploading || isDeleting;
+    isLoading ||
+    isClaimSubmitLoading ||
+    isSignatureUploading ||
+    isDeleting ||
+    isAddressChecking ||
+    isAddressCreating ||
+    isAddressUpdating;
 
   return (
     <AppLayout
@@ -981,6 +1078,109 @@ const ClaimDetails = ({ route, navigation }: any) => {
                 onClose={() => setShowModal(false)}
                 onOK={sig => setSignature(sig)}
               />
+
+              <Modal
+                isVisible={isAddressModalVisible}
+                avoidKeyboard={true}
+                onBackdropPress={() => setIsAddressModalVisible(false)}
+                onDismiss={() => setIsAddressModalVisible(false)}
+                style={styles(theme).modal}
+                animationIn="slideInUp"
+                animationOut="slideOutDown"
+                backdropOpacity={0.3}
+              >
+                <View style={styles(theme).contentContainer}>
+                  <View style={{ alignItems: 'center', flexDirection: 'row' }}>
+                    <Text style={[styles(theme).modalTitle, { flex: 1 }]}>
+                      Complete Address Info
+                    </Text>
+                    <TouchableOpacity onPress={() => setIsAddressModalVisible(false)}>
+                      <Text
+                        style={[
+                          styles(theme).modalTitle,
+                          { color: theme.colors.error, fontSize: 16 },
+                        ]}
+                      >
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles(theme).modal_child_view}>
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        { color: theme.colors.onSurface, fontSize: 14 },
+                      ]}
+                    >
+                      Phone Number<Text style={{ color: theme.colors.error }}>*</Text>
+                    </Text>
+                    <TextInput
+                      mode="outlined"
+                      placeholder="Enter Phone Number"
+                      outlineStyle={{ borderRadius: metrics.baseRadius }}
+                      placeholderTextColor={(theme.colors as any).placeholder || '#999'}
+                      style={{
+                        height: metrics.screenWidth * 0.13,
+                        backgroundColor: theme.colors.surface,
+                      }}
+                      theme={{
+                        colors: {
+                          primary: theme.colors.primary,
+                          onSurface: theme.colors.onSurface,
+                          text: theme.colors.onSurface,
+                          placeholder: (theme.colors as any).placeholder,
+                        },
+                      }}
+                      textColor={theme.colors.onSurface}
+                      onChangeText={setAddressPhone}
+                      value={addressPhone}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+
+                  <View style={styles(theme).modal_child_view}>
+                    <Text
+                      style={[
+                        fontStyle(theme).headingSmall,
+                        { color: theme.colors.onSurface, fontSize: 14 },
+                      ]}
+                    >
+                      Email Address<Text style={{ color: theme.colors.error }}>*</Text>
+                    </Text>
+                    <TextInput
+                      mode="outlined"
+                      placeholder="Enter Email Address"
+                      outlineStyle={{ borderRadius: metrics.baseRadius }}
+                      placeholderTextColor={(theme.colors as any).placeholder || '#999'}
+                      style={{
+                        height: metrics.screenWidth * 0.13,
+                        backgroundColor: theme.colors.surface,
+                      }}
+                      theme={{
+                        colors: {
+                          primary: theme.colors.primary,
+                          onSurface: theme.colors.onSurface,
+                          text: theme.colors.onSurface,
+                          placeholder: (theme.colors as any).placeholder,
+                        },
+                      }}
+                      textColor={theme.colors.onSurface}
+                      onChangeText={setAddressEmail}
+                      value={addressEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+
+                  <UButton
+                    style={{ flex: 0, marginTop: 15 }}
+                    title="Submit"
+                    onPress={() => handleAddressSubmit()}
+                  />
+                  <Toast config={toastConfig} />
+                </View>
+              </Modal>
             </View>
 
             <View style={{ backgroundColor: theme.colors.background }}>
@@ -1183,5 +1383,32 @@ const styles = (theme: MD3Theme) =>
       padding: metrics.baseMargin * 0.8,
       paddingHorizontal: metrics.baseMargin * 1.5,
       borderColor: theme.dark ? '#444' : '#616161',
+    },
+    modal: {
+      justifyContent: 'flex-end',
+      margin: 0,
+    },
+    modal_child_view: {
+      marginTop: metrics.baseMargin,
+    },
+    modalTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginBottom: metrics.baseMargin * 1.5,
+      color: theme.colors.onSurface,
+    },
+    contentContainer: {
+      padding: metrics.doubleMargin * 2,
+      paddingHorizontal: metrics.doubleMargin,
+      backgroundColor: theme.colors.surface,
+      borderRadius: metrics.baseRadius,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
     },
   });

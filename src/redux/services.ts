@@ -356,6 +356,23 @@ export const apiClient = createApi({
         body: request,
       }),
     }),
+    get_address: builder.query({
+      query: () => 'website/address',
+    }),
+    create_address: builder.mutation({
+      query: (request: any) => ({
+        url: 'website/address/v2',
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    update_address: builder.mutation({
+      query: (request: any) => ({
+        url: 'website/address/v2',
+        method: 'PUT',
+        body: request,
+      }),
+    }),
   }),
 });
 
@@ -411,4 +428,7 @@ export const {
   useLazyGet_all_documentsQuery,
   useDelete_document_vaultMutation,
   useUpdate_document_vaultMutation,
+  useLazyGet_addressQuery,
+  useCreate_addressMutation,
+  useUpdate_addressMutation,
 } = apiClient;
