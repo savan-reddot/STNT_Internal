@@ -91,8 +91,8 @@ android {
         applicationId "com.umrah_traveller_new"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 46
-        versionName "46.0"
+        versionCode 49
+        versionName "49.0"
     }
     signingConfigs {
         debug {
