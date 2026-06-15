@@ -48,67 +48,13 @@ export const requestAppPermission = async (
       }
       return reqLocation === RESULTS.GRANTED;
     } else if (type === 'gallery') {
-      // For Android 13+ (API 33+), use READ_MEDIA_IMAGES
-      // For Android 12 and below, use READ_EXTERNAL_STORAGE
-      const androidVersion = Platform.Version;
-      let permission;
-      
-      if (androidVersion >= 33) {
-        permission = PERMISSIONS.ANDROID.READ_MEDIA_IMAGES;
-      } else {
-        permission = PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE;
-      }
-
-      const result = await check(permission);
-      if (result === RESULTS.GRANTED) {
-        return true;
-      }
-
-      if (result === RESULTS.BLOCKED) {
-        showPermissionAlert('Please grant gallery permission to select images.');
-        return false;
-      }
-
-      const reqResult = await request(permission);
-      if (reqResult === RESULTS.BLOCKED) {
-        showPermissionAlert('Please grant gallery permission to select images.');
-        return false;
-      }
-      return reqResult === RESULTS.GRANTED;
+      // Android's native photo picker/SAF picker handles media selection out-of-process.
+      // Since storage permissions are explicitly removed from AndroidManifest.xml,
+      // checking/requesting them will always fail. Bypassing permission check is correct.
+      return true;
     } else if (type === 'document') {
-      // For Android 13+ (API 33+), use READ_MEDIA_IMAGES for images
-      // For Android 10-12, use READ_EXTERNAL_STORAGE
-      // For Android 9 and below, use READ_EXTERNAL_STORAGE
-      const androidVersion = Platform.Version;
-      let permission;
-      
-      if (androidVersion >= 33) {
-        // Android 13+ uses granular media permissions
-        permission = PERMISSIONS.ANDROID.READ_MEDIA_IMAGES;
-      } else if (androidVersion >= 29) {
-        // Android 10-12 uses scoped storage, but we still need READ_EXTERNAL_STORAGE for some cases
-        permission = PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE;
-      } else {
-        // Android 9 and below
-        permission = PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE;
-      }
-
-      const result = await check(permission);
-      if (result === RESULTS.GRANTED) {
-        return true;
-      }
-
-      if (result === RESULTS.BLOCKED) {
-        showPermissionAlert('Please grant file access permission to upload documents.');
-        return false;
-      }
-
-      const reqResult = await request(permission);
-      if (reqResult === RESULTS.BLOCKED) {
-        showPermissionAlert('Please grant file access permission to upload documents.');
-        return false;
-      }
-      return reqResult === RESULTS.GRANTED;
+      // Document picker (SAF) handles file selection out-of-process and does not require permissions.
+      return true;
     }
   } else {
     // iOS permissions

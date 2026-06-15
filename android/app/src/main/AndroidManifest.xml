@@ -19,9 +19,7 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
 
-    <!-- PREVENT ANDROID GRADLE PLUGIN FROM RE-GENERATING MEDIA PERMISSIONS -->
-    <!-- (Empty dummy declaration that blocks auto-upgrade) -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove" tools:overrideLibrary="*" />
+
 
 
     <application
@@ -34,7 +32,7 @@
       android:supportsRtl="true">
 
       <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@mipmap/ic_launcher" />
-      <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notification_primary" />
+      <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notification_primary" tools:replace="android:resource" />
       
       <activity
         android:name=".MainActivity"
