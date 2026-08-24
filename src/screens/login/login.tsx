@@ -53,7 +53,7 @@ const Login = ({ navigation }: any) => {
   const onLogin = async (data: any) => {
     try {
       const resp = await loginUser(data);
-
+      // console.log('resp==>>', resp);
       if (resp?.error) {
         const errorData = 'data' in resp.error ? resp.error.data : null;
         const errorMessage =
@@ -88,7 +88,7 @@ const Login = ({ navigation }: any) => {
         // Continue with additional verification in background
         try {
           const passportResp = await passportById({ uidNo: latestUid });
-
+          // console.log('passportResp==>>', passportResp);
           if (passportResp?.data?.status) {
             const { data } = passportResp?.data;
             if (data && data?.passportNo) {
@@ -97,17 +97,14 @@ const Login = ({ navigation }: any) => {
                 passportNo: data?.passportNo,
                 uidNo: latestUid,
               });
-
+              // console.log('verificationResp==>>', verificationResp);
               if (verificationResp?.data?.success) {
                 const { user: verificationUserData, token: webToken } =
                   verificationResp?.data;
 
                 // Store additional verification data
                 try {
-                  await AsyncStorage.setItem(
-                    'webtoken',
-                    JSON.stringify(webToken),
-                  );
+                  await AsyncStorage.setItem('webtoken', webToken);
                   await AsyncStorage.setItem(
                     'userdetails',
                     JSON.stringify(verificationUserData),

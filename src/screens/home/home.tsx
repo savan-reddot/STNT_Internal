@@ -11,7 +11,7 @@ import {
   ScrollView,
   ImageBackground,
   Modal,
-  Pressable
+  Pressable,
 } from 'react-native';
 import React, { useCallback, useState, useEffect } from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';
@@ -173,6 +173,7 @@ const Home = ({ navigation }: any) => {
 
     try {
       const metaResp = await user_meta(0);
+      console.log('metaResp==>>', metaResp);
       if (metaResp?.data?.status) {
         setMetaData(metaResp.data.data);
       }
