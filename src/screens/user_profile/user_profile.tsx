@@ -135,12 +135,8 @@ const UserProfile = ({ navigation }: any) => {
           selectedUidObj = matchedUids[0];
         } else if (matchedUids.length > 1) {
           selectedUidObj = matchedUids.slice().sort((a: any, b: any) => {
-            const timeA = a?.createdAt
-              ? new Date(a.createdAt).getTime()
-              : 0;
-            const timeB = b?.createdAt
-              ? new Date(b.createdAt).getTime()
-              : 0;
+            const timeA = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const timeB = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
             return timeB - timeA;
           })[0];
         }
@@ -171,13 +167,14 @@ const UserProfile = ({ navigation }: any) => {
         const { data } = passportResp?.data;
         if (data && data?.passportNo) {
           console.log('Passport No : ', data?.passportNo);
-          verifyUser({
-            user,
-            latestUid: targetLatestUid,
-            availableUids,
-            selectedUidObj,
-            passportNoFromApi: data?.passportNo,
-          });
+          isFromSaveButton &&
+            verifyUser({
+              user,
+              latestUid: targetLatestUid,
+              availableUids,
+              selectedUidObj,
+              passportNoFromApi: data?.passportNo,
+            });
         } else {
           showErrorToast('Passport Not Found !!', 'Warning');
           isFromSaveButton &&
@@ -223,17 +220,21 @@ const UserProfile = ({ navigation }: any) => {
       const { token } = verificationResp?.data;
       await AsyncStorage.setItem('webtoken', token);
       dispatch(setWebToken(token));
-      navigation.reset({
-        index: 0,
-        routes: [{ name: Screens.BottomTab }],
-      });
+      setTimeout(() => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: Screens.BottomTab }],
+        });
+      }, 1000);
     } else {
       await AsyncStorage.setItem('webtoken', '');
       dispatch(setWebToken(null));
-      navigation.reset({
-        index: 0,
-        routes: [{ name: Screens.BottomTab }],
-      });
+      setTimeout(() => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: Screens.BottomTab }],
+        });
+      }, 1000);
       // navigation.goBack();
     }
   };
@@ -363,28 +364,47 @@ const UserProfile = ({ navigation }: any) => {
   };
 
   const upload_picture = async (file: any) => {
-    const formData = new FormData();
-    formData.append('file', {
-      uri: 'file://' + file?.uri,
-      type: file?.type,
-      name: file?.name,
-    });
-    console.log('req_sign ------> ', formData);
-    const resp = await upload_profile_picture(formData);
-    console.log('res sign ------> ', resp?.data);
-    if (resp && resp?.data && resp?.data?.status) {
-      const { profile_picture_url } = resp?.data?.data;
-      if (profile_picture_url) {
-        const request: any = {
-          profile_picture: profile_picture_url,
-        };
-
-        const resp_update = await update_profile(request);
-        console.log('resp update profile : ', resp_update);
-        if (resp_update && resp_update?.data && resp_update?.data?.status) {
-          getProfile();
-        }
+    try {
+      const formData = new FormData();
+      let fileUri = file?.uri || '';
+      if (
+        fileUri &&
+        !fileUri.startsWith('file://') &&
+        !fileUri.startsWith('content://')
+      ) {
+        fileUri = 'file://' + fileUri;
       }
+      formData.append('file', {
+        uri: fileUri,
+        type: file?.type || 'image/jpeg',
+        name: file?.name || 'profile_picture.jpg',
+      });
+      console.log('req_sign ------> ', formData);
+      const resp = await upload_profile_picture(formData);
+      console.log('res sign ------> ', resp?.data);
+      if (resp && resp?.data && resp?.data?.status) {
+        const { profile_picture_url } = resp?.data?.data || {};
+        if (profile_picture_url) {
+          const request: any = {
+            profile_picture: profile_picture_url,
+          };
+
+          const resp_update = await update_profile(request);
+          console.log('resp update profile : ', resp_update);
+          if (resp_update && resp_update?.data && resp_update?.data?.status) {
+            showSuccessToast('Profile picture updated successfully');
+            getProfile(false);
+          }
+        }
+      } else {
+        showErrorToast(
+          resp?.data?.message || 'Failed to upload profile picture',
+          'Error !!',
+        );
+      }
+    } catch (err) {
+      console.error('Error uploading profile picture:', err);
+      showErrorToast('Failed to upload profile picture', 'Error !!');
     }
   };
 
@@ -397,7 +417,8 @@ const UserProfile = ({ navigation }: any) => {
     const resp_update = await update_profile(request);
     console.log('resp update profile : ', resp_update);
     if (resp_update && resp_update?.data && resp_update?.data?.status) {
-      getProfile();
+      showSuccessToast('Profile picture removed successfully');
+      getProfile(false);
     }
   };
 
@@ -406,7 +427,7 @@ const UserProfile = ({ navigation }: any) => {
     navigation.navigate(Screens.Splash);
   };
 
-  const isLoad = isLoading;
+  const isLoad = isLoading || isUploadProfileLoading || isPassportNoLoading;
 
   return (
     <KeyboardAwareScrollView
