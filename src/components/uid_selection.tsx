@@ -50,27 +50,59 @@ const UIDSelection = ({
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    if (user.availableUids?.length > 0) {
+    if (user?.availableUids?.length > 0) {
       setData(
-        user?.availableUids?.map(uid => ({
+        user?.availableUids?.map((uid: any) => ({
           label: uid?.formatted + '  -  ' + uid?.name,
           value: uid?.formatted,
         })) || [],
       );
+
+      if (!value) {
+        let defaultUidObj: any = null;
+        if (user?.passportNo) {
+          const userPassport = user.passportNo.trim().toLowerCase();
+          const matchedUids = user.availableUids.filter(
+            (item: any) =>
+              item?.passportNo?.trim()?.toLowerCase() === userPassport,
+          );
+          if (matchedUids.length === 1) {
+            defaultUidObj = matchedUids[0];
+          } else if (matchedUids.length > 1) {
+            defaultUidObj = matchedUids.slice().sort((a: any, b: any) => {
+              const timeA = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const timeB = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+              return timeB - timeA;
+            })[0];
+          }
+        }
+        if (defaultUidObj?.formatted) {
+          setValue(defaultUidObj.formatted);
+        } else if (user?.latestUid) {
+          setValue(user.latestUid);
+        }
+      }
     }
   }, [user]);
 
   const verifyUser = async () => {
-    const passportResp = await passportById({ uidNo: value });
+    const selectedUidObj = user?.availableUids?.find(
+      (uid: any) => uid?.formatted === value,
+    );
+    const targetUid = selectedUidObj?.formatted || value || user?.latestUid;
+
+    const passportResp = await passportById({ uidNo: targetUid });
     console.log('passportById Response : ', JSON.stringify(passportResp));
     if (passportResp?.data?.status) {
       const { data } = passportResp?.data;
       if (data && data?.passportNo) {
         console.log('Passport No : ', data?.passportNo);
         const verificationResp = await verificationUser({
-          name: user?.firstName + ' ' + user?.lastName,
-          passportNo: data?.passportNo,
-          uidNo: value,
+          name:
+            selectedUidObj?.name ||
+            `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+          passportNo: selectedUidObj?.passportNo || data?.passportNo,
+          uidNo: targetUid,
         });
         console.log('response : ', verificationResp.data);
         if (verificationResp?.data?.success) {

@@ -4,6 +4,7 @@ import { RootState } from './store';
 interface initialState {
   user: any;
   user_details: any;
+  user_meta: any;
   token: any;
   web_token: any;
   theme: 'light' | 'dark' | null;
@@ -16,6 +17,7 @@ interface initialState {
 const initialState: initialState = {
   user: null,
   user_details: null,
+  user_meta: null,
   token: null,
   web_token: null,
   theme: null,
@@ -34,6 +36,9 @@ export const auth = createSlice({
     },
     setUserDetails: (state, action) => {
       state.user_details = action.payload;
+    },
+    setUserMeta: (state, action) => {
+      state.user_meta = action.payload;
     },
     setToken: (state, action) => {
       state.token = action.payload;
@@ -59,6 +64,7 @@ export const auth = createSlice({
     logout: (state) => {
       state.user = null;
       state.user_details = null;
+      state.user_meta = null;
       state.token = null;
       state.web_token = null;
       // state.theme = null; // Optional: Decide if logout clears theme. Usually not.
@@ -70,7 +76,8 @@ export const {
   setUser, 
   setToken, 
   setWebToken, 
-  setUserDetails, 
+  setUserDetails,
+  setUserMeta, 
   setTheme, 
   setPrayerNotifications,
   setPrePrayerNotifications,
@@ -82,6 +89,7 @@ export default auth.reducer;
 
 export const getUser = (state: RootState) => state.auth.user;
 export const getUserDetails = (state: RootState) => state.auth.user_details;
+export const getUserMeta = (state: RootState) => state.auth.user_meta;
 export const getToken = (state: RootState) => state.auth.token;
 export const getWebToken = (state: RootState) => state.auth.web_token;
 export const getTheme = (state: RootState) => state.auth.theme;

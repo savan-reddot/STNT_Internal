@@ -51,9 +51,10 @@ const Login = ({ navigation }: any) => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const onLogin = async (data: any) => {
+    console.log('loginUser data==>>', data);
     try {
       const resp = await loginUser(data);
-      // console.log('resp==>>', resp);
+      console.log('resp==>>', resp);
       if (resp?.error) {
         const errorData = 'data' in resp.error ? resp.error.data : null;
         const errorMessage =
@@ -67,15 +68,45 @@ const Login = ({ navigation }: any) => {
       if (resp?.data?.status) {
         const { user, token, latestUid, availableUids } = resp?.data?.data;
 
+        // Filter availableUids matching user's passportNo
+        let selectedUidObj: any = null;
+        if (
+          Array.isArray(availableUids) &&
+          availableUids.length > 0 &&
+          user?.passportNo
+        ) {
+          const userPassport = user.passportNo.trim().toLowerCase();
+          const matchedUids = availableUids.filter(
+            (item: any) =>
+              item?.passportNo?.trim()?.toLowerCase() === userPassport,
+          );
+
+          if (matchedUids.length === 1) {
+            selectedUidObj = matchedUids[0];
+          } else if (matchedUids.length > 1) {
+            selectedUidObj = matchedUids.slice().sort((a: any, b: any) => {
+              const timeA = a?.createdAt
+                ? new Date(a.createdAt).getTime()
+                : 0;
+              const timeB = b?.createdAt
+                ? new Date(b.createdAt).getTime()
+                : 0;
+              return timeB - timeA;
+            })[0];
+          }
+        }
+
+        const targetLatestUid = selectedUidObj?.formatted || latestUid;
+
         // Store basic user data first
         try {
           await AsyncStorage.setItem('@token', token);
           await AsyncStorage.setItem(
             '@user',
-            JSON.stringify({ ...user, latestUid, availableUids }),
+            JSON.stringify({ ...user, latestUid: targetLatestUid, availableUids }),
           );
           dispatch(setToken(token));
-          dispatch(setUser({ ...user, latestUid, availableUids }));
+          dispatch(setUser({ ...user, latestUid: targetLatestUid, availableUids }));
         } catch (storageError) {
           console.error('Error storing login data:', storageError);
           showErrorToast(
@@ -87,17 +118,19 @@ const Login = ({ navigation }: any) => {
 
         // Continue with additional verification in background
         try {
-          const passportResp = await passportById({ uidNo: latestUid });
-          // console.log('passportResp==>>', passportResp);
+          const passportResp = await passportById({ uidNo: targetLatestUid });
+          console.log('passportResp==>>', passportResp);
           if (passportResp?.data?.status) {
             const { data } = passportResp?.data;
             if (data && data?.passportNo) {
               const verificationResp = await verificationUser({
-                name: user?.firstName + ' ' + user?.lastName,
-                passportNo: data?.passportNo,
-                uidNo: latestUid,
+                name:
+                  selectedUidObj?.name ||
+                  `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+                passportNo: selectedUidObj?.passportNo || data?.passportNo,
+                uidNo: selectedUidObj?.formatted || targetLatestUid,
               });
-              // console.log('verificationResp==>>', verificationResp);
+              console.log('verificationResp==>>', verificationResp);
               if (verificationResp?.data?.success) {
                 const { user: verificationUserData, token: webToken } =
                   verificationResp?.data;

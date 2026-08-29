@@ -60,11 +60,53 @@ const Register = ({ navigation }: any) => {
       const { user, token, latestUid, availableUids } = resp?.data?.data;
       console.log('User : ', JSON.stringify(user));
       console.log('Token : ', JSON.stringify(token));
+
+      // Filter availableUids matching user's passportNo
+      let selectedUidObj: any = null;
+      if (
+        Array.isArray(availableUids) &&
+        availableUids.length > 0 &&
+        user?.passportNo
+      ) {
+        const userPassport = user.passportNo.trim().toLowerCase();
+        const matchedUids = availableUids.filter(
+          (item: any) =>
+            item?.passportNo?.trim()?.toLowerCase() === userPassport,
+        );
+
+        if (matchedUids.length === 1) {
+          selectedUidObj = matchedUids[0];
+        } else if (matchedUids.length > 1) {
+          selectedUidObj = matchedUids.slice().sort((a: any, b: any) => {
+            const timeA = a?.createdAt
+              ? new Date(a.createdAt).getTime()
+              : 0;
+            const timeB = b?.createdAt
+              ? new Date(b.createdAt).getTime()
+              : 0;
+            return timeB - timeA;
+          })[0];
+        }
+      }
+
+      const targetLatestUid = selectedUidObj?.formatted || latestUid;
+
       await AsyncStorage.setItem('@token', token);
-      await AsyncStorage.setItem('@user', JSON.stringify(user));
+      await AsyncStorage.setItem(
+        '@user',
+        JSON.stringify({
+          ...user,
+          latestUid: targetLatestUid,
+          availableUids: availableUids || [],
+        }),
+      );
       dispatch(setToken(token));
       dispatch(
-        setUser({ ...user, latestUid, availableUids: availableUids || [] }),
+        setUser({
+          ...user,
+          latestUid: targetLatestUid,
+          availableUids: availableUids || [],
+        }),
       );
 
       // if (user?.passportNo == null || user?.passportNo == '') {
@@ -72,7 +114,7 @@ const Register = ({ navigation }: any) => {
       //   return;
       // }
 
-      const passportResp = await passportById({ uidNo: latestUid });
+      const passportResp = await passportById({ uidNo: targetLatestUid });
       console.log(
         'passportById Response : ',
         JSON.stringify(passportResp?.data),
@@ -81,7 +123,12 @@ const Register = ({ navigation }: any) => {
         const { data } = passportResp?.data;
         if (data && data?.passportNo) {
           console.log('Passport No : ', data?.passportNo);
-          verifyUser({ user, latestUid, passportNo: data?.passportNo });
+          verifyUser({
+            user,
+            latestUid: targetLatestUid,
+            passportNo: data?.passportNo,
+            selectedUidObj,
+          });
         }
       } else {
         showErrorToast('Passport Not Found !!', 'Error !!');
@@ -95,16 +142,26 @@ const Register = ({ navigation }: any) => {
       }
     } else if (resp?.error) {
       const errorMsg =
-        (resp.error as any)?.data?.message || 'Registration failed';
+        (resp.error as any)?.data?.errorMessage || 'Registration failed';
       showErrorToast(errorMsg, 'Error !!');
     }
   };
 
   const verifyUser = async (data: any) => {
+    const selectedUidObj = data?.selectedUidObj;
+    const name =
+      selectedUidObj?.name ||
+      `${data?.user?.firstName || ''} ${data?.user?.lastName || ''}`.trim();
+    const passportNo =
+      selectedUidObj?.passportNo ||
+      data?.passportNo ||
+      data?.user?.passportNo;
+    const uidNo = selectedUidObj?.formatted || data?.latestUid;
+
     const verificationResp = await verificationUser({
-      name: data?.user?.firstName + ' ' + data?.user?.lastName,
-      passportNo: data?.passportNo,
-      uidNo: data?.latestUid,
+      name,
+      passportNo,
+      uidNo,
     });
 
     if (verificationResp?.data?.success) {

@@ -116,23 +116,55 @@ const UserProfile = ({ navigation }: any) => {
     const resp = await get_profile(0);
     console.log('get profile resp : ', resp);
     if (resp && resp?.data && resp?.data?.status) {
+      const { user, latestUid, availableUids } = resp?.data?.data || {};
+
+      // Filter availableUids matching user's passportNo
+      let selectedUidObj: any = null;
+      if (
+        Array.isArray(availableUids) &&
+        availableUids.length > 0 &&
+        user?.passportNo
+      ) {
+        const userPassport = user.passportNo.trim().toLowerCase();
+        const matchedUids = availableUids.filter(
+          (item: any) =>
+            item?.passportNo?.trim()?.toLowerCase() === userPassport,
+        );
+
+        if (matchedUids.length === 1) {
+          selectedUidObj = matchedUids[0];
+        } else if (matchedUids.length > 1) {
+          selectedUidObj = matchedUids.slice().sort((a: any, b: any) => {
+            const timeA = a?.createdAt
+              ? new Date(a.createdAt).getTime()
+              : 0;
+            const timeB = b?.createdAt
+              ? new Date(b.createdAt).getTime()
+              : 0;
+            return timeB - timeA;
+          })[0];
+        }
+      }
+
+      const targetLatestUid = selectedUidObj?.formatted || latestUid;
+
       dispatch(
         setUser({
-          ...resp?.data?.data?.user,
-          latestUid: resp?.data?.data?.latestUid,
-          availableUids: resp?.data?.data?.availableUids,
+          ...user,
+          latestUid: targetLatestUid,
+          availableUids,
         }),
       );
       await AsyncStorage.setItem(
         '@user',
         JSON.stringify({
-          ...resp?.data?.data?.user,
-          latestUid: resp?.data?.data?.latestUid,
-          availableUids: resp?.data?.data?.availableUids,
+          ...user,
+          latestUid: targetLatestUid,
+          availableUids,
         }),
       );
       const passportResp = await passportById({
-        uidNo: resp?.data?.data?.latestUid,
+        uidNo: targetLatestUid,
       });
       console.log('passportById Response get profile : ', passportResp);
       if (passportResp?.data?.status) {
@@ -140,36 +172,51 @@ const UserProfile = ({ navigation }: any) => {
         if (data && data?.passportNo) {
           console.log('Passport No : ', data?.passportNo);
           verifyUser({
-            user: resp?.data?.data?.user,
-            latestUid: resp?.data?.data?.latestUid,
-            availableUids: resp?.data?.data?.availableUids,
+            user,
+            latestUid: targetLatestUid,
+            availableUids,
+            selectedUidObj,
+            passportNoFromApi: data?.passportNo,
           });
         } else {
           showErrorToast('Passport Not Found !!', 'Warning');
           isFromSaveButton &&
             verifyUser({
-              user: resp?.data?.data?.user,
-              latestUid: resp?.data?.data?.latestUid,
-              availableUids: resp?.data?.data?.availableUids,
+              user,
+              latestUid: targetLatestUid,
+              availableUids,
+              selectedUidObj,
+              passportNoFromApi: data?.passportNo,
             });
         }
       } else {
         showErrorToast('Passport Not Found !!', 'Warning');
         isFromSaveButton &&
           verifyUser({
-            user: resp?.data?.data?.user,
-            latestUid: resp?.data?.data?.latestUid,
-            availableUids: resp?.data?.data?.availableUids,
+            user,
+            latestUid: targetLatestUid,
+            availableUids,
+            selectedUidObj,
           });
       }
     }
   };
 
   const verifyUser = async (data: any) => {
+    const selectedUidObj = data?.selectedUidObj;
+    const name =
+      selectedUidObj?.name ||
+      `${data?.user?.firstName || ''} ${data?.user?.lastName || ''}`.trim();
+    const passportNo =
+      selectedUidObj?.passportNo ||
+      data?.passportNoFromApi ||
+      data?.user?.passportNo;
+    const uidNo = selectedUidObj?.formatted || data?.latestUid;
+
     const verificationResp = await verificationUser({
-      name: data?.user?.firstName + ' ' + data?.user?.lastName,
-      passportNo: data?.user?.passportNo,
-      uidNo: data?.latestUid,
+      name,
+      passportNo,
+      uidNo,
     });
     console.log('verificationResp : ', verificationResp);
     if (verificationResp?.data?.success) {

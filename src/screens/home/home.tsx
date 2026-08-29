@@ -22,8 +22,8 @@ import { metrics } from '../../utils/metrics';
 import fontStyle from '../../styles/fontStyle';
 import { Font_Bold, Font_Regular } from '../../theme/fonts';
 import { Screens } from '../../common/screens';
-import { useAppSelector } from '../../redux/hooks';
-import { getUser } from '../../redux/reducer';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { getUser, getUserMeta, setUserMeta } from '../../redux/reducer';
 import {
   useLazyGet_policyQuery,
   useLazyGetplansQuery,
@@ -36,10 +36,6 @@ import UpdateModal from '../../components/update_modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import Entypo from 'react-native-vector-icons/Entypo';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 10;
@@ -54,6 +50,7 @@ interface POLICY_DATA {
 
 const Home = ({ navigation }: any) => {
   const theme = useTheme();
+  const dispatch = useAppDispatch();
   const [getplans] = useLazyGetplansQuery();
   const [get_policy, { isLoading }] = useLazyGet_policyQuery();
   const [user_meta, { isLoading: isMetaLoading }] = useLazyUser_metaQuery();
@@ -64,7 +61,6 @@ const Home = ({ navigation }: any) => {
     expiredPolicies: 0,
   };
   const [policy_data, setPolicy_Data] = useState<POLICY_DATA>(initPolicyData);
-  const [metaData, setMetaData] = useState<any>(null);
   const [updateInfo, setUpdateInfo] = useState({});
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
@@ -72,6 +68,7 @@ const Home = ({ navigation }: any) => {
   const { top } = useSafeAreaInsets();
 
   const user = useAppSelector(getUser);
+  const metaData = useAppSelector(getUserMeta);
 
   const action_list = [
     {
@@ -175,7 +172,7 @@ const Home = ({ navigation }: any) => {
       const metaResp = await user_meta(0);
       console.log('metaResp==>>', metaResp);
       if (metaResp?.data?.status) {
-        setMetaData(metaResp.data.data);
+        dispatch(setUserMeta(metaResp.data.data));
       }
     } catch (err) {
       console.error('Error fetching user meta:', err);
@@ -1218,7 +1215,7 @@ const styles = (theme: MD3Theme) =>
     },
     cardOverlay: {
       width: '65%',
-      padding: 10,
+      padding: 20,
     },
     cardLabel: {
       fontSize: 10,
