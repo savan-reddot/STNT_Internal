@@ -48,6 +48,8 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>The app need camera access permission due to click pictures and upload it while claim submission.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The app requires microphone access for audio and video calls with support staff.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>The app need Document Folder access permission due to upload images and files while claim submission.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

@@ -31,4 +31,5 @@ export const Screens = {
   ResetPassword: 'ResetPassword',
   DocumentVault: 'DocumentVault',
   QiblaPrayers: 'QiblaPrayers',
+  VideoCall: 'VideoCall',
 } as const;

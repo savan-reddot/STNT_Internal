@@ -114,3 +114,47 @@ export const requestAppPermission = async (
 
   return false;
 };
+
+/**
+ * Separate helper function to request microphone permission (for voice/video calling)
+ */
+export const requestMicrophonePermission = async (): Promise<boolean> => {
+  if (Platform.OS === 'android') {
+    const mic = await check(PERMISSIONS.ANDROID.RECORD_AUDIO);
+    if (mic === RESULTS.GRANTED) return true;
+
+    const reqMic = await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
+    if (reqMic === RESULTS.BLOCKED) {
+      showPermissionAlert('Please grant microphone permission to use voice/video call.');
+      return false;
+    }
+    return reqMic === RESULTS.GRANTED;
+  } else {
+    const permission = PERMISSIONS.IOS.MICROPHONE;
+    const result = await check(permission);
+    if (result === RESULTS.GRANTED) return true;
+
+    if (result === RESULTS.BLOCKED) {
+      showPermissionAlert('Please grant microphone permission to use voice/video call.');
+      return false;
+    }
+
+    const reqResult = await request(permission);
+    if (reqResult === RESULTS.GRANTED) return true;
+
+    if (reqResult === RESULTS.BLOCKED) {
+      showPermissionAlert('Please grant microphone permission to use voice/video call.');
+      return false;
+    }
+    return false;
+  }
+};
+
+/**
+ * Separate helper function to request both camera and microphone permissions for video calling
+ */
+export const requestVideoCallPermissions = async (): Promise<boolean> => {
+  const cameraGranted = await requestAppPermission('camera');
+  const micGranted = await requestMicrophonePermission();
+  return cameraGranted && micGranted;
+};

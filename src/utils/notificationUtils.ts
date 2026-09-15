@@ -2,6 +2,9 @@ import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messag
 import notifee, { AndroidImportance, TriggerType, RepeatFrequency } from '@notifee/react-native';
 import { Platform } from 'react-native';
 import moment from 'moment-timezone';
+import { navigateToScreen } from './navigationRef';
+import { Screens } from '../common/screens';
+import { NOTIFICATION_TYPE } from './agoraConfig';
 
 export const requestUserPermission = async () => {
   const authStatus = await messaging().requestPermission();
@@ -86,12 +89,37 @@ export const initNotifications = async () => {
   const unsubscribe = messaging().onMessage(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
     console.log('--- FOREGROUND MESSAGE RECEIVED ---');
     console.log(JSON.stringify(remoteMessage, null, 2));
+
+    const data = remoteMessage?.data;
+    if (data?.type === NOTIFICATION_TYPE.AGORA_VIDEO || data?.type === NOTIFICATION_TYPE.AGORA_AUDIO) {
+      navigateToScreen(Screens.VideoCall, {
+        isIncoming: true,
+        channel: data?.channelName || data?.channel || '',
+        channelName: data?.channelName || data?.channel || '',
+        callerName: data?.fullName || data?.callerName || data?.name || 'ST&T Staff',
+        rtcToken: data?.rtcToken || data?.token || null,
+        type: data?.type,
+      });
+      return;
+    }
+
     await onDisplayNotification(remoteMessage);
   });
 
   // Handle notification click when app is in background but still in memory
   messaging().onNotificationOpenedApp(remoteMessage => {
     console.log('Notification caused app to open from background state:', remoteMessage.notification);
+    const data = remoteMessage?.data;
+    if (data?.type === NOTIFICATION_TYPE.AGORA_VIDEO || data?.type === NOTIFICATION_TYPE.AGORA_AUDIO) {
+      navigateToScreen(Screens.VideoCall, {
+        isIncoming: true,
+        channel: data?.channelName || data?.channel || '',
+        channelName: data?.channelName || data?.channel || '',
+        callerName: data?.fullName || data?.callerName || data?.name || 'ST&T Staff',
+        rtcToken: data?.rtcToken || data?.token || null,
+        type: data?.type,
+      });
+    }
   });
 
   // Check if app was opened by a notification when closed
@@ -100,6 +128,17 @@ export const initNotifications = async () => {
     .then(remoteMessage => {
       if (remoteMessage) {
         console.log('Notification caused app to open from quit state:', remoteMessage.notification);
+        const data = remoteMessage?.data;
+        if (data?.type === NOTIFICATION_TYPE.AGORA_VIDEO || data?.type === NOTIFICATION_TYPE.AGORA_AUDIO) {
+          navigateToScreen(Screens.VideoCall, {
+            isIncoming: true,
+            channel: data?.channelName || data?.channel || '',
+            channelName: data?.channelName || data?.channel || '',
+            callerName: data?.fullName || data?.callerName || data?.name || 'ST&T Staff',
+            rtcToken: data?.rtcToken || data?.token || null,
+            type: data?.type,
+          });
+        }
       }
     });
 

@@ -34,6 +34,7 @@ import Benefits from '../screens/policies/benefits';
 import Exclusions from '../screens/policies/exclusions';
 import DocumentVault from '../screens/document_vault/document_vault';
 import QiblaPrayers from '../screens/qibla/qibla';
+import VideoCallScreen from '../screens/video_call/VideoCallScreen';
 
 const Stack = createStackNavigator();
 
@@ -81,6 +82,7 @@ const MainStack = () => {
       <Stack.Screen name={Screens.Exclusions} component={Exclusions} />
       <Stack.Screen name={Screens.DocumentVault} component={DocumentVault} />
       <Stack.Screen name={Screens.QiblaPrayers} component={QiblaPrayers} />
+      <Stack.Screen name={Screens.VideoCall} component={VideoCallScreen} />
     </Stack.Navigator>
   );
 };
