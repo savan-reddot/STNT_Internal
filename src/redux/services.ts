@@ -96,10 +96,10 @@ export const apiClient = createApi({
       query: () => `website/countries`,
     }),
     getplans: builder.query({
-      query: (page: number) => `plans/get-all?size=10&page=${page}`,
+      query: (page: number) => `plans/get-all?size=100000&page=${page}`,
     }),
     planPricing: builder.query({
-      query: (page: number) => `pricings/get-all?size=10&page=${page}`,
+      query: (page: number) => `pricings/get-all?size=100000&page=${page}`,
     }),
     get_profile: builder.query({
       query: () => `/mobile-data/profile`,

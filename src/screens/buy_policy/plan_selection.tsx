@@ -1,11 +1,12 @@
 import { Text } from '../../components/common';
 import React, { useEffect, useState } from 'react';
+import moment from 'moment';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Linking
+  Linking,
 } from 'react-native';
 import { useTheme, MD3Theme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -29,6 +30,30 @@ interface PlanPricingData {
   adultPricingRaw?: any;
   childPricingRaw?: any;
 }
+
+const getApplicablePricing = (pricingArr: any[], checkDate: any = moment()) => {
+  if (!pricingArr || !pricingArr.length) return null;
+  const date = moment(checkDate);
+  const dated = pricingArr.filter((p: any) => p.start_date && p.end_date);
+  if (!dated.length) return pricingArr[0];
+
+  const active = dated.find((p: any) =>
+    date.isBetween(moment(p.start_date), moment(p.end_date), 'day', '[]'),
+  );
+  if (active) return active;
+
+  const past = dated
+    .filter((p: any) => moment(p.end_date).isBefore(date))
+    .sort((a: any, b: any) => moment(b.end_date).diff(moment(a.end_date)));
+  if (past.length) return past[0];
+
+  const future = dated
+    .filter((p: any) => moment(p.start_date).isAfter(date))
+    .sort((a: any, b: any) => moment(a.start_date).diff(moment(b.start_date)));
+  if (future.length) return future[0];
+
+  return pricingArr[0];
+};
 
 const PlanSelection = ({ navigation }: any) => {
   const theme = useTheme();
@@ -66,57 +91,63 @@ const PlanSelection = ({ navigation }: any) => {
 
         // 2. Fetch Plans
         const plansResp = await getplans(0);
-        if (plansResp?.data?.success && plansResp?.data?.data?.rows) {
-          const allPlans = plansResp.data.data.rows;
-          const filteredPlans = allPlans.filter((plan: any) => {
-            const coverage = (plan?.destination_coverage || '')
-              .trim()
-              .toLowerCase();
-            return (
-              !coverage ||
-              coverage === 'worldwide' ||
-              coverage === validDestination.toLowerCase()
-            );
-          });
+        console.log('plansResp==>>', plansResp);
 
-          const formattedPlans = filteredPlans
-            .map((plan: any) => ({
-              label: plan.display_name,
-              value: plan.id?.toString(),
-              id: plan.id,
-              plan_code: plan.plan_code,
-              trip_days_cap: plan.trip_days_cap,
-              rawPlan: plan,
-            }))
-            .sort((a: any, b: any) => a.id - b.id);
+        if (plansResp?.data?.success && plansResp?.data?.data?.rows) {
+          const fetchedPlans = [...plansResp.data.data.rows].reverse();
+          let plansNew: any[] = [];
+          for (let item of fetchedPlans) {
+            if (!item.plan_type || item.plan_type === 'Umrah')
+              plansNew.push(item);
+          }
+
+          const formattedPlans = plansNew.map((plan: any) => ({
+            label: plan.display_name,
+            value: plan.id?.toString(),
+            id: plan.id,
+            plan_code: plan.plan_code,
+            trip_days_cap: plan.trip_days_cap,
+            travel_inconvenience: plan.travel_inconvenience,
+            destination_coverage: plan.destination_coverage,
+            rawPlan: plan,
+          }));
 
           setPlans(formattedPlans);
 
           // 3. Fetch Pricing
           const priceResp = await planPricing(0);
+          console.log('priceResp==>>', priceResp);
+
           if (priceResp?.data?.success && priceResp?.data?.data?.rows) {
             const allPricings = priceResp.data.data.rows;
             const pricingMap: Record<string, PlanPricingData> = {};
 
             formattedPlans.forEach((plan: any) => {
               const planPricings = allPricings.filter(
-                (p: any) => p.plan_id === plan.id,
+                (prc: any) => +prc.plan_id === +plan.id,
               );
-              if (planPricings.length > 0) {
-                const adultPricing = planPricings.find(
-                  (p: any) => p.age_band?.toUpperCase() === 'ADULT',
-                );
-                const childPricing = planPricings.find(
-                  (p: any) => p.age_band?.toUpperCase() === 'CHILD',
-                );
 
-                if (adultPricing && childPricing) {
+              if (planPricings.length > 0) {
+                const applicablePricing = getApplicablePricing(planPricings);
+
+                const adultPricing =
+                  applicablePricing?.pricing_details?.find(
+                    (item: any) => item?.age_band?.toUpperCase() === 'ADULT',
+                  ) || applicablePricing?.pricing_details?.[0];
+
+                const childPricing =
+                  applicablePricing?.pricing_details?.find(
+                    (item: any) => item?.age_band?.toUpperCase() === 'CHILD',
+                  ) || applicablePricing?.pricing_details?.[1];
+
+                if (adultPricing || childPricing) {
                   const maxDays = plan.trip_days_cap || 0;
-                  const adultPrice = adultPricing.base_premium;
-                  const childPrice = childPricing.base_premium;
+                  const adultPrice = adultPricing?.base_premium || 0;
+                  const childPrice = childPricing?.base_premium || 0;
                   const extraPerDay =
-                    adultPricing.per_extra_day_rate ||
-                    childPricing.per_extra_day_rate;
+                    adultPricing?.per_extra_day_rate ??
+                    childPricing?.per_extra_day_rate ??
+                    0;
 
                   const pricingString = `Duration of Travel: CHILD - Up to ${maxDays} days (Below 18 years old): $${childPrice.toFixed(
                     0,
@@ -303,11 +334,18 @@ const PlanSelection = ({ navigation }: any) => {
                     buttonText,
                   )}
                   {renderFeatureItem(
-                    `${destination} Coverage`,
+                    `${plan.destination_coverage} Coverage`,
                     theme.dark ? { color: '#fff' } : textStyle,
                     badgeColor,
                     buttonText,
                   )}
+                  {Boolean(plan.travel_inconvenience) &&
+                    renderFeatureItem(
+                      'Travel Inconvenience Coverage',
+                      theme.dark ? { color: '#fff' } : textStyle,
+                      badgeColor,
+                      buttonText,
+                    )}
                 </View>
 
                 <View style={styles(theme).actionRow}>
@@ -318,9 +356,7 @@ const PlanSelection = ({ navigation }: any) => {
                         borderColor: '#E5E7EB',
                       },
                     ]}
-                    onPress={() =>
-                      Linking.openURL(plan?.rawPlan?.brochure_url)
-                    }
+                    onPress={() => Linking.openURL(plan?.rawPlan?.brochure_url)}
                   >
                     <Text
                       style={{

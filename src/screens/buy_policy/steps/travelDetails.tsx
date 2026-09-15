@@ -300,26 +300,19 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
           if (resp?.data?.success) {
             const plansList = resp?.data?.data?.rows;
             if (Array.isArray(plansList) && plansList.length > 0) {
-              const normalizedDestination =
-                normalizeString(selectedDestination);
-              const filteredPlans = plansList.filter((plan: any) => {
-                const coverage = normalizeString(plan?.destination_coverage);
-                if (!coverage || coverage === 'worldwide') {
-                  return true;
-                }
-                return coverage === normalizedDestination;
+              const fetchedPlans = [...plansList].reverse();
+              const filteredPlans = fetchedPlans.filter((item: any) => {
+                return !item.plan_type || item.plan_type === 'Umrah';
               });
 
-              const options = filteredPlans
-                .map((plan: any) => ({
-                  label: plan.display_name,
-                  value: plan.id?.toString(),
-                  id: plan.id,
-                  plan_code: plan.plan_code,
-                  trip_days_cap: plan.trip_days_cap,
-                  rawPlan: plan,
-                }))
-                .sort((a, b) => a.id - b.id); // Sort by ID in ascending order
+              const options = filteredPlans.map((plan: any) => ({
+                label: plan.display_name,
+                value: plan.id?.toString(),
+                id: plan.id,
+                plan_code: plan.plan_code,
+                trip_days_cap: plan.trip_days_cap,
+                rawPlan: plan,
+              }));
               setUmrahCoverageOptions(options);
               setHasFetchedPlans(true);
             }
