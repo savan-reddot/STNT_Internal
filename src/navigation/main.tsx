@@ -35,6 +35,11 @@ import Exclusions from '../screens/policies/exclusions';
 import DocumentVault from '../screens/document_vault/document_vault';
 import QiblaPrayers from '../screens/qibla/qibla';
 import VideoCallScreen from '../screens/video_call/VideoCallScreen';
+import ConciergeHub from '../screens/concierge/concierge';
+import FindTripBuddies from '../screens/find_trip_buddies/find_trip_buddies';
+import ChatsRequests from '../screens/chats/chats_requests';
+import Conversation from '../screens/chats/conversation';
+import StaffHome from '../screens/staff/staff_home';
 
 const Stack = createStackNavigator();
 
@@ -83,6 +88,14 @@ const MainStack = () => {
       <Stack.Screen name={Screens.DocumentVault} component={DocumentVault} />
       <Stack.Screen name={Screens.QiblaPrayers} component={QiblaPrayers} />
       <Stack.Screen name={Screens.VideoCall} component={VideoCallScreen} />
+      <Stack.Screen name={Screens.Concierge} component={ConciergeHub} />
+      <Stack.Screen
+        name={Screens.FindTripBuddies}
+        component={FindTripBuddies}
+      />
+      <Stack.Screen name={Screens.ChatsRequests} component={ChatsRequests} />
+      <Stack.Screen name={Screens.Conversation} component={Conversation} />
+      <Stack.Screen name={Screens.StaffHome} component={StaffHome} />
     </Stack.Navigator>
   );
 };

@@ -33,6 +33,10 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 import ForgotPassword from '../../components/forgot_password';
 import { Text, TextInput } from '../../components/common';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { getFCMToken } from '../../utils/notificationUtils';
+import { registerDevice } from '../../redux/agoraApi';
+import { Platform } from 'react-native';
 
 const Login = ({ navigation }: any) => {
   const theme = useTheme();
@@ -85,12 +89,8 @@ const Login = ({ navigation }: any) => {
             selectedUidObj = matchedUids[0];
           } else if (matchedUids.length > 1) {
             selectedUidObj = matchedUids.slice().sort((a: any, b: any) => {
-              const timeA = a?.createdAt
-                ? new Date(a.createdAt).getTime()
-                : 0;
-              const timeB = b?.createdAt
-                ? new Date(b.createdAt).getTime()
-                : 0;
+              const timeA = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const timeB = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
               return timeB - timeA;
             })[0];
           }
@@ -103,10 +103,16 @@ const Login = ({ navigation }: any) => {
           await AsyncStorage.setItem('@token', token);
           await AsyncStorage.setItem(
             '@user',
-            JSON.stringify({ ...user, latestUid: targetLatestUid, availableUids }),
+            JSON.stringify({
+              ...user,
+              latestUid: targetLatestUid,
+              availableUids,
+            }),
           );
           dispatch(setToken(token));
-          dispatch(setUser({ ...user, latestUid: targetLatestUid, availableUids }));
+          dispatch(
+            setUser({ ...user, latestUid: targetLatestUid, availableUids }),
+          );
         } catch (storageError) {
           console.error('Error storing login data:', storageError);
           showErrorToast(
@@ -115,6 +121,19 @@ const Login = ({ navigation }: any) => {
           );
           return;
         }
+
+        // Register device for Agora push notifications in the background
+        getFCMToken().then(fcmToken => {
+          console.log('fcmToken==>>', fcmToken);
+          if (fcmToken) {
+            registerDevice({
+              fcmToken,
+              deviceType: Platform.OS === 'ios' ? 'ios' : 'android',
+            }).catch(err =>
+              console.warn('[login] registerDevice failed:', err?.message),
+            );
+          }
+        });
 
         // Continue with additional verification in background
         try {
@@ -306,6 +325,21 @@ const Login = ({ navigation }: any) => {
                 </Text>
               </View>
             </TouchableOpacity>
+
+            <View style={styles(theme).staffPortalContainer}>
+              <TouchableOpacity
+                style={styles(theme).staffPortalButton}
+                onPress={() => navigation.navigate(Screens.StaffHome)}
+              >
+                <View style={styles(theme).staffPortalLeft}>
+                  <Icon name="shield-outline" size={20} color="#F59E0B" />
+                  <Text style={styles(theme).staffPortalText}>
+                    Sign In to Staff Command Portal
+                  </Text>
+                </View>
+                <Icon name="arrow-forward" size={20} color="#FFF" />
+              </TouchableOpacity>
+            </View>
           </View>
           <View
             style={[
@@ -422,5 +456,29 @@ const styles = (theme: MD3Theme) =>
     },
     keyboard_avoid: {
       flexGrow: 1,
+    },
+    staffPortalContainer: {
+      marginTop: metrics.doubleMargin * 1.5,
+      alignItems: 'center',
+    },
+    staffPortalButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: '#111827',
+      paddingHorizontal: 20,
+      paddingVertical: 14,
+      borderRadius: 16,
+      width: '100%',
+    },
+    staffPortalLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    staffPortalText: {
+      color: '#FFF',
+      fontSize: 15,
+      fontWeight: '600',
+      marginLeft: 12,
     },
   });

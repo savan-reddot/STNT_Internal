@@ -32,4 +32,9 @@ export const Screens = {
   DocumentVault: 'DocumentVault',
   QiblaPrayers: 'QiblaPrayers',
   VideoCall: 'VideoCall',
+  Concierge: 'Concierge',
+  FindTripBuddies: 'FindTripBuddies',
+  ChatsRequests: 'ChatsRequests',
+  Conversation: 'Conversation',
+  StaffHome: 'StaffHome',
 } as const;

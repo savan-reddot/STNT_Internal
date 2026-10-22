@@ -64,6 +64,7 @@ const Home = ({ navigation }: any) => {
   const [updateInfo, setUpdateInfo] = useState({});
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [showConciergeModal, setShowConciergeModal] = useState(false);
   const [currentPlanDetails, setCurrentPlanDetails] = useState<any>(null);
   const { top } = useSafeAreaInsets();
 
@@ -243,6 +244,7 @@ I need some help.
     {
       id: 1,
       title: 'Purchase Insurance',
+      subtitle: 'New Plan',
       icon: 'shield-outline',
       iconColor: '#3BA66B',
       bgColor: '#EAFBF2',
@@ -251,6 +253,7 @@ I need some help.
     {
       id: 2,
       title: 'Claims',
+      subtitle: 'E-Claims',
       icon: 'document-text-outline',
       iconColor: '#3D6AF2',
       bgColor: '#EEF3FF',
@@ -260,6 +263,7 @@ I need some help.
     {
       id: 3,
       title: 'Hotline',
+      subtitle: '24/7 Assist',
       icon: 'call-outline',
       iconColor: '#E24A3B',
       bgColor: '#FFF0EE',
@@ -267,8 +271,9 @@ I need some help.
     },
     {
       id: 4,
-      title: 'Partnered Hospitals',
-      icon: 'heart-outline',
+      title: 'Hospitals',
+      subtitle: 'Panel Clinics',
+      icon: 'business-outline',
       iconColor: '#D84A7A',
       bgColor: '#FFF1F6',
       onPress: () => navigation.navigate(Screens.TrustedHospitals),
@@ -276,6 +281,7 @@ I need some help.
     {
       id: 5,
       title: 'Deals',
+      subtitle: 'Pilgrim Perks',
       icon: 'pricetag-outline',
       iconColor: '#D0893C',
       bgColor: '#FFF8E8',
@@ -284,10 +290,40 @@ I need some help.
     {
       id: 6,
       title: 'Vault',
+      subtitle: 'E-Documents',
       icon: 'lock-closed-outline',
       iconColor: '#5A67F2',
       bgColor: '#F1F3FF',
       onPress: () => navigation.navigate(Screens.DocumentVault),
+    },
+    {
+      id: 7,
+      title: 'Concierge',
+      subtitle: 'Select Option',
+      icon: 'sparkles-outline',
+      iconColor: '#FBBF24',
+      bgColor: '#0F8A65',
+      // badgeText: 'POPUP',
+      onPress: () => setShowConciergeModal(true),
+    },
+    {
+      id: 8,
+      title: 'Find Buddies',
+      subtitle: 'Same Trip',
+      icon: 'people-outline',
+      iconColor: '#3D6AF2',
+      bgColor: '#EEF3FF',
+      onPress: () => navigation.navigate(Screens.FindTripBuddies),
+    },
+    {
+      id: 9,
+      title: 'Trip Chats',
+      subtitle: '3 new',
+      icon: 'chatbubble-outline',
+      iconColor: '#0F8A65',
+      bgColor: '#EAFBF2',
+      hasNotification: true,
+      onPress: () => navigation.navigate(Screens.ChatsRequests),
     },
   ];
 
@@ -525,9 +561,20 @@ I need some help.
                   ]}
                 >
                   <Icon name={item.icon} size={28} color={item.iconColor} />
+                  {item?.badgeText && (
+                    <View style={styles(theme).badgeContainer}>
+                      <Text style={styles(theme).badgeTextInner}>{item.badgeText}</Text>
+                    </View>
+                  )}
                 </View>
+                {item.hasNotification && (
+                  <View style={styles(theme).notificationDot} />
+                )}
 
                 <Text style={styles(theme).serviceText}>{item.title}</Text>
+                {item.subtitle && (
+                  <Text style={styles(theme).serviceSubtitle}>{item.subtitle}</Text>
+                )}
               </TouchableOpacity>
             )}
           />
@@ -665,6 +712,304 @@ I need some help.
             </TouchableOpacity>
           </Pressable>
         </Pressable>
+      </Modal>
+
+      {/* CONCIERGE MODAL */}
+      <Modal
+        visible={showConciergeModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowConciergeModal(false)}
+      >
+        <View style={styles(theme).conciergeOverlay}>
+          <View style={styles(theme).conciergeModalContent}>
+            {/* Header */}
+            <View style={styles(theme).conciergeHeader}>
+              <View style={styles(theme).conciergeHeaderLeft}>
+                <View style={styles(theme).conciergeIconWrapper}>
+                  <Icon name="sparkles-outline" size={24} color="#FBBF24" />
+                </View>
+                <View>
+                  <Text style={styles(theme).conciergeHeaderTitle}>
+                    Select Concierge Option
+                  </Text>
+                  <Text style={styles(theme).conciergeHeaderSubtitle}>
+                    Dedicated support for your Umrah journey
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowConciergeModal(false)}
+                style={styles(theme).conciergeCloseButton}
+              >
+                <Icon name="close" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={{ padding: 20 }}>
+              <Text style={styles(theme).conciergePromptText}>
+                Choose a concierge service below to request or manage:
+              </Text>
+
+              {/* Mutawif Booking */}
+              <TouchableOpacity
+                style={styles(theme).conciergeOptionCard}
+                onPress={() => {
+                  setShowConciergeModal(false);
+                  navigation.navigate(Screens.Concierge, {
+                    initialTab: 'Mutawif',
+                  });
+                }}
+              >
+                <View style={styles(theme).conciergeOptionHeader}>
+                  <View style={styles(theme).conciergeOptionTitleRow}>
+                    <View
+                      style={[
+                        styles(theme).conciergeOptionIcon,
+                        { backgroundColor: '#FEF2F2' },
+                      ]}
+                    >
+                      <Icon name="compass-outline" size={20} color="#EF4444" />
+                    </View>
+                    <Text style={styles(theme).conciergeOptionTitle}>
+                      Mutawif Booking
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles(theme).conciergeBadge,
+                      { backgroundColor: '#FCE7F3' },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles(theme).conciergeBadgeText,
+                        { color: '#BE185D' },
+                      ]}
+                    >
+                      Trip Guides
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles(theme).conciergeOptionDesc}>
+                  Book certified guides assigned to your trip. View spoken
+                  languages and request personal Tawaf or historical Ziyarah
+                  guidance.
+                </Text>
+                <View style={styles(theme).conciergeOptionLinkRow}>
+                  <Text
+                    style={[
+                      styles(theme).conciergeOptionLink,
+                      { color: '#EF4444' },
+                    ]}
+                  >
+                    View Available Guides
+                  </Text>
+                  <Icon name="chevron-forward" size={14} color="#EF4444" />
+                </View>
+              </TouchableOpacity>
+
+              {/* Airport Meet & Greet */}
+              <TouchableOpacity
+                style={styles(theme).conciergeOptionCard}
+                onPress={() => {
+                  setShowConciergeModal(false);
+                  navigation.navigate(Screens.Concierge, {
+                    initialTab: 'MeetGreet',
+                  });
+                }}
+              >
+                <View style={styles(theme).conciergeOptionHeader}>
+                  <View style={styles(theme).conciergeOptionTitleRow}>
+                    <View
+                      style={[
+                        styles(theme).conciergeOptionIcon,
+                        { backgroundColor: '#FFFBEB' },
+                      ]}
+                    >
+                      <Icon name="airplane-outline" size={20} color="#D97706" />
+                    </View>
+                    <Text style={styles(theme).conciergeOptionTitle}>
+                      Airport Meet & Greet
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles(theme).conciergeBadge,
+                      { backgroundColor: '#FEF3C7' },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles(theme).conciergeBadgeText,
+                        { color: '#B45309' },
+                      ]}
+                    >
+                      STNT Offline
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles(theme).conciergeOptionDesc}>
+                  Request arrivals escort at Singapore Changi, Jeddah, or
+                  Madinah. Sent to STNT admin console to arrange offline with
+                  live status tracking.
+                </Text>
+                <View style={styles(theme).conciergeOptionLinkRow}>
+                  <Text
+                    style={[
+                      styles(theme).conciergeOptionLink,
+                      { color: '#D97706' },
+                    ]}
+                  >
+                    Book Escort & Track
+                  </Text>
+                  <Icon name="chevron-forward" size={14} color="#D97706" />
+                </View>
+              </TouchableOpacity>
+
+              {/* SG Marketplace */}
+              <TouchableOpacity
+                style={styles(theme).conciergeOptionCard}
+                onPress={() => {
+                  setShowConciergeModal(false);
+                  navigation.navigate(Screens.Concierge, {
+                    initialTab: 'SGMarket',
+                  });
+                }}
+              >
+                <View style={styles(theme).conciergeOptionHeader}>
+                  <View style={styles(theme).conciergeOptionTitleRow}>
+                    <View
+                      style={[
+                        styles(theme).conciergeOptionIcon,
+                        { backgroundColor: '#EEF2FF' },
+                      ]}
+                    >
+                      <Icon
+                        name="bag-handle-outline"
+                        size={20}
+                        color="#4F46E5"
+                      />
+                    </View>
+                    <Text style={styles(theme).conciergeOptionTitle}>
+                      In-App SG Marketplace
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles(theme).conciergeBadge,
+                      { backgroundColor: '#E0E7FF' },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles(theme).conciergeBadgeText,
+                        { color: '#4338CA' },
+                      ]}
+                    >
+                      SGD Pricing
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles(theme).conciergeOptionDesc}>
+                  Purchase Saudi 5G eSIMs, approved emergency medical kits,
+                  ihrams, and gear. Choose Singapore delivery or Changi T3
+                  collection.
+                </Text>
+                <View style={styles(theme).conciergeOptionLinkRow}>
+                  <Text
+                    style={[
+                      styles(theme).conciergeOptionLink,
+                      { color: '#4F46E5' },
+                    ]}
+                  >
+                    Shop Singapore Essentials
+                  </Text>
+                  <Icon name="chevron-forward" size={14} color="#4F46E5" />
+                </View>
+              </TouchableOpacity>
+
+              {/* Special Care */}
+              <TouchableOpacity
+                style={styles(theme).conciergeOptionCard}
+                onPress={() => {
+                  setShowConciergeModal(false);
+                  navigation.navigate(Screens.Concierge, {
+                    initialTab: 'SpecialCare',
+                  });
+                }}
+              >
+                <View style={styles(theme).conciergeOptionHeader}>
+                  <View style={styles(theme).conciergeOptionTitleRow}>
+                    <View
+                      style={[
+                        styles(theme).conciergeOptionIcon,
+                        { backgroundColor: '#ECFDF5' },
+                      ]}
+                    >
+                      <Icon name="heart-outline" size={20} color="#10B981" />
+                    </View>
+                    <Text style={styles(theme).conciergeOptionTitle}>
+                      Special Care & Support
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles(theme).conciergeBadge,
+                      { backgroundColor: '#D1FAE5' },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles(theme).conciergeBadgeText,
+                        { color: '#047857' },
+                      ]}
+                    >
+                      Track & Replies
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles(theme).conciergeOptionDesc}>
+                  Submit and monitor tickets for elderly escort, wheelchair
+                  mobility, insulin chilling, and receive replies from
+                  medical/ground leads.
+                </Text>
+                <View style={styles(theme).conciergeOptionLinkRow}>
+                  <Text
+                    style={[
+                      styles(theme).conciergeOptionLink,
+                      { color: '#10B981' },
+                    ]}
+                  >
+                    View Support & Comments
+                  </Text>
+                  <Icon name="chevron-forward" size={14} color="#10B981" />
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles(theme).conciergeFooter}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowConciergeModal(false);
+                    navigation.navigate(Screens.Concierge, {
+                      initialTab: 'Mutawif',
+                    });
+                  }}
+                >
+                  <Text style={styles(theme).conciergeFooterLink}>
+                    Open Full Concierge Hub
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles(theme).conciergeCancelButton}
+                  onPress={() => setShowConciergeModal(false)}
+                >
+                  <Text style={styles(theme).conciergeCancelText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
       </Modal>
     </>
   );
@@ -1140,6 +1485,41 @@ const styles = (theme: MD3Theme) =>
       textAlign: 'center',
       paddingHorizontal: 5,
     },
+    serviceSubtitle: {
+      fontSize: 11,
+      color: '#9CA3AF',
+      textAlign: 'center',
+      marginTop: 2,
+      paddingHorizontal: 5,
+    },
+    highlightedText: {
+      color: '#0F8A65',
+    },
+    badgeContainer: {
+      position: 'absolute',
+      top: -10,
+      right: -15,
+      backgroundColor: '#115E59',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 8,
+    },
+    badgeTextInner: {
+      color: '#fff',
+      fontSize: 8,
+      fontWeight: 'bold',
+    },
+    notificationDot: {
+      position: 'absolute',
+      top: 12,
+      right: 12,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: '#10B981',
+      borderWidth: 2,
+      borderColor: '#fff',
+    },
     featureIconsContainer: {
       marginTop: 15,
     },
@@ -1413,5 +1793,143 @@ const styles = (theme: MD3Theme) =>
       color: '#6B7280',
       fontWeight: '600',
       fontSize: 15,
+    },
+    conciergeOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      justifyContent: 'flex-end',
+    },
+    conciergeModalContent: {
+      backgroundColor: '#fff',
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      maxHeight: '90%',
+    },
+    conciergeHeader: {
+      backgroundColor: '#0F8A65',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+    },
+    conciergeHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    conciergeIconWrapper: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    conciergeHeaderTitle: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '700',
+    },
+    conciergeHeaderSubtitle: {
+      color: '#A7F3D0',
+      fontSize: 12,
+    },
+    conciergeCloseButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    conciergePromptText: {
+      fontSize: 14,
+      color: '#4B5563',
+      marginBottom: 20,
+    },
+    conciergeOptionCard: {
+      borderWidth: 1,
+      borderColor: '#F3F4F6',
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 16,
+      backgroundColor: '#fff',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    conciergeOptionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    conciergeOptionTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    conciergeOptionIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    conciergeOptionTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: '#111827',
+    },
+    conciergeBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    conciergeBadgeText: {
+      fontSize: 10,
+      fontWeight: '700',
+    },
+    conciergeOptionDesc: {
+      fontSize: 13,
+      color: '#6B7280',
+      lineHeight: 20,
+      marginBottom: 12,
+    },
+    conciergeOptionLinkRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    conciergeOptionLink: {
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    conciergeFooter: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 10,
+      marginBottom: 30,
+    },
+    conciergeFooterLink: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: '#0F8A65',
+    },
+    conciergeCancelButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      backgroundColor: '#F3F4F6',
+      borderRadius: 12,
+    },
+    conciergeCancelText: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: '#374151',
     },
   });

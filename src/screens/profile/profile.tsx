@@ -2,6 +2,7 @@ import { Text } from '../../components/common';
 import {
   Alert,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -18,6 +19,8 @@ import { Screens } from '../../common/screens';
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import { getUser, setTheme } from '../../redux/reducer';
 import { Font_Bold } from '../../theme/fonts';
+import { getFCMToken } from '../../utils/notificationUtils';
+import { unregisterDevice } from '../../redux/agoraApi';
 
 const data = [
   {
@@ -77,8 +80,20 @@ const Profile = ({ navigation }: any) => {
   };
 
   const doLogout = async () => {
-    await AsyncStorage.clear();
-    navigation.navigate(Screens.Splash);
+    try {
+      const token =
+        (await AsyncStorage.getItem('@token')) ||
+        (await AsyncStorage.getItem('webtoken'));
+      const fcmToken = await getFCMToken();
+      if (fcmToken) {
+        await unregisterDevice(fcmToken, token || undefined);
+      }
+    } catch (err: any) {
+      console.log('[Profile] unregisterDevice failed:', err?.message);
+    } finally {
+      await AsyncStorage.clear();
+      navigation.navigate(Screens.Splash);
+    }
   };
 
   const getIconColorAndBg = (title: string) => {
