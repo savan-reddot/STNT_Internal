@@ -7,6 +7,8 @@ interface initialState {
   user_meta: any;
   token: any;
   web_token: any;
+  staff_user: any;
+  staff_token: any;
   theme: 'light' | 'dark' | null;
   prayerNotifications: boolean;
   prePrayerNotifications: boolean;
@@ -20,6 +22,8 @@ const initialState: initialState = {
   user_meta: null,
   token: null,
   web_token: null,
+  staff_user: null,
+  staff_token: null,
   theme: null,
   prayerNotifications: false,
   prePrayerNotifications: false,
@@ -46,6 +50,16 @@ export const auth = createSlice({
     setWebToken: (state, action) => {
       state.web_token = action.payload;
     },
+    setStaffUser: (state, action) => {
+      state.staff_user = action.payload;
+    },
+    setStaffToken: (state, action) => {
+      state.staff_token = action.payload;
+    },
+    staffLogout: (state) => {
+      state.staff_user = null;
+      state.staff_token = null;
+    },
     setTheme: (state, action) => {
       state.theme = action.payload; // 'light' | 'dark' | null
     },
@@ -67,6 +81,8 @@ export const auth = createSlice({
       state.user_meta = null;
       state.token = null;
       state.web_token = null;
+      state.staff_user = null;
+      state.staff_token = null;
       // state.theme = null; // Optional: Decide if logout clears theme. Usually not.
     },
   },
@@ -78,6 +94,9 @@ export const {
   setWebToken, 
   setUserDetails,
   setUserMeta, 
+  setStaffUser,
+  setStaffToken,
+  staffLogout,
   setTheme, 
   setPrayerNotifications,
   setPrePrayerNotifications,
@@ -92,6 +111,8 @@ export const getUserDetails = (state: RootState) => state.auth.user_details;
 export const getUserMeta = (state: RootState) => state.auth.user_meta;
 export const getToken = (state: RootState) => state.auth.token;
 export const getWebToken = (state: RootState) => state.auth.web_token;
+export const getStaffUser = (state: RootState) => state.auth.staff_user;
+export const getStaffToken = (state: RootState) => state.auth.staff_token;
 export const getTheme = (state: RootState) => state.auth.theme;
 export const getPrayerNotifications = (state: RootState) => state.auth.prayerNotifications;
 export const getPrePrayerNotifications = (state: RootState) => state.auth.prePrayerNotifications;

@@ -21,7 +21,9 @@ export const apiClient = createApi({
         }
         // Determine which token to use based on endpoint
         try {
-          if (requestUrl?.includes('mobile')) {
+          if (requestUrl?.includes('mobile-staff')) {
+            token = await AsyncStorage.getItem('@staff_token');
+          } else if (requestUrl?.includes('mobile')) {
             token = await AsyncStorage.getItem('@token');
           } else {
             if (!requestUrl?.includes('verification')) {
@@ -57,7 +59,20 @@ export const apiClient = createApi({
         // Handle token expiration
         if (result.status === 401) {
           try {
-            await handleTokenExpiration();
+            const firstArg = args[0];
+            const url =
+              typeof firstArg === 'string'
+                ? firstArg
+                : (firstArg as any)?.url || '';
+            if (url.includes('mobile-staff')) {
+              await AsyncStorage.multiRemove([
+                '@staff_token',
+                '@staff_user',
+                '@user_type',
+              ]);
+            } else {
+              await handleTokenExpiration();
+            }
           } catch (tokenError) {
             console.error('Error handling token expiration:', tokenError);
           }
@@ -373,6 +388,29 @@ export const apiClient = createApi({
         body: request,
       }),
     }),
+    staffLogin: builder.mutation({
+      query: (request: any) => ({
+        url: 'mobile-staff-auth/login',
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    staffMe: builder.query<any, void>({
+      query: () => 'mobile-staff-auth/me',
+    }),
+    staffChangePassword: builder.mutation({
+      query: (request: any) => ({
+        url: 'mobile-staff-auth/change-password',
+        method: 'PUT',
+        body: request,
+      }),
+    }),
+    staffLogout: builder.mutation<any, void>({
+      query: () => ({
+        url: 'mobile-staff-auth/logout',
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
@@ -431,4 +469,9 @@ export const {
   useLazyGet_addressQuery,
   useCreate_addressMutation,
   useUpdate_addressMutation,
+  useStaffLoginMutation,
+  useLazyStaffMeQuery,
+  useStaffMeQuery,
+  useStaffChangePasswordMutation,
+  useStaffLogoutMutation,
 } = apiClient;

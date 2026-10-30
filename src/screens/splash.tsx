@@ -6,7 +6,15 @@ import { useTheme } from 'react-native-paper';
 import { metrics } from '../utils/metrics';
 import { useNavigation } from '@react-navigation/native';
 import { Screens } from '../common/screens';
-import { getUser, setToken, setUser, setUserDetails, setWebToken } from '../redux/reducer';
+import {
+  getUser,
+  setStaffToken,
+  setStaffUser,
+  setToken,
+  setUser,
+  setUserDetails,
+  setWebToken,
+} from '../redux/reducer';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -24,6 +32,26 @@ const Splash = ({ navigation }: any) => {
     }).start(async () => {
       // After animation, navigate to Login or Home
       try {
+        // Check for Staff Login first
+        const staffToken = await AsyncStorage.getItem('@staff_token');
+        const staffUser = await AsyncStorage.getItem('@staff_user');
+
+        if (staffToken && staffUser) {
+          try {
+            const parsedStaff = JSON.parse(staffUser);
+            dispatch(setStaffUser(parsedStaff));
+            dispatch(setStaffToken(staffToken));
+            navigation.reset({
+              index: 0,
+              routes: [{ name: Screens.StaffHome }],
+            });
+            return;
+          } catch (staffParseError) {
+            console.error('Splash - Error parsing staff data:', staffParseError);
+            await AsyncStorage.multiRemove(['@staff_token', '@staff_user']);
+          }
+        }
+
         const user = await AsyncStorage.getItem('@user');
         const user_details = await AsyncStorage.getItem('userdetails');
         const token = await AsyncStorage.getItem('@token');

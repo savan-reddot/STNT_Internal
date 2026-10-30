@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,14 +7,36 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Modal,
+  TextInput,
+  ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { Text } from '../../components/common';
 import Icon from 'react-native-vector-icons/Ionicons';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '../../utils/toastConfig';
 import { Dropdown } from 'react-native-element-dropdown';
 import AssignedTrips, { manifestsData } from './components/assigned_trips';
 import TripMembers from './components/trip_members';
 import BroadcastChat from './components/broadcast_chat';
 import LiveBriefing from './components/live_briefing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import {
+  getStaffUser,
+  setStaffToken,
+  setStaffUser,
+  staffLogout,
+} from '../../redux/reducer';
+import {
+  useLazyStaffMeQuery,
+  useStaffChangePasswordMutation,
+  useStaffLogoutMutation,
+} from '../../redux/services';
+import { Screens } from '../../common/screens';
+import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
 
 const tripsData = manifestsData.map(trip => ({
   label: trip.title,
@@ -71,9 +93,158 @@ const staffTilesData = [
     route: null,
   },
 ];
+
 const StaffHome = ({ navigation }: any) => {
   const [selectedTrip, setSelectedTrip] = useState(tripsData[0].value);
   const [activeTile, setActiveTile] = useState('assigned_trips');
+
+  const dispatch = useAppDispatch();
+  const staffUser = useAppSelector(getStaffUser);
+  const [getStaffMe] = useLazyStaffMeQuery();
+  const [staffLogoutApi, { isLoading: isLoggingOut }] =
+    useStaffLogoutMutation();
+  const [changePasswordApi, { isLoading: isChangingPassword }] =
+    useStaffChangePasswordMutation();
+
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleCloseProfileModal = () => {
+    Keyboard.dismiss();
+    setShowProfileModal(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  useEffect(() => {
+    getStaffMe()
+      .unwrap()
+      .then(resp => {
+        console.log('getStaffMe resp:', resp);
+        if (resp?.data?.staff) {
+          dispatch(setStaffUser(resp?.data?.staff));
+          AsyncStorage.setItem(
+            '@staff_user',
+            JSON.stringify(resp?.data?.staff),
+          );
+        }
+      })
+      .catch(err => {
+        console.log('getStaffMe err:', err);
+      });
+  }, []);
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Staff Sign Out',
+      'Are you sure you want to sign out from the Staff Command Portal?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await staffLogoutApi().unwrap();
+            } catch (err: any) {
+              console.log('staffLogoutApi error:', err);
+            } finally {
+              await AsyncStorage.multiRemove([
+                '@staff_token',
+                '@staff_user',
+                '@user_type',
+              ]);
+              dispatch(staffLogout());
+              navigation.reset({
+                index: 0,
+                routes: [{ name: Screens.Login, params: { portal: 'staff' } }],
+              });
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleChangePassword = async () => {
+    Keyboard.dismiss();
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showErrorToast(
+        'Please fill all password fields.',
+        'Validation Error',
+        'top',
+      );
+      return;
+    }
+    if (newPassword.length < 6) {
+      showErrorToast(
+        'New password must be at least 6 characters.',
+        'Validation Error',
+        'top',
+      );
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showErrorToast(
+        'New password and confirmation do not match.',
+        'Validation Error',
+        'top',
+      );
+      return;
+    }
+    if (/[&<>]/.test(newPassword)) {
+      showErrorToast(
+        'Password cannot contain &, <, or > characters.',
+        'Validation Error',
+        'top',
+      );
+      return;
+    }
+
+    try {
+      const resp = await changePasswordApi({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      }).unwrap();
+
+      if (resp?.data?.token) {
+        await AsyncStorage.setItem('@staff_token', resp.data.token);
+        dispatch(setStaffToken(resp.data.token));
+        showSuccessToast(
+          resp.message || 'Password changed successfully',
+          'Success',
+          'top',
+        );
+        handleCloseProfileModal();
+      } else {
+        showErrorToast(
+          resp?.message || 'Failed to change password',
+          'Error',
+          'top',
+        );
+      }
+    } catch (err: any) {
+      const errorMsg =
+        err?.data?.message || err?.message || 'Failed to change password';
+      showErrorToast(errorMsg, 'Error', 'top');
+    }
+  };
+
+  const staffRoleDisplay = staffUser?.staffType
+    ? staffUser.staffType === 'leader'
+      ? 'CHIEF LEADER'
+      : staffUser.staffType.toUpperCase()
+    : 'STAFF';
 
   return (
     <KeyboardAvoidingView
@@ -92,21 +263,35 @@ const StaffHome = ({ navigation }: any) => {
           </View>
           <View>
             <View style={styles.nameRow}>
-              <Text style={styles.name}>Ustaz Haji Farhan Al-Hadi</Text>
-              <Icon name="chevron-down" size={16} color="#6B7280" />
+              <Text style={styles.name}>
+                {staffUser?.name || 'Staff Officer'}
+              </Text>
             </View>
             <View style={styles.badgeChief}>
-              <Text style={styles.badgeChiefText}>CHIEF LEADER</Text>
+              <Text style={styles.badgeChiefText}>{staffRoleDisplay}</Text>
             </View>
           </View>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.btnProfile}>
+          <TouchableOpacity
+            style={styles.btnProfile}
+            onPress={() => setShowProfileModal(true)}
+          >
             <Icon name="person-outline" size={20} color="#4B5563" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnLogOut}>
-            <Icon name="log-out-outline" size={20} color="#E11D48" />
-            <Text style={styles.btnLogOutText}>Log Out</Text>
+          <TouchableOpacity
+            style={styles.btnLogOut}
+            onPress={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? (
+              <ActivityIndicator size="small" color="#E11D48" />
+            ) : (
+              <>
+                <Icon name="log-out-outline" size={20} color="#E11D48" />
+                <Text style={styles.btnLogOutText}>Log Out</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -200,11 +385,341 @@ const StaffHome = ({ navigation }: any) => {
         {activeTile === 'broadcast_chat' && <BroadcastChat />}
         {activeTile === 'live_briefing' && <LiveBriefing />}
       </ScrollView>
+
+      {/* Staff Profile & Change Password Modal */}
+      <Modal
+        visible={showProfileModal}
+        transparent
+        animationType="slide"
+        onRequestClose={handleCloseProfileModal}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalOverlay}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.modalBackdropDismiss}
+            onPress={handleCloseProfileModal}
+          />
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Staff Profile & Security</Text>
+              <TouchableOpacity
+                onPress={handleCloseProfileModal}
+                style={styles.modalCloseButton}
+              >
+                <Icon name="close" size={22} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
+              {/* Staff Details Card */}
+              <View style={styles.profileCard}>
+                <View style={styles.profileAvatarLarge}>
+                  <Text style={styles.profileAvatarInitial}>
+                    {(staffUser?.name || 'S').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={styles.profileName}>
+                  {staffUser?.name || 'Staff Member'}
+                </Text>
+                <Text style={styles.profileUsername}>
+                  @{staffUser?.username || 'staff'}
+                </Text>
+                <View style={styles.profileRoleBadge}>
+                  <Text style={styles.profileRoleText}>{staffRoleDisplay}</Text>
+                </View>
+                {staffUser?.email ? (
+                  <Text style={styles.profileEmail}>{staffUser.email}</Text>
+                ) : null}
+              </View>
+
+              {/* Change Password Section */}
+              <View style={styles.passwordSection}>
+                <View style={styles.passwordHeader}>
+                  <Icon name="lock-closed-outline" size={18} color="#0F8A65" />
+                  <Text style={styles.passwordSectionTitle}>
+                    Change Password
+                  </Text>
+                </View>
+                <Text style={styles.passwordSectionDesc}>
+                  Updating your password will revoke your session on all other
+                  devices.
+                </Text>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Current Password</Text>
+                  <View style={styles.inputWithIconContainer}>
+                    <TextInput
+                      style={styles.textInputWithIcon}
+                      placeholder="Enter current password"
+                      placeholderTextColor="#9CA3AF"
+                      secureTextEntry={!showCurrentPassword}
+                      value={currentPassword}
+                      onChangeText={setCurrentPassword}
+                    />
+                    <TouchableOpacity
+                      onPress={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
+                      style={styles.eyeIconBtn}
+                    >
+                      <Icon
+                        name={
+                          showCurrentPassword
+                            ? 'eye-outline'
+                            : 'eye-off-outline'
+                        }
+                        size={20}
+                        color="#6B7280"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>New Password</Text>
+                  <View style={styles.inputWithIconContainer}>
+                    <TextInput
+                      style={styles.textInputWithIcon}
+                      placeholder="Enter new password (min. 6 chars)"
+                      placeholderTextColor="#9CA3AF"
+                      secureTextEntry={!showNewPassword}
+                      value={newPassword}
+                      onChangeText={setNewPassword}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowNewPassword(!showNewPassword)}
+                      style={styles.eyeIconBtn}
+                    >
+                      <Icon
+                        name={
+                          showNewPassword ? 'eye-outline' : 'eye-off-outline'
+                        }
+                        size={20}
+                        color="#6B7280"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Confirm New Password</Text>
+                  <View style={styles.inputWithIconContainer}>
+                    <TextInput
+                      style={styles.textInputWithIcon}
+                      placeholder="Re-enter new password"
+                      placeholderTextColor="#9CA3AF"
+                      secureTextEntry={!showConfirmPassword}
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                    />
+                    <TouchableOpacity
+                      onPress={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      style={styles.eyeIconBtn}
+                    >
+                      <Icon
+                        name={
+                          showConfirmPassword
+                            ? 'eye-outline'
+                            : 'eye-off-outline'
+                        }
+                        size={20}
+                        color="#6B7280"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.btnChangePassword,
+                    isChangingPassword && { opacity: 0.7 },
+                  ]}
+                  onPress={handleChangePassword}
+                  disabled={isChangingPassword}
+                >
+                  {isChangingPassword ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.btnChangePasswordText}>
+                      UPDATE PASSWORD
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+        <Toast
+          config={toastConfig}
+          topOffset={Platform.OS === 'ios' ? 50 : 20}
+        />
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBackdropDismiss: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  modalCloseButton: {
+    padding: 6,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+  },
+  profileCard: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  profileAvatarLarge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#0F8A65',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  profileAvatarInitial: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  profileName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  profileUsername: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  profileRoleBadge: {
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginTop: 6,
+  },
+  profileRoleText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  profileEmail: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+  passwordSection: {
+    paddingTop: 14,
+  },
+  passwordHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  passwordSectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  passwordSectionDesc: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 12,
+    lineHeight: 16,
+  },
+  inputGroup: {
+    marginBottom: 10,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 4,
+  },
+  inputWithIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    backgroundColor: '#F9FAFB',
+    paddingHorizontal: 12,
+  },
+  textInputWithIcon: {
+    flex: 1,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
+  },
+  eyeIconBtn: {
+    padding: 6,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
+    backgroundColor: '#F9FAFB',
+  },
+  btnChangePassword: {
+    backgroundColor: '#0F8A65',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  btnChangePasswordText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
   container: { flex: 1, backgroundColor: '#F8FAFB', paddingTop: 40 },
   header: {
     flexDirection: 'row',
