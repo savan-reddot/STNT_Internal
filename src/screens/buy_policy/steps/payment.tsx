@@ -16,17 +16,25 @@ import { PaymentCompletionData, PolicyFormData } from '../types';
 import KeyboardAwareContainer from '../components/KeyboardAwareContainer';
 import {
   useApply_referral_codeMutation,
+  useCreate_policy_purchase_draftMutation,
+  useUpdate_policy_purchase_draftMutation,
   usePayment_ordersMutation,
   usePayment_successMutation,
+  useComplete_policy_purchaseMutation,
   useReferral_code_usersMutation,
 } from '../../../redux/services';
 import { showErrorToast, showSuccessToast } from '../../../utils/toastUtils';
 import { useAppSelector } from '../../../redux/hooks';
 import { getUser } from '../../../redux/reducer';
+import { Screens } from '../../../common/screens';
 
 interface PaymentProps {
   watch: UseFormWatch<PolicyFormData>;
-  onPaymentVerified: (data: PaymentCompletionData) => void;
+  policyId?: number | string | null;
+  setPolicyId?: (id: number | string) => void;
+  getPolicyPayload?: (paymentData?: any, status?: string) => any;
+  navigation?: any;
+  onPaymentVerified?: (data: PaymentCompletionData) => void;
 }
 
 interface DiscountInfo {
@@ -41,20 +49,40 @@ interface DiscountInfo {
   };
 }
 
-const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
+const Payment: React.FC<PaymentProps> = ({
+  watch,
+  policyId,
+  setPolicyId,
+  getPolicyPayload,
+  navigation,
+  onPaymentVerified,
+}) => {
   const theme = useTheme();
   const user = useAppSelector(getUser);
   const [referralCodeValue, setReferralCodeValue] = useState('');
   const countryOfTravel = watch('countryOfTravel') || '';
   const [apply_referral_code, { isLoading: isApplyingCode }] =
     useApply_referral_codeMutation();
+  const [create_policy_purchase_draft, { isLoading: isCreatingDraft }] =
+    useCreate_policy_purchase_draftMutation();
+  const [update_policy_purchase_draft, { isLoading: isUpdatingDraft }] =
+    useUpdate_policy_purchase_draftMutation();
   const [payment_orders, { isLoading: isCreatingOrder }] =
     usePayment_ordersMutation();
   const [payment_success, { isLoading: isVerifyingPayment }] =
     usePayment_successMutation();
+  const [complete_policy_purchase, { isLoading: isCompletingPolicy }] =
+    useComplete_policy_purchaseMutation();
   const [referral_code_users] = useReferral_code_usersMutation();
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null);
   const [isCodeApplied, setIsCodeApplied] = useState(false);
+
+  const isProcessing =
+    isCreatingDraft ||
+    isUpdatingDraft ||
+    isCreatingOrder ||
+    isVerifyingPayment ||
+    isCompletingPolicy;
 
   // Get form data for payment
   const name = watch('name') || user?.firstName || '';
@@ -162,46 +190,104 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
       return;
     }
 
-    // Convert amount to smallest currency unit (cents for SGD)
-    const amountInSGD = Math.round(amountToPay * 100);
-
     try {
-      // Step 1: Create payment order via API
-      console.log('Creating payment order...', {
-        amount: amountInSGD,
-        currency: 'SGD',
-      });
-      const orderResponse = await payment_orders({
-        amount: amountInSGD,
-        currency: 'SGD',
-      });
+      // Step 1: Ensure draft exists on server
+      let currentPolicyId = policyId;
+      if (!currentPolicyId) {
+        const contactData = watch();
+        console.log('Creating initial draft from payment step...');
+        const draftResp = await create_policy_purchase_draft({
+          travel_type:
+            contactData.travellingSaudiWith &&
+            contactData.travellingSaudiWith.toLowerCase() !== 'individual'
+              ? 'group'
+              : 'individual',
+          name: contactData.name,
+          phone: contactData.phone,
+          phone_code: contactData.phone_code || '+65',
+          email: contactData.email,
+          ...(contactData.travelAgencyName && {
+            travel_agency_name: contactData.travelAgencyName,
+          }),
+          name_nok: contactData.nextOfKinName,
+          phone_nok: contactData.nextOfKinPhone,
+          phone_code_nok: contactData.phone_code_nok || '+65',
+          email_nok: contactData.nextOfKinEmail,
+          referral_code_used: isCodeApplied
+            ? referralCodeValue.trim()
+            : contactData.referralCode || '',
+        }).unwrap();
 
-      console.log('Payment order created:', orderResponse);
+        currentPolicyId = draftResp?.data?.policyId;
+        if (currentPolicyId && setPolicyId) {
+          setPolicyId(currentPolicyId);
+        }
+      }
 
-      // Check for errors first
-      if (orderResponse.error) {
-        const errorMessage =
-          (orderResponse.error as any)?.data?.message ||
-          'Failed to create payment order';
-        showErrorToast(errorMessage, 'Error !!');
+      if (!currentPolicyId) {
+        showErrorToast(
+          'Failed to create policy draft. Please try again.',
+          'Error !!',
+        );
         return;
       }
 
-      const orderData = orderResponse?.data?.data;
+      // Step 2 (2nd API): PUT /api/policy-purchase-form-draft/:policyId
+      // Save entire form before payment with status: "draft" and payment_details: null
+      if (getPolicyPayload) {
+        const draftBody = getPolicyPayload(null, 'draft');
+        if (isCodeApplied && referralCodeValue.trim()) {
+          draftBody.referral_code_used = referralCodeValue.trim();
+        }
+        console.log(
+          'Updating full form draft before payment on policyId:',
+          currentPolicyId,
+        );
+        await update_policy_purchase_draft({
+          policyId: currentPolicyId,
+          body: draftBody,
+        }).unwrap();
+      }
+
+      // Step 3 (3rd API): POST /api/payment/orders with policyPurchaseId
+      const amountInSGD = Math.round(amountToPay * 100);
+      console.log('Creating payment order...', {
+        amount: amountInSGD,
+        currency: 'SGD',
+        policyPurchaseId: currentPolicyId,
+      });
+
+      const orderResponse = await payment_orders({
+        amount: amountInSGD,
+        currency: 'SGD',
+        policyPurchaseId: currentPolicyId,
+      }).unwrap();
+
+      console.log('Payment order response:', orderResponse);
+
+      const orderData = orderResponse?.data;
       const orderId = orderData?.id;
 
       if (!orderId) {
-        console.error('Order ID not found in response:', orderResponse);
         showErrorToast('Failed to create payment order', 'Error !!');
         return;
       }
 
-      console.log('Using order_id:', orderId);
+      // Extract dynamic key_id from order response (preferred) or fallback
+      const razorpayKey =
+        orderData?.key_id ||
+        orderData?.orderData?.key_id ||
+        RAZORPAY_KEY_ID ||
+        'rzp_live_sg_g264lawpXy1P8j';
 
-      // Step 2: Open Razorpay checkout with order_id
+      console.log('Using Razorpay key:', razorpayKey, 'orderId:', orderId);
+
+      // Step 4: Open Razorpay checkout
       const options = {
+        name: 'ST&T International',
+        description: 'Policy Purchase',
         currency: 'SGD',
-        key: __DEV__ ? 'rzp_test_sg_jTyhhA2UxKAEaT' : RAZORPAY_KEY_ID,
+        key: razorpayKey,
         amount: amountInSGD,
         order_id: orderId,
         prefill: {
@@ -209,105 +295,107 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
           contact: phone,
           name: name,
         },
+        theme: { color: '#03989E' },
       };
-      console.log('options ----> ', options);
-      const razorpayData = await RazorpayCheckout.open(options);
-
-      // Payment successful from Razorpay SDK
-      console.log('Razorpay Payment Success:', razorpayData);
-
-      // Step 3: Verify payment with backend API
+      console.log("options==>>", options);
+      
+      let razorpayData: any;
       try {
-        console.log('Verifying payment with backend...');
-        const verificationResponse = await payment_success({
+        razorpayData = await RazorpayCheckout.open(options);
+        console.log('Razorpay Payment Success:', razorpayData);
+      } catch (checkoutError: any) {
+        console.log('Razorpay checkout error / cancelled:', checkoutError);
+        if (
+          checkoutError?.code === 'Payment Cancelled' ||
+          checkoutError?.description === 'Payment Cancelled'
+        ) {
+          return;
+        }
+        showErrorToast(
+          checkoutError?.description || 'Payment cancelled or failed',
+          'Error !!',
+        );
+        return;
+      }
+
+      // Step 5: Verify payment with /payment/success
+      try {
+        console.log('Verifying payment with /payment/success...');
+        await payment_success({
           orderCreationId: orderId,
           razorpayPaymentId: razorpayData?.razorpay_payment_id,
           razorpayOrderId: razorpayData?.razorpay_order_id,
           razorpaySignature: razorpayData?.razorpay_signature,
         }).unwrap();
-
-        console.log('Payment verification response:', verificationResponse);
-
-        // Check if verification was successful
-        if (verificationResponse?.success) {
-          // If referral code was applied, call referral-code-users API
-          if (isCodeApplied && referralCodeValue.trim()) {
-            try {
-              console.log('Calling referral-code-users API...');
-              const referralUserResponse = await referral_code_users({
-                referral_code: referralCodeValue.trim(),
-                name: name,
-                email: email,
-                bill_amount: billAmount,
-                discount_amount: discountInfo?.discountAmount ?? 0,
-                final_bill_amount: amountToPay,
-              }).unwrap();
-
-              console.log('Referral code user saved:', referralUserResponse);
-            } catch (referralError: any) {
-              console.error('Error saving referral code user:', referralError);
-              // Don't block payment completion if referral user save fails
-              const errorMessage =
-                referralError?.data?.message ||
-                referralError?.message ||
-                'Failed to save referral code user';
-              console.warn('Referral code user save failed:', errorMessage);
-            }
-          }
-
-          const completionPayload: PaymentCompletionData = {
-            orderCreationId: orderId,
-            razorpayPaymentId: razorpayData?.razorpay_payment_id ?? '',
-            razorpayOrderId: razorpayData?.razorpay_order_id ?? '',
-            razorpaySignature: razorpayData?.razorpay_signature ?? '',
-            discountAmount: discountInfo?.discountAmount ?? 0,
-            billAmount,
-            finalBillAmount: amountToPay,
-            referralCode: isCodeApplied ? referralCodeValue.trim() : '',
-            referralDetails: discountInfo?.referralData,
-            paymentTimestamp: new Date().toISOString(),
-          };
-
-          onPaymentVerified(completionPayload);
-          showSuccessToast('Payment verified successfully', 'Success !!');
-        } else {
-          showErrorToast('Payment verification failed', 'Error !!');
-        }
       } catch (verifyError: any) {
-        console.error('Payment verification error:', verifyError);
-        const errorMessage =
-          verifyError?.data?.message ||
-          verifyError?.message ||
-          'Payment verification failed';
-        showErrorToast(errorMessage, 'Error !!');
+        console.warn('Payment success verification warning:', verifyError);
+      }
+
+      // If referral code was applied, call referral-code-users API
+      if (isCodeApplied && referralCodeValue.trim()) {
+        try {
+          await referral_code_users({
+            referral_code: referralCodeValue.trim(),
+            name: name,
+            email: email,
+            bill_amount: billAmount,
+            discount_amount: discountInfo?.discountAmount ?? 0,
+            final_bill_amount: amountToPay,
+          }).unwrap();
+        } catch (referralError) {
+          console.warn('Referral code user save failed:', referralError);
+        }
+      }
+
+      // Step 6 (4th API): PUT /api/complete-policy-purchase/:policyId
+      const paymentDetails = {
+        orderCreationId: orderId,
+        razorpayOrderId: razorpayData?.razorpay_order_id,
+        razorpayPaymentId: razorpayData?.razorpay_payment_id,
+        bill_amount: billAmount,
+        discount_amount: discountInfo?.discountAmount ?? 0,
+        final_bill_amount: amountToPay,
+        referral_code: isCodeApplied ? referralCodeValue.trim() : '',
+      };
+
+      console.log('Calling complete-policy-purchase on policyId:', currentPolicyId);
+      if (getPolicyPayload) {
+        const completeBody = getPolicyPayload(paymentDetails);
+        console.log("complete_policy_purchase completeBody==>>", completeBody);
+        
+        await complete_policy_purchase({
+          policyId: currentPolicyId,
+          body: completeBody,
+        }).unwrap();
+      }
+
+      if (onPaymentVerified) {
+        onPaymentVerified({
+          orderCreationId: orderId,
+          razorpayPaymentId: razorpayData?.razorpay_payment_id ?? '',
+          razorpayOrderId: razorpayData?.razorpay_order_id ?? '',
+          razorpaySignature: razorpayData?.razorpay_signature ?? '',
+          discountAmount: discountInfo?.discountAmount ?? 0,
+          billAmount,
+          finalBillAmount: amountToPay,
+          referralCode: isCodeApplied ? referralCodeValue.trim() : '',
+          referralDetails: discountInfo?.referralData,
+          paymentTimestamp: new Date().toISOString(),
+        });
+      }
+
+      showSuccessToast('Policy purchased successfully!', 'Success !!');
+      if (navigation) {
+        navigation.navigate(Screens.BuyPolicySuccess);
       }
     } catch (error: any) {
-      // Handle errors
-      console.log('Payment Error:', error);
-
-      // Check if it's an order creation error
-      if (error?.data || error?.error) {
-        const errorMessage =
-          error?.data?.message ||
-          error?.error?.message ||
-          error?.message ||
-          'Failed to process payment';
-        showErrorToast(errorMessage, 'Error !!');
-        return;
-      }
-
-      // Handle Razorpay checkout errors
-      if (error.code === 'BAD_REQUEST_ERROR') {
-        showErrorToast('Invalid payment request', 'Error !!');
-      } else if (error.code === 'NETWORK_ERROR') {
-        showErrorToast(
-          'Network error. Please check your connection',
-          'Error !!',
-        );
-      } else if (error.code !== 'Payment Cancelled') {
-        // Don't show error for user cancellation
-        showErrorToast(error.description || 'Payment failed', 'Error !!');
-      }
+      console.error('Payment Error:', error);
+      const errorMessage =
+        error?.data?.errorMessage ||
+        error?.data?.message ||
+        error?.message ||
+        'Failed to process payment';
+      showErrorToast(errorMessage, 'Error !!');
     }
   };
 
@@ -423,12 +511,11 @@ const Payment: React.FC<PaymentProps> = ({ watch, onPaymentVerified }) => {
             onPress={handleMakePayment}
             style={[
               styles(theme).makePaymentButton,
-              (isCreatingOrder || isVerifyingPayment) &&
-                styles(theme).makePaymentButtonDisabled,
+              isProcessing && styles(theme).makePaymentButtonDisabled,
             ]}
-            disabled={isCreatingOrder || isVerifyingPayment}
+            disabled={isProcessing}
           >
-            {isCreatingOrder || isVerifyingPayment ? (
+            {isProcessing ? (
               <ActivityIndicator color="white" size="small" />
             ) : (
               <Text style={styles(theme).makePaymentButtonText}>

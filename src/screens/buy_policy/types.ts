@@ -18,6 +18,7 @@ export interface PlanDetails {
 }
 
 export interface PolicyFormData {
+  policyId?: number | string;
   // Contact Details
   travellingSaudiWith: string;
   travelAgencyName: string;

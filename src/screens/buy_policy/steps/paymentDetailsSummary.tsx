@@ -97,7 +97,7 @@ const PaymentDetailsSummary: React.FC<PaymentDetailsSummaryProps> = ({
       {values.customers && values.customers.length > 0 && (
         <View style={styles.section}>
           {renderSectionHeader('Customer Details')}
-          {values.customers.map((customer, index) => {
+          {values.customers.map((customer: any, index: number) => {
             const customerType = customer.isChild ? 'Child' : 'Adult';
             const customerNumber = customer.isChild
               ? index - (values.adults || 0) + 1

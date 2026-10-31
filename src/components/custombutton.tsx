@@ -16,12 +16,17 @@ interface UType {
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  disabled?: boolean;
 }
 
-const UButton = ({ title = '', onPress, style, textStyle }: UType) => {
+const UButton = ({ title = '', onPress, style, textStyle, disabled = false }: UType) => {
   const theme = useTheme();
   return (
-    <Pressable style={[styles(theme).button, style]} onPress={onPress}>
+    <Pressable
+      style={[styles(theme).button, style, disabled && { opacity: 0.6 }]}
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
+    >
       <Text style={[styles(theme).buttonText, textStyle]}>{title}</Text>
     </Pressable>
   );

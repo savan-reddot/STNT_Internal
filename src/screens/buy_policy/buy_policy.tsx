@@ -20,7 +20,11 @@ import NoticeDeclaration from './steps/noticeDeclaration';
 import Payment from './steps/payment';
 import PaymentDetailsSummary from './steps/paymentDetailsSummary';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
-import { usePolicy_purchase_formMutation } from '../../redux/services';
+import {
+  usePolicy_purchase_formMutation,
+  useCreate_policy_purchase_draftMutation,
+  useUpdate_policy_purchase_draftMutation,
+} from '../../redux/services';
 import { Screens } from '../../common/screens';
 
 const steps = [
@@ -90,8 +94,13 @@ const BuyPolicy = ({ navigation, route }: any) => {
   const [paymentMeta, setPaymentMeta] = useState<PaymentCompletionData | null>(
     null,
   );
+  const [policyId, setPolicyId] = useState<number | string | null>(null);
   const [policy_purchase_form, { isLoading: isPurchasingPolicy }] =
     usePolicy_purchase_formMutation();
+  const [create_policy_purchase_draft, { isLoading: isCreatingDraft }] =
+    useCreate_policy_purchase_draftMutation();
+  const [update_policy_purchase_draft, { isLoading: isUpdatingDraft }] =
+    useUpdate_policy_purchase_draftMutation();
 
   const preSelectedPlan = route?.params?.selectedPlan;
   const preSelectedPricing = route?.params?.pricingData;
@@ -310,7 +319,75 @@ const BuyPolicy = ({ navigation, route }: any) => {
 
   const handleNext = async () => {
     const isValid = await validateCurrentStep();
-    if (isValid && currentStep < steps.length - 1) {
+    if (!isValid) {
+      return;
+    }
+
+    // 1st API: Save draft on Step 0 (Contact Details)
+    if (currentStep === 0) {
+      try {
+        const contactData = watch();
+        const draftPayload = {
+          travel_type:
+            contactData.travellingSaudiWith &&
+            contactData.travellingSaudiWith.toLowerCase() !== 'individual'
+              ? 'group'
+              : 'individual',
+          name: contactData.name,
+          phone: contactData.phone,
+          phone_code: contactData.phone_code || '+65',
+          email: contactData.email,
+          ...(contactData.travelAgencyName && {
+            travel_agency_name: contactData.travelAgencyName,
+          }),
+          name_nok: contactData.nextOfKinName,
+          phone_nok: contactData.nextOfKinPhone,
+          phone_code_nok: contactData.phone_code_nok || '+65',
+          email_nok: contactData.nextOfKinEmail,
+          referral_code_used: contactData.referralCode || '',
+        };
+
+        if (policyId) {
+          console.log(
+            'Updating existing draft on Step 0 with policyId:',
+            policyId,
+          );
+          await update_policy_purchase_draft({
+            policyId,
+            body: {
+              ...draftPayload,
+              status: 'draft',
+              payment_details: null,
+            },
+          }).unwrap();
+        } else {
+          console.log('Creating draft on Step 0...', draftPayload);
+          const resp = await create_policy_purchase_draft(
+            draftPayload,
+          ).unwrap();
+          const newPolicyId = resp?.data?.policyId;
+          console.log(
+            'Draft created successfully on Step 0. policyId:',
+            newPolicyId,
+            resp?.data,
+          );
+          if (newPolicyId) {
+            setPolicyId(newPolicyId);
+            setValue('policyId', newPolicyId);
+          }
+        }
+      } catch (err: any) {
+        console.error('Error creating/updating draft on step 0:', err);
+        const errorMsg =
+          err?.data?.message ||
+          err?.message ||
+          'Failed to save draft. Please try again.';
+        showErrorToast(errorMsg, 'Error !!');
+        return;
+      }
+    }
+
+    if (currentStep < steps.length - 1) {
       goToStep(currentStep + 1);
     }
   };
@@ -542,62 +619,13 @@ const BuyPolicy = ({ navigation, route }: any) => {
     return undefined;
   };
 
-  const handlePaymentVerified = (data: PaymentCompletionData) => {
-    setPaymentMeta(data);
-    handleFinalSubmit(data);
-  };
-
-  const handleFinalSubmit = (paymentData?: PaymentCompletionData) => {
-    if (isPurchasingPolicy) {
-      return;
-    }
-    // Use paymentData if provided, otherwise use paymentMeta from state
-    const finalPaymentData = paymentData || paymentMeta;
-    if (!finalPaymentData) {
-      showErrorToast('Complete your payment before submitting', 'Error !!');
-      return;
-    }
-    handleSubmit(formData => onSubmit(formData, finalPaymentData))();
-  };
-
-  const onSubmit = async (
-    data: PolicyFormData,
-    paymentData: PaymentCompletionData,
-  ) => {
-    if (
-      !paymentData?.razorpayPaymentId ||
-      !paymentData?.orderCreationId ||
-      !paymentData?.razorpayOrderId
-    ) {
-      showErrorToast('Complete your payment before submitting', 'Error !!');
-      return;
-    }
-
+  const getPolicyPayload = (paymentData?: any, status?: string) => {
+    const data = watch();
     const planId = parseInt(data.umrahCoveragePlan || '0', 10);
-    if (!planId) {
-      showErrorToast('Please select a plan before proceeding', 'Error !!');
-      goToStep(1);
-      return;
-    }
-
     const planDisplayName = data.selectedPlanDisplayName;
     const planAdultPricing = data.planAdultPricing;
     const planChildPricing = data.planChildPricing;
     const selectedPlanDetails = data.selectedPlanDetails;
-
-    if (
-      !planDisplayName ||
-      !planAdultPricing ||
-      !planChildPricing ||
-      !selectedPlanDetails
-    ) {
-      showErrorToast(
-        'Plan details are missing. Please revisit Travel Details step.',
-        'Error !!',
-      );
-      goToStep(1);
-      return;
-    }
 
     const customerInformation = (data.customers || []).map(customer => {
       const dobISO = convertDateToISO(customer.dateOfBirth);
@@ -631,7 +659,6 @@ const BuyPolicy = ({ navigation, route }: any) => {
       };
     });
 
-    // Format additional flights for backend
     const additionalFlightDetails = (data.additionalFlights || []).map(
       flight => ({
         flight_number: flight.flight_number,
@@ -639,7 +666,7 @@ const BuyPolicy = ({ navigation, route }: any) => {
       }),
     );
 
-    const policyPayload = {
+    const payload: any = {
       travel_type:
         data.travellingSaudiWith &&
         data.travellingSaudiWith.toLowerCase() !== 'individual'
@@ -681,15 +708,20 @@ const BuyPolicy = ({ navigation, route }: any) => {
       is_purchasing_before_trip: data.purchasingBeforeTrip,
       is_not_traveling_against_advice: data.notTravelingAgainstAdvice,
       is_pdpa_consent_accepted: data.acknowledgePrivacyNotice,
-      payment_details: {
-        orderCreationId: paymentData?.orderCreationId,
-        razorpayPaymentId: paymentData?.razorpayPaymentId,
-        razorpayOrderId: paymentData?.razorpayOrderId,
-        discount_amount: paymentData?.discountAmount,
-        bill_amount: paymentData?.billAmount,
-        final_bill_amount: paymentData?.finalBillAmount,
-        referral_code: paymentData?.referralCode || '',
-      },
+      payment_details: paymentData
+        ? {
+            orderCreationId: paymentData.orderCreationId,
+            razorpayPaymentId: paymentData.razorpayPaymentId,
+            razorpayOrderId: paymentData.razorpayOrderId,
+            discount_amount:
+              paymentData.discount_amount ?? paymentData.discountAmount ?? 0,
+            bill_amount: paymentData.bill_amount ?? paymentData.billAmount ?? 0,
+            final_bill_amount:
+              paymentData.final_bill_amount ?? paymentData.finalBillAmount ?? 0,
+            referral_code:
+              paymentData.referral_code ?? paymentData.referralCode ?? '',
+          }
+        : null,
       plan_details: {
         plan: selectedPlanDetails,
         adultPricing: planAdultPricing,
@@ -697,23 +729,23 @@ const BuyPolicy = ({ navigation, route }: any) => {
       },
     };
 
-    console.log('policyPayload ----> ', policyPayload);
-    try {
-      const response = await policy_purchase_form(policyPayload).unwrap();
-      console.log('response ----> ', response);
-      if (response?.success) {
-        showSuccessToast('Policy purchased successfully!', 'Success !!');
-        navigation.navigate(Screens.BuyPolicySuccess);
-      } else {
-        showErrorToast('Failed to purchase policy', 'Error !!');
-      }
-    } catch (error: any) {
-      console.error('Policy purchase error:', error);
-      const errorMessage =
-        error?.data?.errorMessage ||
-        error?.message ||
-        'Failed to purchase policy';
-      showErrorToast(errorMessage, 'Error !!');
+    if (status) {
+      payload.status = status;
+    }
+
+    return payload;
+  };
+
+  const handlePaymentVerified = (data: PaymentCompletionData) => {
+    setPaymentMeta(data);
+  };
+
+  const handleFinalSubmit = (paymentData?: PaymentCompletionData) => {
+    // Kept for backward compatibility if invoked
+    const finalPaymentData = paymentData || paymentMeta;
+    if (!finalPaymentData) {
+      showErrorToast('Complete your payment before submitting', 'Error !!');
+      return;
     }
   };
 
@@ -753,7 +785,14 @@ const BuyPolicy = ({ navigation, route }: any) => {
         return <PaymentDetailsSummary watch={watch} />;
       case 5:
         return (
-          <Payment watch={watch} onPaymentVerified={handlePaymentVerified} />
+          <Payment
+            watch={watch}
+            policyId={policyId}
+            setPolicyId={setPolicyId}
+            getPolicyPayload={getPolicyPayload}
+            navigation={navigation}
+            onPaymentVerified={handlePaymentVerified}
+          />
         );
       default:
         return null;
@@ -795,46 +834,21 @@ const BuyPolicy = ({ navigation, route }: any) => {
 
         <View style={{ flex: 1 }}>{renderStep()}</View>
 
-        <View
-          style={[
-            styles(theme).buttonRow,
-            { padding: metrics.doubleMargin, paddingTop: metrics.baseMargin },
-          ]}
-        >
-          {currentStep === steps.length - 1 && (
-            <Text
-              style={[
-                fontStyle(theme).bodySmall,
-                { textAlign: 'center', marginBottom: metrics.smallMargin },
-              ]}
-            >
-              Review the details above and tap submit to purchase the policy.
-            </Text>
-          )}
-          {isPurchasingPolicy && currentStep === steps.length - 1 && (
-            <Text
-              style={[
-                fontStyle(theme).bodySmall,
-                { textAlign: 'center', marginBottom: metrics.smallMargin },
-              ]}
-            >
-              Processing payment, please wait...
-            </Text>
-          )}
-          <UButton
-            title={
-              currentStep === steps.length - 1
-                ? isPurchasingPolicy
-                  ? 'Submitting...'
-                  : 'Submit'
-                : 'Next'
-            }
-            onPress={
-              currentStep === steps.length - 1 ? handleFinalSubmit : handleNext
-            }
-            style={styles(theme).buttonFull}
-          />
-        </View>
+        {currentStep < steps.length - 1 && (
+          <View
+            style={[
+              styles(theme).buttonRow,
+              { padding: metrics.doubleMargin, paddingTop: metrics.baseMargin },
+            ]}
+          >
+            <UButton
+              title={isCreatingDraft || isUpdatingDraft ? 'Saving...' : 'Next'}
+              onPress={handleNext}
+              disabled={isCreatingDraft || isUpdatingDraft}
+              style={styles(theme).buttonFull}
+            />
+          </View>
+        )}
 
         <DatePickerModal
           locale="en"

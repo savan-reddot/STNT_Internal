@@ -313,6 +313,27 @@ export const apiClient = createApi({
         body: request,
       }),
     }),
+    create_policy_purchase_draft: builder.mutation({
+      query: (request: any) => ({
+        url: 'policy-purchase-form-draft',
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    update_policy_purchase_draft: builder.mutation({
+      query: ({ policyId, body }: { policyId: string | number; body: any }) => ({
+        url: `policy-purchase-form-draft/${policyId}`,
+        method: 'PUT',
+        body,
+      }),
+    }),
+    complete_policy_purchase: builder.mutation({
+      query: ({ policyId, body }: { policyId: string | number; body: any }) => ({
+        url: `complete-policy-purchase/${policyId}`,
+        method: 'PUT',
+        body,
+      }),
+    }),
     preferred_merchants: builder.query({
       query: () => `mobile-data/trusted-retail-outlets?size=100000&page=1`,
     }),
@@ -417,6 +438,9 @@ export const {
   usePayment_ordersMutation,
   usePayment_successMutation,
   usePolicy_purchase_formMutation,
+  useCreate_policy_purchase_draftMutation,
+  useUpdate_policy_purchase_draftMutation,
+  useComplete_policy_purchaseMutation,
   useLazyGetplansQuery,
   useLazyPlanPricingQuery,
   useLazyPreferred_merchantsQuery,
