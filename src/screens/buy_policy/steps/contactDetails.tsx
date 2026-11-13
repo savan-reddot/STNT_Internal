@@ -1,5 +1,5 @@
 import { Text, TextInput } from '../../../components/common';
-import { View, StyleSheet, ScrollView, Linking } from 'react-native';
+import { View, StyleSheet, Linking, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
 import { MD3Theme, useTheme } from 'react-native-paper';
 import {
@@ -18,6 +18,7 @@ import { metrics } from '../../../utils/metrics';
 import { globalStyle } from '../../../utils/globalStyles';
 import { PolicyFormData } from '../types';
 import KeyboardAwareContainer from '../components/KeyboardAwareContainer';
+import { useGetActiveAgenciesQuery } from '../../../redux/services';
 
 interface ContactDetailsProps {
   control: Control<PolicyFormData>;
@@ -32,49 +33,6 @@ const travellingSaudiOptions = [
     label: 'Non-Partenered Travel Agency',
     value: 'non_partnered_travel_agency',
   },
-];
-
-const partneredTravelAgents = [
-  'ABU BAKAR TRAVEL SERVICES PTE LTD',
-  'AFANDI TRAVEL & SERVICES PTE LTD',
-  'AFANA SERVICES PTE LTD',
-  'AK TOURS & TRAVELS PTE LTD',
-  'AL-FATTAH TRAVEL & TOURS PTE LTD',
-  'AL FIRDAUS TRAVELS PTE LTD',
-  'AL-MUNAWWARAH TRAVEL & TOURS PTE LTD',
-  'AL-QURRO TRAVEL & TOURS PTE LTD',
-  'AL-SALAMAH TRAVEL & SERVICES PTE LTD',
-  'AQ TRAVEL & TOURS PTE LTD',
-  'AR RAIYAN TOURS & TRAVEL PTE LTD',
-  'AS-SOFI TRAVEL & SERVICES PTE LTD',
-  'AZZA TRAVEL & TOURS PTE LTD',
-  'DE HAYAT TRAVEL & SERVICES PTE LTD',
-  'EL-HIJRAH TRAVEL PTE LTD',
-  'EMERALD TOURS AND TRAVELS',
-  'EVERSHINE TRAVEL & SERVICES PTE LTD',
-  'FURSA TRAVEL PTE LTD',
-  'HAGEL TRAVEL & TOURS PTE LTD',
-  'HAMIDAH TRAVEL & TOURS PTE LTD',
-  'HUSAINI TRAVELS & TOURS PTE LTD',
-  'IMAN TRAVEL & SERVICES PTE LTD',
-  'IMAAN TRAVEL & TOURS PTE LTD',
-  'JALALUDDIN TRAVEL & SERVICES PTE LTD',
-  'M3 OASIS PTE LTD',
-  'NOOR MOHAMAD SERVICES & TRAVEL PTE LTD',
-  'NURHIKMAH TRAVEL & TOURS PTE LTD',
-  'POS TKI TRAVEL & TOURS PTE LTD',
-  'RAFFLESIA TRAVEL & TOURS SERVICES PTE LTD',
-  'RAFFLES HOLIDAYS PTE LTD',
-  'SA AL-HABSYI TRAVEL PTE LTD',
-  'SENYUM TRAVEL PTE LTD',
-  'SHA TRAVEL & TOUR PTE LTD',
-  'SHAHIDAH TRAVEL & TOURS PTE LTD',
-  'SJ HOLIDAYS PTE LTD',
-  'SMILING TRAVEL PTE LTD',
-  'SINGAPORE TRAVEL HUB PTE LTD',
-  'SUNNY ISLAND TRAVEL & TOURS PTE LTD',
-  'TRAVEL WITH GLAMZ PTE LTD',
-  'UMMI TRAVEL PTE LTD',
 ];
 
 const ContactDetails: React.FC<ContactDetailsProps> = ({
@@ -93,6 +51,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
   const isNonPartneredAgency =
     travellingSaudiWith === 'non_partnered_travel_agency';
   const showContactFields = isIndividual || isNonPartneredAgency;
+
+  const { data: agenciesResp, isLoading: isAgenciesLoading } =
+    useGetActiveAgenciesQuery(undefined, {
+      skip: !isPartneredAgency,
+    });
+  const partneredAgencies = agenciesResp?.data || [];
 
   const [phoneCountryCode, setPhoneCountryCode] = useState<CountryCode>('SG');
   const [nextOfKinPhoneCountryCode, setNextOfKinPhoneCountryCode] =
@@ -218,9 +182,9 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
             </Text>
 
             <View style={styles(theme).agentsListContainer}>
-              {partneredTravelAgents.map((agent, index) => (
-                <Text key={index} style={styles(theme).agentItem}>
-                  {index + 1}. {agent}
+              {partneredAgencies.map((agent: any, index: number) => (
+                <Text key={agent.id ?? index} style={styles(theme).agentItem}>
+                  {index + 1}. {agent.name}
                 </Text>
               ))}
             </View>

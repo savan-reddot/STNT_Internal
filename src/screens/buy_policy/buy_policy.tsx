@@ -176,6 +176,14 @@ const BuyPolicy = ({ navigation, route }: any) => {
     },
   });
 
+  const travellingSaudiWith = watch('travellingSaudiWith');
+
+  const showNextButton =
+    currentStep < steps.length - 1 &&
+    (currentStep !== 0 ||
+      travellingSaudiWith === 'individual' ||
+      travellingSaudiWith === 'non_partnered_travel_agency');
+
   const goToStep = (nextStep: number) => {
     const boundedStep = Math.max(0, Math.min(nextStep, steps.length - 1));
     setCurrentStep(boundedStep);
@@ -187,7 +195,9 @@ const BuyPolicy = ({ navigation, route }: any) => {
   const validateCurrentStep = async (): Promise<boolean> => {
     switch (currentStep) {
       case 0: // Contact Details
-        const travellingSaudiWith = watch('travellingSaudiWith');
+        if (travellingSaudiWith === 'partnered_travel_agency') {
+          return false;
+        }
         const contactFields: (keyof PolicyFormData)[] = ['travellingSaudiWith'];
 
         // Only validate other fields based on selection
@@ -834,7 +844,7 @@ const BuyPolicy = ({ navigation, route }: any) => {
 
         <View style={{ flex: 1 }}>{renderStep()}</View>
 
-        {currentStep < steps.length - 1 && (
+        {showNextButton && (
           <View
             style={[
               styles(theme).buttonRow,

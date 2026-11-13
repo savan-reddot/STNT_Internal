@@ -321,14 +321,26 @@ export const apiClient = createApi({
       }),
     }),
     update_policy_purchase_draft: builder.mutation({
-      query: ({ policyId, body }: { policyId: string | number; body: any }) => ({
+      query: ({
+        policyId,
+        body,
+      }: {
+        policyId: string | number;
+        body: any;
+      }) => ({
         url: `policy-purchase-form-draft/${policyId}`,
         method: 'PUT',
         body,
       }),
     }),
     complete_policy_purchase: builder.mutation({
-      query: ({ policyId, body }: { policyId: string | number; body: any }) => ({
+      query: ({
+        policyId,
+        body,
+      }: {
+        policyId: string | number;
+        body: any;
+      }) => ({
         url: `complete-policy-purchase/${policyId}`,
         method: 'PUT',
         body,
@@ -394,6 +406,12 @@ export const apiClient = createApi({
         body: request,
       }),
     }),
+    getActiveAgencies: builder.query<
+      { status: boolean; data: { id: number; name: string }[] },
+      void
+    >({
+      query: () => 'referrals/agencies/active',
+    }),
   }),
 });
 
@@ -455,4 +473,5 @@ export const {
   useLazyGet_addressQuery,
   useCreate_addressMutation,
   useUpdate_addressMutation,
+  useGetActiveAgenciesQuery,
 } = apiClient;
