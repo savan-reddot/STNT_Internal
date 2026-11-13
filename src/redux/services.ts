@@ -23,6 +23,15 @@ export const apiClient = createApi({
         try {
           if (requestUrl?.includes('mobile-staff')) {
             token = await AsyncStorage.getItem('@staff_token');
+          } else if (requestUrl?.includes('chat')) {
+            const userType = await AsyncStorage.getItem('@user_type');
+            if (userType === 'staff') {
+              token = await AsyncStorage.getItem('@staff_token');
+            } else {
+              token =
+                (await AsyncStorage.getItem('@token')) ||
+                (await AsyncStorage.getItem('@staff_token'));
+            }
           } else if (requestUrl?.includes('mobile')) {
             token = await AsyncStorage.getItem('@token');
           } else {
@@ -51,20 +60,58 @@ export const apiClient = createApi({
         return headers; // Return headers even if there's an error
       }
     },
-    // Add custom fetch function to handle errors
+    // Add custom fetch function to handle errors and print logs
     fetchFn: async (...args) => {
+      const firstArg = args[0];
+      const url =
+        typeof firstArg === 'string'
+          ? firstArg
+          : (firstArg as any)?.url || '';
+      const options = args[1] || {};
+      const isNewApi =
+        url.includes('mobile-staff') ||
+        url.includes('mobile-trips') ||
+        url.includes('chat/');
+
+      if (isNewApi) {
+        let parsedBody = options.body;
+        if (typeof options.body === 'string') {
+          try {
+            parsedBody = JSON.parse(options.body);
+          } catch (_) {
+            parsedBody = options.body;
+          }
+        }
+        console.log(
+          `🌐 [API REQUEST] [${options.method || 'GET'}] ${url}`,
+          parsedBody ? { payload: parsedBody } : '',
+        );
+      }
+
       try {
         const result = await fetch(...args);
-        // console.log('result ----> ', result.status, result);
+
+        if (isNewApi) {
+          try {
+            const clone = result.clone();
+            const data = await clone.json();
+            console.log(
+              `📥 [API RESPONSE] [${result.status}] ${url} ==> `,
+              data,
+            );
+          } catch (_) {
+            console.log(`📥 [API RESPONSE] [${result.status}] ${url}`);
+          }
+        }
+
         // Handle token expiration
         if (result.status === 401) {
           try {
-            const firstArg = args[0];
-            const url =
-              typeof firstArg === 'string'
-                ? firstArg
-                : (firstArg as any)?.url || '';
-            if (url.includes('mobile-staff')) {
+            const userType = await AsyncStorage.getItem('@user_type');
+            if (
+              url.includes('mobile-staff') ||
+              (url.includes('chat') && userType === 'staff')
+            ) {
               await AsyncStorage.multiRemove([
                 '@staff_token',
                 '@staff_user',
@@ -80,7 +127,11 @@ export const apiClient = createApi({
 
         return result;
       } catch (error) {
-        console.error('API request failed:', error);
+        if (isNewApi) {
+          console.error(`❌ [API ERROR] ${url} ==> `, error);
+        } else {
+          console.error('API request failed:', error);
+        }
         // Re-throw the error so RTK Query can handle it properly
         throw error;
       }
@@ -411,6 +462,178 @@ export const apiClient = createApi({
         method: 'POST',
       }),
     }),
+    // ==========================================
+    // Staff Trips & Broadcast APIs (1st - 8th)
+    // ==========================================
+    staffTrips: builder.query<
+      any,
+      { status?: string; page?: number; size?: number } | void
+    >({
+      query: params => ({
+        url: 'mobile-staff-trips',
+        params: params || undefined,
+      }),
+    }),
+    staffTripById: builder.query<any, number | string>({
+      query: tripId => `mobile-staff-trips/${tripId}`,
+    }),
+    staffTripMembers: builder.query<
+      any,
+      {
+        tripId: number | string;
+        searchKey?: string;
+        filter?: string;
+        page?: number;
+        size?: number;
+      }
+    >({
+      query: ({ tripId, ...params }) => ({
+        url: `mobile-staff-trips/${tripId}/members`,
+        params,
+      }),
+    }),
+    staffUpdateMemberChat: builder.mutation<
+      any,
+      { tripId: number | string; memberId: number | string; inGroup: boolean }
+    >({
+      query: ({ tripId, memberId, inGroup }) => ({
+        url: `mobile-staff-trips/${tripId}/members/${memberId}/chat`,
+        method: 'PUT',
+        body: { inGroup },
+      }),
+    }),
+    staffUpdateChatSettings: builder.mutation<
+      any,
+      { tripId: number | string; membersCanPost: boolean }
+    >({
+      query: ({ tripId, membersCanPost }) => ({
+        url: `mobile-staff-trips/${tripId}/chat-settings`,
+        method: 'PUT',
+        body: { membersCanPost },
+      }),
+    }),
+    staffBroadcastPresets: builder.query<any, void>({
+      query: () => 'mobile-staff-trips/broadcast-presets',
+    }),
+    staffSendBroadcast: builder.mutation<
+      any,
+      { tripId: number | string; body: { text?: string; presetId?: string } }
+    >({
+      query: ({ tripId, body }) => ({
+        url: `mobile-staff-trips/${tripId}/broadcast`,
+        method: 'POST',
+        body,
+      }),
+    }),
+    staffRegisterDevice: builder.mutation<
+      any,
+      { fcmToken: string; deviceType: string; deviceId?: string }
+    >({
+      query: body => ({
+        url: 'mobile-staff-auth/register-device',
+        method: 'POST',
+        body,
+      }),
+    }),
+    staffUnregisterDevice: builder.mutation<any, { fcmToken: string }>({
+      query: body => ({
+        url: 'mobile-staff-auth/unregister-device',
+        method: 'POST',
+        body,
+      }),
+    }),
+
+    // ==========================================
+    // Pilgrim Trips APIs (9th & 10th)
+    // ==========================================
+    pilgrimMyTrips: builder.query<any, void>({
+      query: () => 'mobile-trips/my',
+    }),
+    pilgrimTripById: builder.query<any, number | string>({
+      query: tripId => `mobile-trips/${tripId}`,
+    }),
+
+    // ==========================================
+    // Chat APIs - Staff & Pilgrim (11th - 17th)
+    // ==========================================
+    chatConversations: builder.query<
+      any,
+      { page?: number; size?: number } | void
+    >({
+      query: params => ({
+        url: 'chat/conversations',
+        params: params || undefined,
+      }),
+    }),
+    chatCreateDirect: builder.mutation<
+      any,
+      {
+        tripId: number | string;
+        staffId?: number | string;
+        memberId?: number | string;
+      }
+    >({
+      query: body => ({
+        url: 'chat/conversations/direct',
+        method: 'POST',
+        body,
+      }),
+    }),
+    chatMessages: builder.query<
+      any,
+      {
+        conversationId: number | string;
+        before?: number;
+        after?: number;
+        limit?: number;
+      }
+    >({
+      query: ({ conversationId, ...params }) => ({
+        url: `chat/conversations/${conversationId}/messages`,
+        params,
+      }),
+    }),
+    chatSendMessage: builder.mutation<
+      any,
+      { conversationId: number | string; text: string }
+    >({
+      query: ({ conversationId, text }) => ({
+        url: `chat/conversations/${conversationId}/messages`,
+        method: 'POST',
+        body: { text },
+      }),
+    }),
+    chatMarkRead: builder.mutation<
+      any,
+      { conversationId: number | string; lastReadMessageId: number }
+    >({
+      query: ({ conversationId, lastReadMessageId }) => ({
+        url: `chat/conversations/${conversationId}/read`,
+        method: 'PUT',
+        body: { lastReadMessageId },
+      }),
+    }),
+    chatNotifications: builder.query<
+      any,
+      { page?: number; size?: number } | void
+    >({
+      query: params => ({
+        url: 'chat/notifications',
+        params: params || undefined,
+      }),
+    }),
+    chatMarkNotificationRead: builder.mutation<any, number | string>({
+      query: notificationId => ({
+        url: `chat/notifications/${notificationId}/read`,
+        method: 'PUT',
+      }),
+    }),
+    chatMarkAllNotificationsRead: builder.mutation<any, void>({
+      query: () => ({
+        url: 'chat/notifications/read-all',
+        method: 'PUT',
+      }),
+    }),
   }),
 });
 
@@ -474,4 +697,35 @@ export const {
   useStaffMeQuery,
   useStaffChangePasswordMutation,
   useStaffLogoutMutation,
+  // Staff Trips & Broadcast Hooks
+  useStaffTripsQuery,
+  useLazyStaffTripsQuery,
+  useStaffTripByIdQuery,
+  useLazyStaffTripByIdQuery,
+  useStaffTripMembersQuery,
+  useLazyStaffTripMembersQuery,
+  useStaffUpdateMemberChatMutation,
+  useStaffUpdateChatSettingsMutation,
+  useStaffBroadcastPresetsQuery,
+  useLazyStaffBroadcastPresetsQuery,
+  useStaffSendBroadcastMutation,
+  useStaffRegisterDeviceMutation,
+  useStaffUnregisterDeviceMutation,
+  // Pilgrim Trips Hooks
+  usePilgrimMyTripsQuery,
+  useLazyPilgrimMyTripsQuery,
+  usePilgrimTripByIdQuery,
+  useLazyPilgrimTripByIdQuery,
+  // Chat Hooks
+  useChatConversationsQuery,
+  useLazyChatConversationsQuery,
+  useChatCreateDirectMutation,
+  useChatMessagesQuery,
+  useLazyChatMessagesQuery,
+  useChatSendMessageMutation,
+  useChatMarkReadMutation,
+  useChatNotificationsQuery,
+  useLazyChatNotificationsQuery,
+  useChatMarkNotificationReadMutation,
+  useChatMarkAllNotificationsReadMutation,
 } = apiClient;

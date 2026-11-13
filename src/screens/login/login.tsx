@@ -19,6 +19,7 @@ import {
   useLoginUserMutation,
   usePassportByIdMutation,
   useStaffLoginMutation,
+  useStaffRegisterDeviceMutation,
 } from '../../redux/services';
 import { useAppDispatch } from '../../redux/hooks';
 import {
@@ -76,6 +77,7 @@ const Login = ({ navigation }: any) => {
   const dispatch = useAppDispatch();
   const [loginUser, { isLoading }] = useLoginUserMutation();
   const [staffLogin, { isLoading: isStaffLoading }] = useStaffLoginMutation();
+  const [staffRegisterDevice] = useStaffRegisterDeviceMutation();
   const [verificationUser] = useLazyVerificationUserQuery();
   const [passportById, { isLoading: isPassportNoLoading }] =
     usePassportByIdMutation();
@@ -115,14 +117,14 @@ const Login = ({ navigation }: any) => {
           dispatch(setStaffToken(token));
           dispatch(setStaffUser(staff));
 
-          // Register device for Agora push notifications in the background
+          // Register device for staff push notifications
           getFCMToken().then(fcmToken => {
             if (fcmToken) {
-              registerDevice({
+              staffRegisterDevice({
                 fcmToken,
                 deviceType: Platform.OS === 'ios' ? 'ios' : 'android',
               }).catch(err =>
-                console.warn('[staff login] registerDevice failed:', err?.message),
+                console.warn('[staff login] staffRegisterDevice failed:', err?.message),
               );
             }
           });

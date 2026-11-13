@@ -34,9 +34,12 @@ import {
   useLazyStaffMeQuery,
   useStaffChangePasswordMutation,
   useStaffLogoutMutation,
+  useStaffTripsQuery,
+  useStaffUnregisterDeviceMutation,
 } from '../../redux/services';
 import { Screens } from '../../common/screens';
 import { showErrorToast, showSuccessToast } from '../../utils/toastUtils';
+import { getFCMToken } from '../../utils/notificationUtils';
 
 const tripsData = manifestsData.map(trip => ({
   label: trip.title,
@@ -59,7 +62,7 @@ const staffTilesData = [
   {
     id: 'trip_members',
     title: 'Trip Members',
-    desc: '7 Pilgrims & care flags',
+    desc: 'Pilgrims & care flags',
     iconName: 'people-outline',
     iconColor: '#3B82F6',
     iconBg: '#EFF6FF',
@@ -95,16 +98,36 @@ const staffTilesData = [
 ];
 
 const StaffHome = ({ navigation }: any) => {
-  const [selectedTrip, setSelectedTrip] = useState(tripsData[0].value);
-  const [activeTile, setActiveTile] = useState('assigned_trips');
-
   const dispatch = useAppDispatch();
   const staffUser = useAppSelector(getStaffUser);
   const [getStaffMe] = useLazyStaffMeQuery();
   const [staffLogoutApi, { isLoading: isLoggingOut }] =
     useStaffLogoutMutation();
+  const [staffUnregisterDeviceApi] = useStaffUnregisterDeviceMutation();
   const [changePasswordApi, { isLoading: isChangingPassword }] =
     useStaffChangePasswordMutation();
+
+  const { data: tripsResp, isLoading: isTripsLoading } = useStaffTripsQuery();
+  const tripsList = tripsResp?.data?.rows || [];
+
+  const dynamicTripsData =
+    tripsList.length > 0
+      ? tripsList.map((trip: any) => ({
+          label: `${trip.name} (${trip.code || ''})`,
+          value: trip.id,
+        }))
+      : tripsData;
+
+  const [selectedTrip, setSelectedTrip] = useState<any>(
+    dynamicTripsData[0]?.value || '1',
+  );
+  const [activeTile, setActiveTile] = useState('assigned_trips');
+
+  useEffect(() => {
+    if (tripsList.length > 0 && !tripsList.some((t: any) => t.id === selectedTrip)) {
+      setSelectedTrip(tripsList[0].id);
+    }
+  }, [tripsList]);
 
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -153,6 +176,16 @@ const StaffHome = ({ navigation }: any) => {
           text: 'Sign Out',
           style: 'destructive',
           onPress: async () => {
+            try {
+              // Unregister FCM device token
+              const fcmToken = await getFCMToken();
+              if (fcmToken) {
+                await staffUnregisterDeviceApi({ fcmToken }).unwrap();
+              }
+            } catch (err: any) {
+              console.log('staffUnregisterDevice error:', err);
+            }
+
             try {
               await staffLogoutApi().unwrap();
             } catch (err: any) {
@@ -308,7 +341,7 @@ const StaffHome = ({ navigation }: any) => {
             selectedTextStyle={styles.tripDropdownText}
             containerStyle={styles.dropdownMenu}
             itemTextStyle={styles.dropdownItemText}
-            data={tripsData}
+            data={dynamicTripsData}
             labelField="label"
             valueField="value"
             value={selectedTrip}
@@ -321,7 +354,11 @@ const StaffHome = ({ navigation }: any) => {
         </View>
         <View style={styles.liveIndicator}>
           <View style={styles.liveDot} />
-          <Text style={styles.liveText}>Live Active</Text>
+          <Text style={styles.liveText}>
+            {tripsList.find((t: any) => t.id === selectedTrip)?.status === 'active'
+              ? 'Live Active'
+              : 'Assigned'}
+          </Text>
         </View>
       </View>
 
@@ -337,6 +374,15 @@ const StaffHome = ({ navigation }: any) => {
         <View style={styles.grid}>
           {staffTilesData.map(tile => {
             const isActive = tile.id === activeTile;
+            let badgeText = tile.badgeText;
+            if (tile.id === 'assigned_trips' && tripsList.length > 0) {
+              badgeText = `${tripsList.length} Assigned`;
+            } else if (tile.id === 'trip_members') {
+              const curTrip = tripsList.find((t: any) => t.id === selectedTrip);
+              if (curTrip?.memberCount !== undefined) {
+                badgeText = `${curTrip.memberCount} Pilgrims`;
+              }
+            }
             return (
               <TouchableOpacity
                 key={tile.id}
@@ -365,7 +411,7 @@ const StaffHome = ({ navigation }: any) => {
                     <Text
                       style={[styles.tileBadgeText, { color: tile.badgeColor }]}
                     >
-                      {tile.badgeText}
+                      {badgeText}
                     </Text>
                   </View>
                 </View>
@@ -378,11 +424,25 @@ const StaffHome = ({ navigation }: any) => {
 
         {activeTile === 'assigned_trips' && (
           <AssignedTrips
+            trips={tripsList}
+            selectedTripId={selectedTrip}
+            onSelectTrip={(id: any) => setSelectedTrip(id)}
             onExpandMembers={() => setActiveTile('trip_members')}
+            onOpenBroadcast={() => setActiveTile('broadcast_chat')}
           />
         )}
-        {activeTile === 'trip_members' && <TripMembers />}
-        {activeTile === 'broadcast_chat' && <BroadcastChat />}
+        {activeTile === 'trip_members' && (
+          <TripMembers
+            selectedTripId={selectedTrip}
+            trips={tripsList}
+          />
+        )}
+        {activeTile === 'broadcast_chat' && (
+          <BroadcastChat
+            selectedTripId={selectedTrip}
+            trips={tripsList}
+          />
+        )}
         {activeTile === 'live_briefing' && <LiveBriefing />}
       </ScrollView>
 

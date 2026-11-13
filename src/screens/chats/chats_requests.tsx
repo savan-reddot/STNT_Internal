@@ -5,11 +5,14 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Text } from '../../components/common';
 import AppLayout from '../../components/safeareawrapper';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Screens } from '../../common/screens';
+import { useChatConversationsQuery } from '../../redux/services';
 
 const chatsData = [
   {
@@ -49,7 +52,7 @@ const initialRequestsData = [
 ];
 
 const ChatsRequests = ({ navigation }: any) => {
-  const [activeTab, setActiveTab] = useState('chats');
+  const [activeTab, setActiveTab] = useState<'chats' | 'requests'>('chats');
   const [requests, setRequests] = useState(initialRequestsData);
 
   const handleAccept = (id: string) => {
@@ -64,8 +67,67 @@ const ChatsRequests = ({ navigation }: any) => {
     );
   };
 
+  const {
+    data: convResp,
+    isLoading: isConvLoading,
+    refetch: refetchConv,
+    isFetching: isConvFetching,
+  } = useChatConversationsQuery(undefined, {
+    pollingInterval: 10000,
+  });
+
+  const apiConversations = convResp?.data?.rows || [];
+
+  const formatTime = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      const now = new Date();
+      const isToday = d.toDateString() === now.toDateString();
+      if (isToday) {
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    } catch {
+      return '';
+    }
+  };
+
+  const conversationsToRender =
+    apiConversations.length > 0
+      ? apiConversations.map((c: any) => ({
+          id: String(c.id),
+          conversationId: c.id,
+          avatar:
+            c.type === 'trip_group'
+              ? 'https://ui-avatars.com/api/?name=Group&background=0F8A65&color=fff'
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  c.title || 'User',
+                )}&background=3B82F6&color=fff`,
+          title: c.title,
+          role: c.type === 'trip_group' ? 'Official Group' : c.role || 'Direct Chat',
+          isOfficial: c.type === 'trip_group',
+          time: formatTime(c.lastMessage?.createdAt),
+          message: c.lastMessage
+            ? c.lastMessage.kind === 'broadcast'
+              ? `📢 ${c.lastMessage.text}`
+              : `${c.lastMessage.senderName ? `${c.lastMessage.senderName}: ` : ''}${c.lastMessage.text}`
+            : 'No messages yet',
+          unread: c.unreadCount ?? 0,
+          canPost: c.canPost,
+          tripId: c.tripId,
+          type: c.type,
+        }))
+      : chatsData.map(c => ({
+          ...c,
+          conversationId: c.id,
+          canPost: true,
+          tripId: 1,
+          type: c.isOfficial ? 'trip_group' : 'direct',
+        }));
+
   return (
-    <AppLayout title="CHATS & REQUESTS" onBackPress={() => navigation.goBack()}>
+    <AppLayout title="CHATS & GROUPS" onBackPress={() => navigation.goBack()}>
       <View style={styles.container}>
         <View style={styles.tabContainer}>
           <TouchableOpacity
@@ -110,74 +172,96 @@ const ChatsRequests = ({ navigation }: any) => {
         </View>
 
         {activeTab === 'chats' ? (
-          <FlatList
-            data={chatsData}
-            keyExtractor={item => item.id}
-            contentContainerStyle={styles.content}
-            ListHeaderComponent={
-              <View style={styles.infoBanner}>
-                <View style={styles.infoIconWrapper}>
-                  <Icon name="people-outline" size={20} color="#0F8A65" />
-                </View>
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoTitle}>Pilgrim Communications</Text>
-                  <Text style={styles.infoDesc}>
-                    Connect with travel leaders or verified pilgrims on your
-                    Singapore-Jeddah trip. Requests must be mutually accepted
-                    before chatting.
-                  </Text>
-                </View>
-              </View>
-            }
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.chatCard}
-                onPress={() => navigation.navigate(Screens.Conversation)}
-              >
-                <Image
-                  source={{ uri: item.avatar }}
-                  style={styles.chatAvatar}
+          isConvLoading && apiConversations.length === 0 ? (
+            <ActivityIndicator
+              size="large"
+              color="#0F8A65"
+              style={{ marginTop: 40 }}
+            />
+          ) : (
+            <FlatList
+              data={conversationsToRender}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.content}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isConvFetching}
+                  onRefresh={refetchConv}
+                  colors={['#0F8A65']}
                 />
-                <View style={styles.chatContent}>
-                  <View style={styles.chatHeaderRow}>
-                    <Text style={styles.chatTitle} numberOfLines={1}>
-                      {item.title}
+              }
+              ListHeaderComponent={
+                <View style={styles.infoBanner}>
+                  <View style={styles.infoIconWrapper}>
+                    <Icon name="people-outline" size={20} color="#0F8A65" />
+                  </View>
+                  <View style={styles.infoTextContainer}>
+                    <Text style={styles.infoTitle}>Trip Communications</Text>
+                    <Text style={styles.infoDesc}>
+                      Official announcements, broadcast briefings, and direct 1-on-1 chat channels for your Umrah trip.
                     </Text>
-                    <View
-                      style={
-                        item.isOfficial
-                          ? styles.roleBadgeOfficial
-                          : styles.roleBadgeLeader
-                      }
-                    >
-                      <Text
+                  </View>
+                </View>
+              }
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.chatCard}
+                  onPress={() =>
+                    navigation.navigate(Screens.Conversation, {
+                      conversationId: item.conversationId,
+                      title: item.title,
+                      role: item.role,
+                      type: item.type,
+                      canPost: item.canPost,
+                      tripId: item.tripId,
+                    })
+                  }
+                >
+                  <Image
+                    source={{ uri: item.avatar }}
+                    style={styles.chatAvatar}
+                  />
+                  <View style={styles.chatContent}>
+                    <View style={styles.chatHeaderRow}>
+                      <Text style={styles.chatTitle} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <View
                         style={
                           item.isOfficial
-                            ? styles.roleBadgeOfficialText
-                            : styles.roleBadgeLeaderText
+                            ? styles.roleBadgeOfficial
+                            : styles.roleBadgeLeader
                         }
                       >
-                        {item.role}
-                      </Text>
-                    </View>
-                    <Text style={styles.chatTime}>{item.time}</Text>
-                  </View>
-                  <View style={styles.chatMessageRow}>
-                    <Text style={styles.chatMessage} numberOfLines={1}>
-                      {item.message}
-                    </Text>
-                    {item.unread > 0 && (
-                      <View style={styles.unreadBadge}>
-                        <Text style={styles.unreadBadgeText}>
-                          {item.unread}
+                        <Text
+                          style={
+                            item.isOfficial
+                              ? styles.roleBadgeOfficialText
+                              : styles.roleBadgeLeaderText
+                          }
+                        >
+                          {item.role}
                         </Text>
                       </View>
-                    )}
+                      <Text style={styles.chatTime}>{item.time}</Text>
+                    </View>
+                    <View style={styles.chatMessageRow}>
+                      <Text style={styles.chatMessage} numberOfLines={1}>
+                        {item.message}
+                      </Text>
+                      {item.unread > 0 && (
+                        <View style={styles.unreadBadge}>
+                          <Text style={styles.unreadBadgeText}>
+                            {item.unread}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
+                </TouchableOpacity>
+              )}
+            />
+          )
         ) : (
           <FlatList
             data={requests}

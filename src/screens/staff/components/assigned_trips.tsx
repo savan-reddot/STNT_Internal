@@ -72,18 +72,90 @@ export const manifestsData = [
   },
 ];
 
-const AssignedTrips = ({ onExpandMembers }: any) => {
-  const [expandedId, setExpandedId] = useState('1');
+const AssignedTrips = ({
+  trips = [],
+  selectedTripId,
+  onSelectTrip,
+  onExpandMembers,
+  onOpenBroadcast,
+}: any) => {
+  const displayTrips =
+    trips.length > 0
+      ? trips.map((trip: any) => ({
+          id: String(trip.id),
+          title: `${trip.name} (${trip.code || ''})`,
+          status: (trip.status || 'UPCOMING').toUpperCase(),
+          badgeBg: trip.status === 'active' ? '#D1FAE5' : '#ECFDF5',
+          badgeText: '#065F46',
+          btnBg: '#ECFDF5',
+          info: `${trip.startDate || ''} – ${trip.endDate || ''} • ${
+            trip.memberCount ?? 0
+          } Pilgrims Enrolled`,
+          pilgrims: trip.memberCount ?? 0,
+          flights: [
+            ...(trip.flightOut
+              ? [
+                  {
+                    id: 'f1',
+                    type: 'outbound',
+                    title: `Outbound: ${trip.flightOut}`,
+                    desc: 'Outbound flight to Saudi Arabia',
+                  },
+                ]
+              : []),
+            ...(trip.flightReturn
+              ? [
+                  {
+                    id: 'f2',
+                    type: 'return',
+                    title: `Return: ${trip.flightReturn}`,
+                    desc: 'Return flight to Singapore',
+                  },
+                ]
+              : []),
+          ],
+          hotels: [
+            ...(trip.hotelMakkah
+              ? [
+                  {
+                    id: 'h1',
+                    label: 'MAKKAH HOTEL',
+                    value: trip.hotelMakkah,
+                  },
+                ]
+              : []),
+            ...(trip.hotelMadinah
+              ? [
+                  {
+                    id: 'h2',
+                    label: 'MADINAH HOTEL',
+                    value: trip.hotelMadinah,
+                  },
+                ]
+              : []),
+          ],
+          team: (trip.team || []).map((t: any) => ({
+            id: String(t.staffId),
+            name: t.name,
+            role: t.role || t.staffType,
+            avatar: 'https://i.pravatar.cc/150?img=11',
+          })),
+        }))
+      : manifestsData;
+
+  const [expandedId, setExpandedId] = useState(
+    displayTrips[0]?.id || '1',
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>ASSIGNED TRIP MANIFESTS (2)</Text>
-        <Text style={styles.sectionSubtitle}>
-          Staff ID: <Text style={{ fontWeight: '700' }}>staff_lead_1</Text>
+        <Text style={styles.sectionTitle}>
+          ASSIGNED TRIP MANIFESTS ({displayTrips.length})
         </Text>
       </View>
 
-      {manifestsData.map(manifest => {
+      {displayTrips.map((manifest: any) => {
         const isExpanded = expandedId === manifest.id;
         return (
           <TouchableOpacity
@@ -91,7 +163,10 @@ const AssignedTrips = ({ onExpandMembers }: any) => {
             style={
               isExpanded ? styles.manifestCardExpanded : styles.manifestCard
             }
-            onPress={() => setExpandedId(isExpanded ? '' : manifest.id)}
+            onPress={() => {
+              setExpandedId(isExpanded ? '' : manifest.id);
+              if (onSelectTrip) onSelectTrip(Number(manifest.id) || manifest.id);
+            }}
             activeOpacity={0.8}
           >
             <View style={styles.manifestHeader}>
@@ -122,20 +197,29 @@ const AssignedTrips = ({ onExpandMembers }: any) => {
                   styles.btnViewPilgrims,
                   { backgroundColor: manifest.btnBg },
                 ]}
-                onPress={onExpandMembers}
+                onPress={() => {
+                  if (onSelectTrip) onSelectTrip(Number(manifest.id) || manifest.id);
+                  if (onExpandMembers) onExpandMembers();
+                }}
               >
                 <Text style={styles.btnViewPilgrimsText}>
                   View Pilgrims ({manifest.pilgrims})
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.btnOpenBroadcast}>
+              <TouchableOpacity
+                style={styles.btnOpenBroadcast}
+                onPress={() => {
+                  if (onSelectTrip) onSelectTrip(Number(manifest.id) || manifest.id);
+                  if (onOpenBroadcast) onOpenBroadcast();
+                }}
+              >
                 <Text style={styles.btnOpenBroadcastText}>Open Broadcast</Text>
               </TouchableOpacity>
             </View>
 
             {isExpanded && (
               <View style={styles.expandedDetails}>
-                {manifest.flights.map(flight => (
+                {manifest.flights.map((flight: any) => (
                   <View key={flight.id} style={styles.detailCard}>
                     <View style={styles.detailCardHeader}>
                       <Icon
@@ -170,7 +254,7 @@ const AssignedTrips = ({ onExpandMembers }: any) => {
                       </Text>
                     </View>
 
-                    {manifest.hotels.map(hotel => (
+                    {manifest.hotels.map((hotel: any) => (
                       <View key={hotel.id} style={styles.hotelItem}>
                         <Text style={styles.hotelLabel}>{hotel.label}</Text>
                         <Text style={styles.hotelValue}>{hotel.value}</Text>
@@ -185,7 +269,7 @@ const AssignedTrips = ({ onExpandMembers }: any) => {
                       Trip{'\n'}Staff{'\n'}Team:
                     </Text>
 
-                    {manifest.team.map(member => (
+                    {manifest.team.map((member: any) => (
                       <View key={member.id} style={styles.teamPill}>
                         <Image
                           source={{ uri: member.avatar }}

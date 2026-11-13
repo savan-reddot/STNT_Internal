@@ -14,82 +14,161 @@ import {
 import { Text } from '../../../components/common';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const presets = [
-  {
-    id: '1',
-    icon: '📢',
-    title: 'Rawdah Appointment Alert',
-    desc: 'Assalamu alaikum pilgrims! Please assemble at Hotel Lo...',
-  },
-  {
-    id: '2',
-    icon: '🕋',
-    title: 'Tawaf Guidance Briefing',
-    desc: 'Tawaf guidance will commence tonight at 11:30 PM. Me...',
-  },
-  {
-    id: '3',
-    icon: '🧳',
-    title: 'Luggage Collection Alert',
-    desc: 'Hotel Checkout Notice: Please label your large luggag...',
-  },
-  {
-    id: '4',
-    icon: '✈️',
-    title: 'Meeqat & Ihram on Flight',
-    desc: 'Attention pilgrims: The flight captain will announce Qar...',
-  },
-];
+import { ActivityIndicator, Alert } from 'react-native';
+import {
+  useStaffBroadcastPresetsQuery,
+  useStaffSendBroadcastMutation,
+  useStaffUpdateChatSettingsMutation,
+  useStaffTripMembersQuery,
+  useStaffUpdateMemberChatMutation,
+  useStaffTripByIdQuery,
+} from '../../../redux/services';
+import { showSuccessToast, showErrorToast } from '../../../utils/toastUtils';
 
-const groupMembers = [
-  {
-    id: '1',
-    name: 'Noorfazella Sujud',
-    memberId: 'PLG-8821',
-    desc: 'Female • 46 yrs • Swissotel #1402',
-    avatar: 'https://i.pravatar.cc/150?img=5',
-  },
-  {
-    id: '2',
-    name: 'Hjh Zainab Binte Abdullah',
-    memberId: 'PLG-4402',
-    desc: 'Female • 56 yrs • Swissotel #1408',
-    avatar: 'https://i.pravatar.cc/150?img=9',
-  },
-  {
-    id: '3',
-    name: 'Hj Razak Bin Othman',
-    memberId: 'PLG-9104',
-    desc: 'Male • 64 yrs • Swissotel #1210',
-    avatar: 'https://i.pravatar.cc/150?img=11',
-  },
-  {
-    id: '4',
-    name: 'Noorfazella Sujud',
-    memberId: 'PLG-8821',
-    desc: 'Female • 46 yrs • Swissotel #1402',
-    avatar: 'https://i.pravatar.cc/150?img=5',
-  },
-  {
-    id: '5',
-    name: 'Hjh Zainab Binte Abdullah',
-    memberId: 'PLG-4402',
-    desc: 'Female • 56 yrs • Swissotel #1408',
-    avatar: 'https://i.pravatar.cc/150?img=9',
-  },
-  {
-    id: '6',
-    name: 'Hj Razak Bin Othman',
-    memberId: 'PLG-9104',
-    desc: 'Male • 64 yrs • Swissotel #1210',
-    avatar: 'https://i.pravatar.cc/150?img=11',
-  },
-];
+const BroadcastChat = ({ selectedTripId, trips }: any) => {
+  const tripId = selectedTripId || (trips && trips[0]?.id) || 1;
+  const currentTrip = (trips || []).find((t: any) => t.id === tripId);
 
-const BroadcastChat = () => {
-  const [isAnnouncementOnly, setIsAnnouncementOnly] = useState(false);
+  const { data: tripDetailResp, refetch: refetchTrip } =
+    useStaffTripByIdQuery(tripId, { skip: !tripId });
+  const tripData = tripDetailResp?.data || currentTrip;
+
+  const { data: presetsResp } = useStaffBroadcastPresetsQuery();
+  const presetsList = presetsResp?.data || [];
+
+  const { data: membersResp, refetch: refetchMembers } =
+    useStaffTripMembersQuery({ tripId }, { skip: !tripId });
+  const membersList = membersResp?.data?.rows || [];
+  const activeMembersInGroup = membersList.filter((m: any) => m.inChatGroup);
+
+  const [updateChatSettings, { isLoading: isUpdatingSettings }] =
+    useStaffUpdateChatSettingsMutation();
+  const [sendBroadcast, { isLoading: isSendingBroadcast }] =
+    useStaffSendBroadcastMutation();
+  const [updateMemberChat] = useStaffUpdateMemberChatMutation();
+
+  const [broadcastText, setBroadcastText] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-  const [allowPilgrims, setAllowPilgrims] = useState(true);
+  const [addMemberInput, setAddMemberInput] = useState('');
+
+  // membersCanPost: true means discussion mode, false means announcement-only
+  const membersCanPost = tripData?.membersCanPost ?? true;
+  const isAnnouncementOnly = !membersCanPost;
+
+  const handleToggleChatPermission = async (val: boolean) => {
+    // val is isAnnouncementOnly -> membersCanPost = !val
+    const newMembersCanPost = !val;
+    try {
+      const resp = await updateChatSettings({
+        tripId,
+        membersCanPost: newMembersCanPost,
+      }).unwrap();
+      showSuccessToast(
+        resp.message ||
+          (newMembersCanPost
+            ? 'Members can now post in the group'
+            : 'Announcement only mode activated'),
+        'Updated',
+      );
+      refetchTrip();
+    } catch (err: any) {
+      const msg =
+        err?.data?.message || err?.message || 'Failed to update settings';
+      showErrorToast(msg, 'Error');
+    }
+  };
+
+  const handleSendPreset = (preset: any) => {
+    Alert.alert(
+      'Send Broadcast',
+      `Send "${preset.title}" to all pilgrims in ${tripData?.name || 'this group'}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send Now',
+          style: 'default',
+          onPress: async () => {
+            try {
+              const resp = await sendBroadcast({
+                tripId,
+                body: { presetId: preset.id },
+              }).unwrap();
+              showSuccessToast(
+                resp?.message || 'Broadcast announcement sent!',
+                'Broadcast Sent',
+              );
+            } catch (err: any) {
+              const msg =
+                err?.data?.message || err?.message || 'Failed to send broadcast';
+              showErrorToast(msg, 'Error');
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleSendCustomBroadcast = async () => {
+    if (!broadcastText.trim()) {
+      showErrorToast('Please enter an announcement text.', 'Input Required');
+      return;
+    }
+    try {
+      const resp = await sendBroadcast({
+        tripId,
+        body: { text: broadcastText.trim() },
+      }).unwrap();
+      showSuccessToast(
+        resp?.message || 'Broadcast announcement sent!',
+        'Broadcast Sent',
+      );
+      setBroadcastText('');
+    } catch (err: any) {
+      const msg =
+        err?.data?.message || err?.message || 'Failed to send broadcast';
+      showErrorToast(msg, 'Error');
+    }
+  };
+
+  const handleToggleMember = async (member: any, inGroup: boolean) => {
+    try {
+      const resp = await updateMemberChat({
+        tripId,
+        memberId: member.memberId || member.uidNo,
+        inGroup,
+      }).unwrap();
+      showSuccessToast(
+        resp.message || (inGroup ? 'Member added' : 'Member removed'),
+        'Success',
+      );
+      refetchMembers();
+      refetchTrip();
+    } catch (err: any) {
+      const msg = err?.data?.message || err?.message || 'Update failed';
+      showErrorToast(msg, 'Error');
+    }
+  };
+
+  const handleAddMemberById = async () => {
+    if (!addMemberInput.trim()) {
+      showErrorToast('Please enter a member ID or UID', 'Input Required');
+      return;
+    }
+    try {
+      const resp = await updateMemberChat({
+        tripId,
+        memberId: addMemberInput.trim(),
+        inGroup: true,
+      }).unwrap();
+      showSuccessToast(resp.message || 'Member added to group', 'Success');
+      setAddMemberInput('');
+      refetchMembers();
+      refetchTrip();
+    } catch (err: any) {
+      const msg = err?.data?.message || err?.message || 'Failed to add member';
+      showErrorToast(msg, 'Error');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -102,15 +181,17 @@ const BroadcastChat = () => {
           </Text>
           <Switch
             value={isAnnouncementOnly}
-            onValueChange={setIsAnnouncementOnly}
+            onValueChange={handleToggleChatPermission}
+            disabled={isUpdatingSettings}
             trackColor={{ false: '#D1D5DB', true: '#0F8A65' }}
-            thumbColor={isAnnouncementOnly ? '#fff' : '#fff'}
+            thumbColor="#fff"
             style={{ marginLeft: 'auto' }}
           />
         </View>
         <Text style={styles.permissionDesc}>
-          Announcement Only: Only authorized staff (Leaders & Mutawifs) can
-          broadcast messages.
+          {isAnnouncementOnly
+            ? 'Announcement Only: Only authorized staff (Leaders & Mutawifs) can post in this group.'
+            : 'Discussion Mode: All enrolled pilgrims can post messages and replies in the group chat.'}
         </Text>
 
         <View style={styles.divider} />
@@ -126,7 +207,10 @@ const BroadcastChat = () => {
                 style={{ marginLeft: 8 }}
               />
             </View>
-            <Text style={styles.membersCountText}>7 / 7</Text>
+            <Text style={styles.membersCountText}>
+              {tripData?.chatMemberCount ?? activeMembersInGroup.length} /{' '}
+              {tripData?.memberCount ?? membersList.length}
+            </Text>
           </View>
           <TouchableOpacity onPress={() => setModalVisible(true)}>
             <Text style={styles.manageBtnText}>
@@ -145,11 +229,15 @@ const BroadcastChat = () => {
           </Text>
         </View>
 
-        {presets.map(preset => (
-          <TouchableOpacity key={preset.id} style={styles.presetItem}>
+        {presetsList.map((preset: any) => (
+          <TouchableOpacity
+            key={preset.id}
+            style={styles.presetItem}
+            onPress={() => handleSendPreset(preset)}
+          >
             <Text style={styles.presetItemTitle}>{preset.title}</Text>
-            <Text style={styles.presetItemDesc} numberOfLines={1}>
-              {preset.icon} {preset.desc}
+            <Text style={styles.presetItemDesc} numberOfLines={2}>
+              📢 {preset.text}
             </Text>
           </TouchableOpacity>
         ))}
@@ -158,22 +246,40 @@ const BroadcastChat = () => {
       {/* Chat Input Card */}
       <View style={styles.card}>
         <View style={styles.chatHeaderRow}>
-          <Text style={styles.chatTitle}>
-            Official SG Nov-26 Pilgrims Group
+          <Text style={styles.chatTitle} numberOfLines={1}>
+            {tripData?.name || 'Official Pilgrims Group'}
           </Text>
           <View style={styles.feedBadge}>
-            <Text style={styles.feedBadgeText}>Official Feed</Text>
+            <Text style={styles.feedBadgeText}>Official Broadcast</Text>
           </View>
         </View>
         <View style={styles.chatInputRow}>
           <TextInput
             style={styles.chatInput}
-            placeholder="Type an announcement to all 42 p"
+            placeholder={`Announcement to all ${
+              tripData?.chatMemberCount ?? activeMembersInGroup.length
+            } pilgrims...`}
             placeholderTextColor="#9CA3AF"
+            value={broadcastText}
+            onChangeText={setBroadcastText}
+            multiline
           />
-          <TouchableOpacity style={styles.postBtn}>
-            <Icon name="paper-plane-outline" size={16} color="#fff" />
-            <Text style={styles.postBtnText}>Post</Text>
+          <TouchableOpacity
+            style={[
+              styles.postBtn,
+              isSendingBroadcast && { opacity: 0.6 },
+            ]}
+            onPress={handleSendCustomBroadcast}
+            disabled={isSendingBroadcast}
+          >
+            {isSendingBroadcast ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Icon name="paper-plane-outline" size={16} color="#fff" />
+                <Text style={styles.postBtnText}>Post</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -191,10 +297,10 @@ const BroadcastChat = () => {
                   <View style={styles.shieldIconWrapper}>
                     <Icon name="shield-outline" size={20} color="#fff" />
                   </View>
-                  <View>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
                     <Text style={styles.modalTitle}>Chat Group Controls</Text>
-                    <Text style={styles.modalSubtitle}>
-                      Official SG Nov-26 Pilgrims Group
+                    <Text style={styles.modalSubtitle} numberOfLines={1}>
+                      {tripData?.name || 'Official Pilgrims Group'}
                     </Text>
                   </View>
                 </View>
@@ -218,16 +324,17 @@ const BroadcastChat = () => {
                       Allow Pilgrims to Post Messages
                     </Text>
                     <Switch
-                      value={allowPilgrims}
-                      onValueChange={setAllowPilgrims}
+                      value={membersCanPost}
+                      onValueChange={val => handleToggleChatPermission(!val)}
                       trackColor={{ false: '#D1D5DB', true: '#0F8A65' }}
                       thumbColor="#fff"
                       style={{ marginLeft: 'auto' }}
                     />
                   </View>
                   <Text style={styles.toggleDesc}>
-                    All enrolled pilgrims can send text and replies in the group
-                    chat.
+                    {membersCanPost
+                      ? 'All enrolled pilgrims can send text and replies in the group chat.'
+                      : 'Only leaders and coordinators can post messages.'}
                   </Text>
                   <View style={styles.infoBox}>
                     <Icon
@@ -236,7 +343,9 @@ const BroadcastChat = () => {
                       color="#0F8A65"
                     />
                     <Text style={styles.infoBoxText}>
-                      Discussion Mode: Everyone can participate.
+                      {membersCanPost
+                        ? 'Discussion Mode: Everyone can participate.'
+                        : 'Announcement Mode: Pilgrim replies are blocked.'}
                     </Text>
                   </View>
                 </View>
@@ -245,7 +354,7 @@ const BroadcastChat = () => {
                 <View style={styles.sectionHeader}>
                   <Icon name="person-add-outline" size={16} color="#0F8A65" />
                   <Text style={styles.sectionTitle}>
-                    ADD MEMBER USING MEMBER ID
+                    ADD MEMBER USING MEMBER ID / UID
                   </Text>
                 </View>
                 <View style={styles.addMemberRow}>
@@ -253,11 +362,17 @@ const BroadcastChat = () => {
                     <Icon name="search-outline" size={16} color="#9CA3AF" />
                     <TextInput
                       style={styles.addInput}
-                      placeholder="ENTER MEMBER ID (E.G. P"
+                      placeholder="ENTER UID OR MEMBER ID"
                       placeholderTextColor="#9CA3AF"
+                      value={addMemberInput}
+                      onChangeText={setAddMemberInput}
+                      autoCapitalize="characters"
                     />
                   </View>
-                  <TouchableOpacity style={styles.btnAddGroup}>
+                  <TouchableOpacity
+                    style={styles.btnAddGroup}
+                    onPress={handleAddMemberById}
+                  >
                     <Text style={styles.btnAddGroupText}>Add to Group</Text>
                   </TouchableOpacity>
                 </View>
@@ -267,18 +382,22 @@ const BroadcastChat = () => {
                   <View style={styles.sectionHeaderLeft}>
                     <Icon name="people-outline" size={16} color="#4B5563" />
                     <Text style={[styles.sectionTitle, { color: '#111827' }]}>
-                      ACTIVE GROUP MEMBERS (7)
+                      ALL TRIP MEMBERS ({membersList.length})
                     </Text>
                   </View>
                   <Text style={styles.staffModerateText}>
-                    Staff can moderate
+                    In Group: {activeMembersInGroup.length}
                   </Text>
                 </View>
 
-                {groupMembers.map(member => (
-                  <View key={member.id} style={styles.memberListItem}>
+                {membersList.map((member: any) => (
+                  <View key={member.memberId || member.uidNo} style={styles.memberListItem}>
                     <Image
-                      source={{ uri: member.avatar }}
+                      source={{
+                        uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          member.name || 'Pilgrim',
+                        )}&background=0F8A65&color=fff`,
+                      }}
                       style={styles.memberAvatar}
                     />
                     <View style={styles.memberInfo}>
@@ -286,17 +405,28 @@ const BroadcastChat = () => {
                         <Text style={styles.memberName}>{member.name}</Text>
                         <View style={styles.memberIdBadge}>
                           <Text style={styles.memberIdText}>
-                            {member.memberId}
+                            {member.uidNo || `ID-${member.memberId}`}
                           </Text>
                         </View>
                       </View>
-                      <Text style={styles.memberDesc}>{member.desc}</Text>
+                      <Text style={styles.memberDesc}>
+                        {member.hotelRoom ? `Room ${member.hotelRoom} • ` : ''}
+                        {member.phone || 'No phone'}
+                      </Text>
                     </View>
-                    <TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() =>
+                        handleToggleMember(member, !member.inChatGroup)
+                      }
+                    >
                       <Icon
-                        name="person-remove-outline"
+                        name={
+                          member.inChatGroup
+                            ? 'person-remove-outline'
+                            : 'person-add-outline'
+                        }
                         size={20}
-                        color="#E11D48"
+                        color={member.inChatGroup ? '#E11D48' : '#0F8A65'}
                       />
                     </TouchableOpacity>
                   </View>

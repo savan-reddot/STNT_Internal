@@ -5,61 +5,85 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Text } from '../../../components/common';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {
+  useStaffTripMembersQuery,
+  useStaffUpdateMemberChatMutation,
+  useChatCreateDirectMutation,
+} from '../../../redux/services';
+import { showSuccessToast, showErrorToast } from '../../../utils/toastUtils';
+import { useNavigation } from '@react-navigation/native';
+import { Screens } from '../../../common/screens';
 
-const membersData = [
-  {
-    id: '1',
-    name: 'Noorfazella Sujud',
-    memberId: 'PLG-8821',
-    status: 'Checked In',
-    room: 'Swissotel #1402',
-    passport: 'K6148390D',
-    phone: '+65 9876 5432',
-    emergency: 'Encik Sujud (Brother) • +65 9111 2233',
-    flags: ['Medical: Insulin Chilling Required', 'First-Time Traveler'],
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    categories: ['all', 'special'],
-    showAddGroup: false,
-  },
-  {
-    id: '2',
-    name: 'Hjh Zainab Binte Abdullah',
-    memberId: 'PLG-4482',
-    status: 'Checked In',
-    room: 'Swissotel #1408',
-    passport: 'E4319801C',
-    phone: '+65 9234 5678',
-    emergency: 'Taufiq (Son) • +65 9222 3344',
-    flags: ['Elderly Support', 'Wheelchair Required for Tawaf & Sai'],
-    avatar: 'https://i.pravatar.cc/150?img=9',
-    categories: ['all', 'special'],
-    showAddGroup: false,
-  },
-  {
-    id: '4',
-    name: 'Nurul Huda Binte Sulaiman',
-    memberId: 'PLG-7712',
-    status: 'Checked In',
-    room: 'Swissotel #1602',
-    passport: 'E9981245G',
-    phone: '+65 9789 0123',
-    emergency: 'Danial (Spouse) • +65 9777 8899',
-    flags: ['Traveling with Infant'],
-    avatar: 'https://i.pravatar.cc/150?img=31',
-    categories: ['all', 'not_in_chat'],
-    showAddGroup: true,
-  },
-];
+const TripMembers = ({ selectedTripId, trips }: any) => {
+  const navigation = useNavigation<any>();
+  const [activeFilter, setActiveFilter] = useState<'all' | 'not_in_group'>('all');
+  const [searchKey, setSearchKey] = useState('');
 
-const TripMembers = () => {
-  const [activeFilter, setActiveFilter] = useState('all');
+  const tripId = selectedTripId || (trips && trips[0]?.id) || 1;
 
-  const filteredMembers = membersData.filter(m =>
-    m.categories.includes(activeFilter),
+  const {
+    data: membersResp,
+    isLoading,
+    refetch,
+  } = useStaffTripMembersQuery(
+    {
+      tripId,
+      searchKey: searchKey.trim() || undefined,
+      filter: activeFilter === 'not_in_group' ? 'not_in_group' : 'all',
+    },
+    { skip: !tripId },
   );
+
+  const [updateMemberChat, { isLoading: isUpdatingChat }] =
+    useStaffUpdateMemberChatMutation();
+  const [createDirectChat] = useChatCreateDirectMutation();
+
+  const membersList = membersResp?.data?.rows || [];
+  const totalCount = membersResp?.data?.count ?? membersList.length;
+
+  const handleToggleGroup = async (member: any, inGroup: boolean) => {
+    try {
+      const resp = await updateMemberChat({
+        tripId,
+        memberId: member.memberId || member.uidNo,
+        inGroup,
+      }).unwrap();
+      showSuccessToast(
+        resp.message ||
+          (inGroup ? 'Member added to group' : 'Member removed from group'),
+        'Success',
+      );
+      refetch();
+    } catch (err: any) {
+      const msg = err?.data?.message || err?.message || 'Failed to update member';
+      showErrorToast(msg, 'Error');
+    }
+  };
+
+  const handleOpenDirectChat = async (member: any) => {
+    try {
+      const resp = await createDirectChat({
+        tripId,
+        memberId: member.memberId,
+      }).unwrap();
+      if (resp?.data?.id) {
+        navigation.navigate(Screens.Conversation, {
+          conversationId: resp.data.id,
+          title: resp.data.title || member.name,
+          role: resp.data.role,
+          type: resp.data.type,
+          canPost: resp.data.canPost,
+        });
+      }
+    } catch (err: any) {
+      const msg = err?.data?.message || err?.message || 'Failed to open chat';
+      showErrorToast(msg, 'Chat Error');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -67,9 +91,16 @@ const TripMembers = () => {
         <Icon name="search-outline" size={20} color="#9CA3AF" />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by pilgrim name, Member ID (e.g. PLG-8821), or"
+          placeholder="Search by pilgrim name, UID, or room"
           placeholderTextColor="#9CA3AF"
+          value={searchKey}
+          onChangeText={setSearchKey}
         />
+        {searchKey ? (
+          <TouchableOpacity onPress={() => setSearchKey('')}>
+            <Icon name="close-circle" size={18} color="#9CA3AF" />
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       <View style={styles.filtersRow}>
@@ -86,111 +117,141 @@ const TripMembers = () => {
               activeFilter === 'all' && styles.filterChipTextActive,
             ]}
           >
-            All Pilgrims (7)
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.filterChipAlert,
-            activeFilter === 'special' && styles.filterChipAlertActive,
-          ]}
-          onPress={() => setActiveFilter('special')}
-        >
-          <Icon
-            name="warning-outline"
-            size={14}
-            color={activeFilter === 'special' ? '#fff' : '#E11D48'}
-          />
-          <Text
-            style={[
-              styles.filterChipAlertText,
-              activeFilter === 'special' && styles.filterChipAlertTextActive,
-            ]}
-          >
-            Special Care / Medical (7)
+            All Pilgrims ({totalCount})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.filterChipWarning,
-            activeFilter === 'not_in_chat' && styles.filterChipWarningActive,
+            activeFilter === 'not_in_group' && styles.filterChipWarningActive,
           ]}
-          onPress={() => setActiveFilter('not_in_chat')}
+          onPress={() => setActiveFilter('not_in_group')}
         >
           <Text
             style={[
               styles.filterChipWarningText,
-              activeFilter === 'not_in_chat' &&
+              activeFilter === 'not_in_group' &&
                 styles.filterChipWarningTextActive,
             ]}
           >
-            Not in Chat Group (1)
+            Not in Chat Group
           </Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.listContent}>
-        {filteredMembers.map(member => (
-          <View key={member.id} style={styles.memberCard}>
-            <View style={styles.memberHeader}>
-              <Image source={{ uri: member.avatar }} style={styles.avatar} />
-              <View style={styles.memberInfo}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.name}>{member.name}</Text>
-                  <View style={styles.idBadge}>
-                    <Text style={styles.idBadgeText}>{member.memberId}</Text>
-                  </View>
-                  <Text style={styles.statusText}>{member.status}</Text>
-                </View>
-                <Text style={styles.detailsText}>
-                  {member.room} • Passport: {member.passport} •
-                </Text>
-                <Text style={styles.detailsText}>{member.phone}</Text>
-                <Text style={styles.emergencyText}>
-                  Emergency: {member.emergency}
-                </Text>
+      {isLoading ? (
+        <ActivityIndicator
+          size="large"
+          color="#0F8A65"
+          style={{ marginVertical: 32 }}
+        />
+      ) : membersList.length === 0 ? (
+        <View style={{ alignItems: 'center', padding: 32 }}>
+          <Text style={{ color: '#6B7280', fontSize: 14 }}>
+            No pilgrims found for this trip.
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.listContent}>
+          {membersList.map((member: any) => {
+            const emergencyStr =
+              typeof member.emergencyContact === 'string'
+                ? member.emergencyContact
+                : member.emergencyContact
+                ? `${member.emergencyContact.name || ''} • ${
+                    member.emergencyContact.phone || ''
+                  }`
+                : 'Not Provided';
 
-                <View style={styles.flagsContainer}>
-                  {member.flags.map((flag, index) => (
-                    <View key={index} style={styles.flagBadge}>
-                      <Icon name="warning-outline" size={12} color="#E11D48" />
-                      <Text style={styles.flagText}>{flag}</Text>
+            return (
+              <View key={member.memberId || member.uidNo} style={styles.memberCard}>
+                <View style={styles.memberHeader}>
+                  <Image
+                    source={{
+                      uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        member.name || 'Pilgrim',
+                      )}&background=0F8A65&color=fff`,
+                    }}
+                    style={styles.avatar}
+                  />
+                  <View style={styles.memberInfo}>
+                    <View style={styles.nameRow}>
+                      <Text style={styles.name}>{member.name}</Text>
+                      <View style={styles.idBadge}>
+                        <Text style={styles.idBadgeText}>
+                          {member.uidNo || `ID-${member.memberId}`}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.statusText,
+                          { color: member.inChatGroup ? '#0F8A65' : '#D97706' },
+                        ]}
+                      >
+                        {member.inChatGroup ? 'In Group' : 'No Chat'}
+                      </Text>
                     </View>
-                  ))}
+                    <Text style={styles.detailsText}>
+                      Room: {member.hotelRoom || 'TBA'} • Passport:{' '}
+                      {member.passportNo || '—'}
+                    </Text>
+                    <Text style={styles.detailsText}>
+                      Phone: {member.phone || '—'}
+                    </Text>
+                    <Text style={styles.emergencyText}>
+                      Emergency: {emergencyStr}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={[styles.actionsRow, { gap: 8 }]}>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => handleOpenDirectChat(member)}
+                  >
+                    <Icon
+                      name="chatbubble-outline"
+                      size={16}
+                      color="#0F8A65"
+                    />
+                    <Text style={[styles.actionBtnText, { color: '#0F8A65' }]}>
+                      Direct Chat
+                    </Text>
+                  </TouchableOpacity>
+
+                  {!member.inChatGroup ? (
+                    <TouchableOpacity
+                      style={styles.actionBtnAddGroup}
+                      onPress={() => handleToggleGroup(member, true)}
+                    >
+                      <Text style={styles.actionBtnAddGroupText}>
+                        + Add to Group
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[
+                        styles.actionBtnAddGroup,
+                        { backgroundColor: '#FEE2E2' },
+                      ]}
+                      onPress={() => handleToggleGroup(member, false)}
+                    >
+                      <Text
+                        style={[
+                          styles.actionBtnAddGroupText,
+                          { color: '#B91C1C' },
+                        ]}
+                      >
+                        Remove from Group
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
-            </View>
-
-            <View
-              style={[styles.actionsRow, { gap: member.showAddGroup ? 5 : 12 }]}
-            >
-              <TouchableOpacity style={styles.actionBtn}>
-                <Icon name="call-outline" size={16} color="#0F8A65" />
-                <Text style={styles.actionBtnText}>Audio</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionBtn}>
-                <Icon name="videocam-outline" size={16} color="#0F8A65" />
-                <Text style={styles.actionBtnText}>Video</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.actionBtn}>
-                <Icon name="chatbubble-outline" size={16} color="#374151" />
-                <Text style={[styles.actionBtnText, { color: '#374151' }]}>
-                  Chat
-                </Text>
-              </TouchableOpacity>
-
-              {member.showAddGroup && (
-                <TouchableOpacity style={styles.actionBtnAddGroup}>
-                  <Text style={styles.actionBtnAddGroupText}>
-                    + Add to Group
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-        ))}
-      </View>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 };
