@@ -710,12 +710,10 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
         <Controller
           control={control}
           name="flightDepartureDateDeparture"
-          rules={{ required: 'Flight departure date is required' }}
           render={({ field: { value } }) => (
             <View style={styles(theme).fieldContainer}>
               <Text style={fontStyle(theme).headingSmall}>
                 Flight Departure Date/Time (Departure)
-                <Text style={{ color: 'red' }}>*</Text>
               </Text>
               <TouchableOpacity
                 onPress={() => {
@@ -822,12 +820,10 @@ const TravelDetails: React.FC<TravelDetailsProps> = ({
         <Controller
           control={control}
           name="flightDepartureDateArrival"
-          rules={{ required: 'Flight departure date is required' }}
           render={({ field: { value } }) => (
             <View style={styles(theme).fieldContainer}>
               <Text style={fontStyle(theme).headingSmall}>
                 Flight Departure Date/Time (Arrival)
-                <Text style={{ color: 'red' }}>*</Text>
               </Text>
               <TouchableOpacity
                 onPress={() => {

@@ -280,7 +280,8 @@ const BuyPolicy = ({ navigation, route }: any) => {
         }
         const customerResult = await trigger(customerFields as any);
 
-        const passportRegex = /^[A-Za-z]\d{7}[A-Za-z]?$/;
+        // const passportRegex = /^[A-Za-z]\d{7}[A-Za-z]?$/;
+        const passportRegex = /^[A-Z0-9]{4,20}$/;
         let hasInvalidPassport = false;
         customers.forEach((customer, index) => {
           const passport = (customer?.passportNumber || '').trim();
